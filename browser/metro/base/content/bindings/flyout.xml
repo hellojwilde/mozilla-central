@@ -9,7 +9,7 @@
     xmlns:xbl="http://www.mozilla.org/xbl"
     xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <binding id="arrowbox" extends="xul:box">
+  <binding id="flyout" extends="xul:box">
     <content orient="vertical">
       <xul:box anonid="container" class="panel-arrowcontainer" flex="1">
         <xul:box anonid="arrowbox" class="panel-arrowbox" dir="ltr">
@@ -22,6 +22,7 @@
         </xul:scrollbox>
       </xul:box>
     </content>
+
     <implementation implements="nsIDOMEventListener">
       <constructor>
         <![CDATA[
@@ -87,10 +88,10 @@
                      anchorPosX = parseFloat(this.anchorNode.getAttribute("anchorPosX")) || 0.5;
                   arrowbox.style.marginLeft = ((targetRect.left - popupRect.left) + (targetRect.width * anchorPosX) - HALF_ARROW_WIDTH) + "px";
                   if (vertPos == 1) {
-                    container.dir = "normal"; 
+                    container.dir = "normal";
                     anchorClass = "top";
                   } else if (vertPos == -1) {
-                    container.dir = "reverse"; 
+                    container.dir = "reverse";
                     anchorClass = "bottom";
                   }
                 }
@@ -103,7 +104,7 @@
                      anchorPosY = parseFloat(this.anchorNode.getAttribute("anchorPosY")) || 0.5;
                 arrowbox.style.marginTop = ((targetRect.top - popupRect.top) + (targetRect.height * anchorPosY) - HALF_ARROW_WIDTH) + "px";
                 if (horizPos == 1) {
-                  container.dir = "ltr"; 
+                  container.dir = "ltr";
                   anchorClass = "left";
                 } else if (horizPos == -1) {
                   container.dir = "rtl";

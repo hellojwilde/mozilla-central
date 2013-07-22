@@ -141,6 +141,10 @@ spinbuttons {
   list-style-image: url("chrome://browser/skin/images/arrowup-16.png");
 }
 
+/* Flyouts ----------------------------------------------------------------- */
+
+
+
 /* Menu List --------------------------------------------------------------- */
 
 menulist {
@@ -500,22 +504,11 @@ notification {
 
 /* Dialogs ----------------------------------------------------------------- */
 
-.modal-block,
-.perm-modal-block {
+.modal-block {
   background-color: rgba(0,0,0,.6);
   -moz-box-align: center;
   -moz-box-pack: center;
   -moz-box-orient: horizontal;
-}
-
-.dialog-dark,
-.panel-arrowcontent {
-  background: url("chrome://browser/skin/images/popup-bg-hdpi.png") left bottom repeat-x;
-  background-color: white;
-  border-radius: @border_radius_normal@;
-  box-shadow: black 0 @border_radius_tiny@ @border_radius_tiny@,
-              black 0 -@border_radius_tiny@ @border_radius_tiny@;
-  padding: @padding_normal@ 0; /* core spacing on top/bottom */
 }
 
 dialog {
@@ -599,46 +592,6 @@ dialog > .prompt-inner {
 
 .crash-privacy-statement-scroller {
   overflow: auto;
-}
-
-/* Arrowbox ---------------------------------------------------------------- */
-
-arrowbox {
-  -moz-appearance: none;
-  background: transparent;
-  border: none;
-}
-
-.arrowbox-dark .panel-arrowcontent {
-  color: white;
-  background: @panel_dark_color@;
-}
-
-.arrowbox-dark .panel-arrowcontent {
-  border: @border_width_large@ solid white;
-  border-radius: @border_radius_normal@;
-  box-shadow: black 0 @shadow_width_small@ @shadow_width_small@;
-}
-
-.panel-arrow[side="top"] {
-  list-style-image: url("chrome://browser/skin/images/arrowbox-up.png");
-  margin-bottom: -@margin_normal@;
-}
-
-.panel-arrow[side="bottom"] {
-  list-style-image: url("chrome://browser/skin/images/arrowbox-down.png");
-  margin-top: -@margin_normal@;
-}
-
-.panel-arrow[side="left"] {
-  list-style-image: url("chrome://browser/skin/images/arrowbox-horiz.png");
-  margin-right: -@margin_normal@;
-  transform: scaleX(-1);
-}
-
-.panel-arrow[side="right"] {
-  list-style-image: url("chrome://browser/skin/images/arrowbox-horiz.png");
-  margin-left: -@margin_normal@;
 }
 
 /*.meta -------------------------------------------------------------------- */
