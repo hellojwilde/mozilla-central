@@ -140,7 +140,7 @@ let ScriptContexts = {};
   ["ItemPinHelper", "chrome://browser/content/helperui/ItemPinHelper.js"],
   ["NavButtonSlider", "chrome://browser/content/NavButtonSlider.js"],
   ["ContextUI", "chrome://browser/content/ContextUI.js"],
-  ["FlyoutPanelsUI", "chrome://browser/content/flyouts/flyoutUI.js"],
+  ["FlyoutPanelsUI", "chrome://browser/content/flyoutpanels/flyoutUI.js"],
 #ifdef MOZ_SERVICES_SYNC
   ["RemoteTabsView", "chrome://browser/content/RemoteTabs.js"],
   ["RemoteTabsPanelView", "chrome://browser/content/RemoteTabs.js"],
