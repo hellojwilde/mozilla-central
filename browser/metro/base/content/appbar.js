@@ -101,35 +101,29 @@ var Appbar = {
   },
 
   onMenuButton: function(aEvent) {
-      var typesArray = ["find-in-page"];
+    /*var typesArray = ["find-in-page"];
 
-      if (ConsolePanelView.enabled) typesArray.push("open-error-console");
-      if (!MetroUtils.immersive) typesArray.push("open-jsshell");
+    if (ConsolePanelView.enabled) typesArray.push("open-error-console");
+    if (!MetroUtils.immersive) typesArray.push("open-jsshell");
 
-      try {
-        // If we have a valid http or https URI then show the view on desktop
-        // menu item.
-        var uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
-                                     null, null);
-        if (uri.schemeIs('http') || uri.schemeIs('https')) {
-          typesArray.push("view-on-desktop");
-        }
-      } catch(ex) {
+    try {
+      // If we have a valid http or https URI then show the view on desktop
+      // menu item.
+      var uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
+                                   null, null);
+      if (uri.schemeIs('http') || uri.schemeIs('https')) {
+        typesArray.push("view-on-desktop");
       }
+    } catch(ex) {
+    }*/
 
-      var x = this.menuButton.getBoundingClientRect().left;
-      var y = Elements.toolbar.getBoundingClientRect().top;
-      ContextMenuUI.showContextMenu({
-        json: {
-          types: typesArray,
-          string: '',
-          xPos: x,
-          yPos: y,
-          leftAligned: true,
-          bottomAligned: true
-      }
+    try {
+      let menu = document.getElementById("navbar-menu");
+      menu.openFlyout(this.menuButton, "before_end", 0, 0);
+    } catch(e) {
+      Util.dumpLn(e);
+    }
 
-      });
   },
 
   onViewOnDesktop: function() {

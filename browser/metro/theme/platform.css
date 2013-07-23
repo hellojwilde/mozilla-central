@@ -144,8 +144,9 @@ spinbuttons {
 /* Flyouts ----------------------------------------------------------------- */
 
 flyout {
-  position: absolute;
+  position: fixed;
   opacity: 0;
+  -moz-stack-sizing: ignore;
 }
 
 flyout[showingfrom="below"] {
@@ -164,8 +165,8 @@ flyout[showingfrom="right"] {
   transform: translateX(@metro_spacing_normal@);
 }
 
-flyout[hiding],
-flyout[showing] {
+flyout[showing],
+flyout[hiding] {
   transition: opacity ease-out 0.2s,
               transform ease-out 0.2s;
 }

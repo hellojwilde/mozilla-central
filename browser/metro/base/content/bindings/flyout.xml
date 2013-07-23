@@ -10,20 +10,27 @@
 
   <binding id="flyoutBinding" extends="xul:box">
     <implementation implements="nsIDOMEventListener">
-      <content>
-        <xul:scrollbox anonid="flyout-contents" flex="1" orient="vertical">
-          <children/>
-        </xul:scrollbox>
-      </content>
+      <field name="_isRtl">
+        <![CDATA[
+          Cc["@mozilla.org/chrome/chrome-registry;1"].
+            getService(Ci.nsIXULChromeRegistry).
+            isLocaleRTL("global");
+        ]]>
+      </field>
 
-      <field name="_state">closed</field>
-      <field name="_anchorNode">null</field>
+      <field name="_state">"closed"</field>
+      <field name="_position">null</field>
+      <field name="_anchor">null</field>
+      <field name="_x">0</field>
+      <field name="_y">0</field>
+
+      <field name="wantTypeBehind">false</field>
+      <field name="controller">null</field>
 
       <property name="state" readonly="true" onget="return this._state;"/>
       <property name="position" onget="return this.getAttribute('position');"
                 onset="return this.setAttribute('position', val);"/>
-      <property name="anchorNode" readonly="true"
-                onget="return this._anchorNode;"/>
+      <property name="anchor" readonly="true" onget="return this._anchor;"/>
 
       <method name="openFlyout">
         <parameter name="aAnchor"/>
@@ -32,73 +39,15 @@
         <parameter name="aY"/>
         <body>
           <![CDATA[
-            let position = aPosition || this.getAttribute("position");
-            let showingFrom = null;
-            let isRtl = Cc["@mozilla.org/chrome/chrome-registry;1"].
-                          getService(Ci.nsIXULChromeRegistry).
-                          isLocaleRTL("global");
-            let x = 0;
-            let y = 0;
-
-            if (aAnchor) {
-              let anchorRect = aAnchor.getBoundingClientRect();
-              let thisBox = this.boxObject;
-
-              switch (position) {
-                case "before_start":
-                  y = anchorRect.top - thisBox.height;
-                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
-                  showingFrom = "below";
-                  break;
-                case "before_end":
-                  y = anchorRect.top - thisBox.height;
-                  x = isRtl ? anchorRect.left : anchorRect.right - thisBox.width;
-                  showingFrom = "below";
-                  break;
-                case "after_start":
-                  y = anchorRect.bottom;
-                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
-                  showingFrom = "above";
-                  break;
-                case "after_end":
-                  y = anchorRect.bottom;
-                  x = isRtl ? anchorRect.left : anchorRect.right - thisBox.width;
-                  showingFrom = "above";
-                  break;
-                case "start_before":
-                  y = anchorRect.top;
-                  x = isRtl ? anchorRect.right : anchorRect.left - thisBox.width;
-                  showingFrom = isRtl ? "left" : "right";
-                  break;
-                case "start_after":
-                  y = anchorRect.bottom - thisBox.height;
-                  x = isRtl ? anchorRect.right : anchorRect.left - thisBox.width;
-                  showingFrom = isRtl ? "left" : "right";
-                  break;
-                case "end_before":
-                  y = anchorRect.top;
-                  x = isRtl ? anchorRect.left - thisBox.width : anchorRect.right;
-                  showingFrom = isRtl ? "right" : "left";
-                  break;
-                case "end_after":
-                  y = anchorRect.bottom - thisBox.height;
-                  x = isRtl ? anchorRect.left - thisBox.width : anchorRect.right;
-                  showingFrom = isRtl ? "right" : "left";
-                  break;
-                case "overlay":
-                  y = anchorRect.top;
-                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
-                  showingFrom = "above";
-                  break;
-              }
+            if (this._state != "closed") {
+              return;
             }
 
-            // Add offsets.
-            y += aY;
-            x += aX;
+            this.setAttribute("showingfrom", this._getFromDirection(aPosition));
+            this.hidden = false;
+            this.anchorAt(aAnchor, aPosition, aX, aY);
 
-            this.openFlyoutAtScreen(aX, aY, showingFrom);
-            this._anchorNode = aAnchor;
+            this._open();
           ]]>
         </body>
       </method>
@@ -109,31 +58,15 @@
         <parameter name="aShowingFrom"/>
         <body>
           <![CDATA[
-            this.moveTo(aX, aY);
-
             if (this._state != "closed") {
               return;
             }
 
             this.setAttribute("showingfrom", aShowingFrom || "below");
             this.hidden = false;
-            this._anchorNode = null;
+            this.moveTo(aX, aY);
 
-            let self = this;
-            this.addEventListener("transitionend", function () {
-              self.removeEventListener("transitionend", arguments.callee);
-              self.removeAttribute("showingfrom");
-              self._state = "open";
-              self._dispatchEvent("flyoutshown");
-            });
-
-            this.setAttribute("showing", true);
-
-            // Make sure we don't interfere with the animation.
-            setTimeout(() => {
-              self._state = "showing";
-              self._dispatchEvent("flyoutshowing");
-            }, 0);
+            this._open();
           ]]>
         </body>
       </method>
@@ -154,8 +87,6 @@
             let maxWidth = styles.getPropertyValue("max-width");
             let maxHeight = styles.getPropertyValue("max-height");
 
-            // TODO <jwilde>: Potentially bring moveBelowToFit in here.
-
             // If we're off the left or right edge, push us in to fit.
             if (aX < kPositionPadding) {
               aX = kPositionPadding;
@@ -163,7 +94,7 @@
               let xAtRight = screenWidth - width - kPositionPadding;
               aX = Math.max(xAtRight, kPositionPadding);
             }
-            this.left = aX;
+            this.style.left = aX + "px";
 
             // If we're off the top or bottom edge, push us in to fit.
             if (aY < kPositionPadding) {
@@ -172,21 +103,95 @@
               let yAtBottom = screenHeight - height - kPositionPadding;
               aY = Math.max(yAtBottom, kPositionPadding);
             }
-            this.top = aY;
+            this.style.top = aY + "px";
 
             // Set a maximum width if one isn't set.
             if (maxWidth == "none") {
-              let popupWidth = Math.min(aX + width + kPositionPadding,
-                                        screenWidth - aX - kPositionPadding);
+              let popupWidth = screenWidth - aX - kPositionPadding;
               this.style.maxWidth = popupWidth + "px";
             }
 
             // Set a maximum height if one isn't set.
             if (maxHeight == "none") {
-              let popupHeight = Math.min(aY + height + kPositionPadding,
-                                         screenHeight - aY - kPositionPadding);
+              let popupHeight = screenHeight - aY - kPositionPadding;
               this.style.maxHeight = popupHeight + "px";
             }
+
+            // Save our current positioning settings for reanchoring.
+            this._anchor = this._position = null;
+            this._x = aX;
+            this._y = aY;
+          ]]>
+        </body>
+      </method>
+
+      <method name="anchorAt">
+        <parameter name="aAnchor"/>
+        <parameter name="aPosition"/>
+        <parameter name="aX"/>
+        <parameter name="aY"/>
+        <body>
+          <![CDATA[
+            let position = aPosition || this.getAttribute("position");
+            let showingFrom = null;
+            let x = aX || 0;
+            let y = aY || 0;
+
+            let width = this.boxObject.width;
+            let height = this.boxObject.height;
+            let anchorRect = aAnchor.getBoundingClientRect();
+
+            switch (position) {
+              case "before_start":
+                x += this._isRtl ? anchorRect.right - width : anchorRect.left;
+                y += anchorRect.top - height;
+                break;
+              case "before_center": // Non-standard.
+                y += anchorRect.top - height;
+                x += ((anchorRect.left + anchorRect.right) / 2) - (width / 2);
+                break;
+              case "before_end":
+                x += this._isRtl ? anchorRect.left : anchorRect.right - width;
+                y += anchorRect.top - height;
+                break;
+              case "after_start":
+                y += anchorRect.bottom;
+                x += this._isRtl ? anchorRect.right - width : anchorRect.left;
+                break;
+              case "after_end":
+                y += anchorRect.bottom;
+                x += this._isRtl ? anchorRect.left : anchorRect.right - width;
+                showingFrom = "above";
+                break;
+              case "start_before":
+                y += anchorRect.top;
+                x += this._isRtl ? anchorRect.right : anchorRect.left - width;
+                break;
+              case "start_after":
+                y += anchorRect.bottom - height;
+                x += this._isRtl ? anchorRect.right : anchorRect.left - width;
+                break;
+              case "end_before":
+                y += anchorRect.top;
+                x += this._isRtl ? anchorRect.left - width : anchorRect.right;
+                break;
+              case "end_after":
+                y += anchorRect.bottom - height;
+                x += this._isRtl ? anchorRect.left - width : anchorRect.right;
+                break;
+              case "overlay":
+                y = anchorRect.top;
+                x = this._isRtl ? anchorRect.right - width : anchorRect.left;
+                break;
+            }
+
+            this.moveTo(x, y, showingFrom);
+
+            // Save our position for when we reanchor.
+            this._anchor = aAnchor;
+            this._position = aPosition;
+            this._x = aX;
+            this._y = aY;
           ]]>
         </body>
       </method>
@@ -201,24 +206,17 @@
             let self = this;
             this.addEventListener("transitionend", function () {
               self.removeEventListener("transitionend", arguments.callee);
-
-              self.removeAttribute("hiding");
-              self.hidden = true;
-              self.style.maxWidth = "none";
-              self.style.maxHeight = "none";
-
-              self.state = "closed";
+              self.removeAttribute("showingfrom");
+              self._state = "closed";
               self._dispatchEvent("flyouthidden");
             });
 
+            this._state = "hiding";
+            this._dispatchEvent("flyouthiding");
+            this._unbindFromWindow();
+
             this.setAttribute("hiding", "true");
             this.removeAttribute("showing");
-
-            // Make sure we don't interfere with the hiding animation.
-            setTimeout(() => {
-              self._dispatchEvent("flyouthiding");
-              self.state = "hiding";
-            }, 0);
           ]]>
         </body>
       </method>
@@ -227,7 +225,110 @@
         <parameter name="aEvent"/>
         <body>
           <![CDATA[
+            switch (aEvent.type) {
+              case "keypress":
+                if (!this.wantTypeBehind) {
+                  // Hide the context menu so you can't type behind it.
+                  aEvent.stopPropagation();
+                  aEvent.preventDefault();
+                  if (aEvent.keyCode != aEvent.DOM_VK_ESCAPE) {
+                    this.hideFlyout();
+                  }
+                }
+                break;
+              case "click":
+                if (!this.contains(aEvent.target)) {
+                  aEvent.stopPropagation();
+                  this.hideFlyout();
+                }
+                break;
+              case "PopupChanged":
+                if (aEvent.detail) {
+                  this.hideFlyout();
+                }
+                break;
+              case "MozAppbarShowing":
+                if (this.controller && this.controller.hide) {
+                  this.controller.hide()
+                } else {
+                  this.hideFlyout();
+                }
+                break;
+              case "PanBegin":
+                this.hideFlyout();
+                break;
+            }
+          ]]>
+        </body>
+      </method>
 
+      <!-- Internal Helpers -->
+
+      <method name="_getFromDirection">
+        <parameter name="aPosition"/>
+        <body>
+          let showingFrom = null;
+          switch (aPosition) {
+            case "before_start":
+            case "before_end":
+              showingFrom = "below";
+              break;
+            case "overlay":
+            case "after_start":
+            case "after_end":
+              showingFrom = "above";
+              break;
+            case "start_before":
+            case "start_after":
+              showingFrom = this._isRtl ? "left" : "right";
+              break;
+            case "end_before":
+            case "end_after":
+              showingFrom = this._isRtl ? "right" : "left";
+              break;
+          }
+          return showingFrom;
+        </body>
+      </method>
+
+      <method name="_open">
+        <body>
+          <![CDATA[
+            let self = this;
+            this.addEventListener("transitionend", function () {
+              self.removeEventListener("transitionend", arguments.callee);
+              self.removeAttribute("showingfrom");
+              self._state = "open";
+              self._dispatchEvent("flyoutshown");
+            });
+
+            this._state = "showing";
+            this._dispatchEvent("flyoutshowing");
+            this._bindToWindow();
+
+            this.setAttribute("showing", "true");
+          ]]>
+        </body>
+      </method>
+
+      <method name="_bindToWindow">
+        <body>
+          <![CDATA[
+            window.addEventListener("keypress", this, true);
+            window.addEventListener("click", this, true);
+            Elements.stack.addEventListener("PopupChanged", this, false);
+            Elements.browsers.addEventListener("PanBegin", this, false);
+          ]]>
+        </body>
+      </method>
+
+      <method name="_unbindFromWindow">
+        <body>
+          <![CDATA[
+            window.removeEventListener("keypress", this, true);
+            window.removeEventListener("click", this, true);
+            Elements.stack.removeEventListener("PopupChanged", this, false);
+            Elements.browsers.removeEventListener("PanBegin", this, false);
           ]]>
         </body>
       </method>
@@ -242,13 +343,6 @@
           ]]>
         </body>
       </method>
-
-      <field name="anonScrollBox" readonly="true">
-        <![CDATA[
-          // Expose the anyonymous scrollbox so ScrollUtils.getScrollboxFromElement can find it.
-          document.getAnonymousElementByAttribute(this, "anonid", "flyout-contents");
-        ]]>
-      </field>
     </implementation>
   </binding>
 </bindings>
