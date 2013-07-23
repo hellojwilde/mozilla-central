@@ -718,6 +718,27 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
+    <flyout id="navbar-menu" class="menu-popup" hidden="true">
+      <richlistbox id="navbar-menu-commands" flex="1">
+        <!-- App bar: 'more' button context menu -->
+        <!-- developer buttons - shown in metrodesktop mode only -->
+        <richlistitem id="context-error-console" type="open-error-console" onclick="ContextCommands.errorConsole();">
+          <label value="&appbarErrorConsole.label;"/>
+        </richlistitem>
+        <richlistitem id="context-jsshell" type="open-jsshell" onclick="ContextCommands.jsShell();">
+          <label value="&appbarJSShell.label;"/>
+        </richlistitem>
+
+        <!-- standard buttons -->
+        <richlistitem id="context-findinpage" type="find-in-page" onclick="ContextCommands.findInPage();">
+          <label value="&appbarFindInPage2.label;"/>
+        </richlistitem>
+        <richlistitem id="context-viewondesktop" type="view-on-desktop" onclick="ContextCommands.viewOnDesktop();">
+          <label value="&appbarViewOnDesktop2.label;"/>
+        </richlistitem>
+      </richlistbox>
+    </flyout>
+
     <box onclick="event.stopPropagation();" id="context-container" class="menu-container" hidden="true">
       <!-- onclick is dom bug 835175 -->
       <vbox id="context-popup" class="menu-popup">
@@ -802,23 +823,6 @@
           </richlistitem>
           <richlistitem id="context-bookmark-link" type="link" priority="low" onclick="ContextCommands.bookmarkLink();">
             <label value="&contextBookmarkLinkHref.label;"/>
-          </richlistitem>
-
-          <!-- App bar: 'more' button context menu -->
-          <!-- developer buttons - shown in metrodesktop mode only -->
-          <richlistitem id="context-error-console" type="open-error-console" onclick="ContextCommands.errorConsole();">
-            <label value="&appbarErrorConsole.label;"/>
-          </richlistitem>
-          <richlistitem id="context-jsshell" type="open-jsshell" onclick="ContextCommands.jsShell();">
-            <label value="&appbarJSShell.label;"/>
-          </richlistitem>
-
-          <!-- standard buttons -->
-          <richlistitem id="context-findinpage" type="find-in-page" onclick="ContextCommands.findInPage();">
-            <label value="&appbarFindInPage2.label;"/>
-          </richlistitem>
-          <richlistitem id="context-viewondesktop" type="view-on-desktop" onclick="ContextCommands.viewOnDesktop();">
-            <label value="&appbarViewOnDesktop2.label;"/>
           </richlistitem>
         </richlistbox>
       </vbox>
