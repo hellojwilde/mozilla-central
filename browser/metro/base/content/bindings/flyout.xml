@@ -19,11 +19,6 @@
       </field>
 
       <field name="_state">"closed"</field>
-      <field name="_position">null</field>
-      <field name="_anchor">null</field>
-      <field name="_x">0</field>
-      <field name="_y">0</field>
-
       <field name="wantTypeBehind">false</field>
       <field name="controller">null</field>
 
@@ -116,11 +111,6 @@
               let popupHeight = screenHeight - aY - kPositionPadding;
               this.style.maxHeight = popupHeight + "px";
             }
-
-            // Save our current positioning settings for reanchoring.
-            this._anchor = this._position = null;
-            this._x = aX;
-            this._y = aY;
           ]]>
         </body>
       </method>
@@ -186,12 +176,6 @@
             }
 
             this.moveTo(x, y, showingFrom);
-
-            // Save our position for when we reanchor.
-            this._anchor = aAnchor;
-            this._position = aPosition;
-            this._x = aX;
-            this._y = aY;
           ]]>
         </body>
       </method>
