@@ -251,27 +251,29 @@
       <method name="_getFromDirection">
         <parameter name="aPosition"/>
         <body>
-          let showingFrom = null;
-          switch (aPosition) {
-            case "before_start":
-            case "before_end":
-              showingFrom = "below";
-              break;
-            case "overlay":
-            case "after_start":
-            case "after_end":
-              showingFrom = "above";
-              break;
-            case "start_before":
-            case "start_after":
-              showingFrom = this._isRtl ? "left" : "right";
-              break;
-            case "end_before":
-            case "end_after":
-              showingFrom = this._isRtl ? "right" : "left";
-              break;
-          }
-          return showingFrom;
+          <![CDATA[
+            let showingFrom = null;
+            switch (aPosition) {
+              case "before_start":
+              case "before_end":
+                showingFrom = "below";
+                break;
+              case "overlay":
+              case "after_start":
+              case "after_end":
+                showingFrom = "above";
+                break;
+              case "start_before":
+              case "start_after":
+                showingFrom = this._isRtl ? "left" : "right";
+                break;
+              case "end_before":
+              case "end_after":
+                showingFrom = this._isRtl ? "right" : "left";
+                break;
+            }
+            return showingFrom;
+          ]]>
         </body>
       </method>
 
