@@ -156,6 +156,14 @@ flyout[showingfrom="above"] {
   transform: translateY(-@metro_spacing_normal@);
 }
 
+flyout[showingfrom="left"] {
+  transform: translateX(-@metro_spacing_normal@);
+}
+
+flyout[showingfrom="right"] {
+  transform: translateX(@metro_spacing_normal@);
+}
+
 flyout[hiding],
 flyout[showing] {
   transition: opacity ease-out 0.2s,
