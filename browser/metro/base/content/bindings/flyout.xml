@@ -11,14 +11,13 @@
   <binding id="flyoutBinding" extends="xul:box">
     <implementation implements="nsIDOMEventListener">
       <content>
-        <xul:scrollbox class="flyout-contents" flex="1" orient="vertical">
+        <xul:scrollbox anonid="flyout-contents" flex="1" orient="vertical">
           <children/>
         </xul:scrollbox>
       </content>
 
       <field name="_state">closed</field>
       <field name="_anchorNode">null</field>
-      <field name="_kPositionPadding">10</field>
 
       <property name="state" readonly="true" onget="return this._state;"/>
       <property name="position" onget="return this.getAttribute('position');"
@@ -31,12 +30,74 @@
         <parameter name="aPosition"/>
         <parameter name="aX"/>
         <parameter name="aY"/>
-        <parameter name="aAttributesOverride"/>
         <body>
           <![CDATA[
-            // TODO <jwilde>: Implement relative positioning here.
+            let position = aPosition || this.getAttribute("position");
+            let showingFrom = null;
+            let isRtl = Cc["@mozilla.org/chrome/chrome-registry;1"].
+                          getService(Ci.nsIXULChromeRegistry).
+                          isLocaleRTL("global");
+            let x = 0;
+            let y = 0;
 
-            this.openFlyoutAtScreen(relX, relY, showingFrom);
+            if (aAnchor) {
+              let anchorRect = aAnchor.getBoundingClientRect();
+              let thisBox = this.boxObject;
+
+              switch (position) {
+                case "before_start":
+                  y = anchorRect.top - thisBox.height;
+                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
+                  showingFrom = "below";
+                  break;
+                case "before_end":
+                  y = anchorRect.top - thisBox.height;
+                  x = isRtl ? anchorRect.left : anchorRect.right - thisBox.width;
+                  showingFrom = "below";
+                  break;
+                case "after_start":
+                  y = anchorRect.bottom;
+                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
+                  showingFrom = "above";
+                  break;
+                case "after_end":
+                  y = anchorRect.bottom;
+                  x = isRtl ? anchorRect.left : anchorRect.right - thisBox.width;
+                  showingFrom = "above";
+                  break;
+                case "start_before":
+                  y = anchorRect.top;
+                  x = isRtl ? anchorRect.right : anchorRect.left - thisBox.width;
+                  showingFrom = isRtl ? "left" : "right";
+                  break;
+                case "start_after":
+                  y = anchorRect.bottom - thisBox.height;
+                  x = isRtl ? anchorRect.right : anchorRect.left - thisBox.width;
+                  showingFrom = isRtl ? "left" : "right";
+                  break;
+                case "end_before":
+                  y = anchorRect.top;
+                  x = isRtl ? anchorRect.left - thisBox.width : anchorRect.right;
+                  showingFrom = isRtl ? "right" : "left";
+                  break;
+                case "end_after":
+                  y = anchorRect.bottom - thisBox.height;
+                  x = isRtl ? anchorRect.left - thisBox.width : anchorRect.right;
+                  showingFrom = isRtl ? "right" : "left";
+                  break;
+                case "overlay":
+                  y = anchorRect.top;
+                  x = isRtl ? anchorRect.right - thisBox.width : anchorRect.left;
+                  showingFrom = "above";
+                  break;
+              }
+            }
+
+            // Add offsets.
+            y += aY;
+            x += aX;
+
+            this.openFlyoutAtScreen(aX, aY, showingFrom);
             this._anchorNode = aAnchor;
           ]]>
         </body>
@@ -82,6 +143,8 @@
         <parameter name="aY"/>
         <body>
           <![CDATA[
+            const kPositionPadding = 10;
+
             let width = this.boxObject.width;
             let height = this.boxObject.height;
             let screenWidth = ContentAreaObserver.width;
@@ -94,34 +157,34 @@
             // TODO <jwilde>: Potentially bring moveBelowToFit in here.
 
             // If we're off the left or right edge, push us in to fit.
-            if (aX < this._kPositionPadding) {
-              aX = this._kPositionPadding;
-            } else if (aX + width + this._kPositionPadding > screenWidth) {
-              let xAtRight = screenWidth - width - this._kPositionPadding;
-              aX = Math.max(xAtRight, this._kPositionPadding);
+            if (aX < kPositionPadding) {
+              aX = kPositionPadding;
+            } else if (aX + width + kPositionPadding > screenWidth) {
+              let xAtRight = screenWidth - width - kPositionPadding;
+              aX = Math.max(xAtRight, kPositionPadding);
             }
             this.left = aX;
 
             // If we're off the top or bottom edge, push us in to fit.
-            if (aY < this._kPositionPadding) {
-              aY = this._kPositionPadding;
-            } else if (aY + height + this._kPositionPadding > screenHeight) {
-              let yAtBottom = screenHeight - height - this._kPositionPadding;
-              aY = Math.max(yAtBottom, this._kPositionPadding);
+            if (aY < kPositionPadding) {
+              aY = kPositionPadding;
+            } else if (aY + height + kPositionPadding > screenHeight) {
+              let yAtBottom = screenHeight - height - kPositionPadding;
+              aY = Math.max(yAtBottom, kPositionPadding);
             }
             this.top = aY;
 
             // Set a maximum width if one isn't set.
             if (maxWidth == "none") {
-              let popupWidth = Math.min(aX + width + this._kPositionPadding,
-                                        screenWidth - aX - this._kPositionPadding);
+              let popupWidth = Math.min(aX + width + kPositionPadding,
+                                        screenWidth - aX - kPositionPadding);
               this.style.maxWidth = popupWidth + "px";
             }
 
             // Set a maximum height if one isn't set.
             if (maxHeight == "none") {
-              let popupHeight = Math.min(aY + height + this._kPositionPadding,
-                                         screenHeight - aY - this._kPositionPadding);
+              let popupHeight = Math.min(aY + height + kPositionPadding,
+                                         screenHeight - aY - kPositionPadding);
               this.style.maxHeight = popupHeight + "px";
             }
           ]]>
@@ -160,6 +223,15 @@
         </body>
       </method>
 
+      <method name="handleEvent">
+        <parameter name="aEvent"/>
+        <body>
+          <![CDATA[
+
+          ]]>
+        </body>
+      </method>
+
       <method name="_dispatchEvent">
         <parameter name="aName"/>
         <body>
@@ -171,10 +243,12 @@
         </body>
       </method>
 
-      <field name="anonScrollBox" readonly="true"><![CDATA[
-        // Expose the anyonymous scrollbox so ScrollUtils.getScrollboxFromElement can find it.
-        document.getAnonymousElementByAttribute(this, "anonid", "flyout-contents");
-      ]]></field>
+      <field name="anonScrollBox" readonly="true">
+        <![CDATA[
+          // Expose the anyonymous scrollbox so ScrollUtils.getScrollboxFromElement can find it.
+          document.getAnonymousElementByAttribute(this, "anonid", "flyout-contents");
+        ]]>
+      </field>
     </implementation>
   </binding>
 </bindings>
