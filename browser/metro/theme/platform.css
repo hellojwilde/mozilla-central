@@ -143,7 +143,29 @@ spinbuttons {
 
 /* Flyouts ----------------------------------------------------------------- */
 
+flyout {
+  position: absolute;
+  opacity: 0;
+}
 
+flyout[showingfrom="below"] {
+  transform: translateY(@metro_spacing_normal@);
+}
+
+flyout[showingfrom="above"] {
+  transform: translateY(-@metro_spacing_normal@);
+}
+
+flyout[hiding],
+flyout[showing] {
+  transition: opacity ease-out 0.2s,
+              transform ease-out 0.2s;
+}
+
+flyout[showing] {
+  opacity: 1;
+  transform: none;
+}
 
 /* Menu List --------------------------------------------------------------- */
 
