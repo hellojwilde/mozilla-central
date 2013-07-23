@@ -292,7 +292,7 @@
           <toolbarbutton id="download-button" class="appbar-secondary" oncommand="Appbar.onDownloadButton()"/>
           <toolbarbutton id="star-button" class="appbar-primary" type="checkbox" oncommand="Appbar.onStarButton()"/>
           <toolbarbutton id="pin-button" class="appbar-primary" type="checkbox" oncommand="Appbar.onPinButton()"/>
-          <toolbarbutton id="menu-button" class="appbar-primary" oncommand="Appbar.onMenuButton(event)"/>
+          <toolbarbutton id="menu-button" class="appbar-primary" oncommand="Appbar.onMenuButton()"/>
         </toolbar>
       </vbox>
     </appbar>
@@ -689,27 +689,6 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
-    <flyout id="navbar-menu" class="menu-popup" hidden="true">
-      <richlistbox id="navbar-menu-commands" flex="1">
-        <!-- App bar: 'more' button context menu -->
-        <!-- developer buttons - shown in metrodesktop mode only -->
-        <richlistitem id="context-error-console" type="open-error-console" onclick="ContextCommands.errorConsole();">
-          <label value="&appbarErrorConsole.label;"/>
-        </richlistitem>
-        <richlistitem id="context-jsshell" type="open-jsshell" onclick="ContextCommands.jsShell();">
-          <label value="&appbarJSShell.label;"/>
-        </richlistitem>
-
-        <!-- standard buttons -->
-        <richlistitem id="context-findinpage" type="find-in-page" onclick="ContextCommands.findInPage();">
-          <label value="&appbarFindInPage2.label;"/>
-        </richlistitem>
-        <richlistitem id="context-viewondesktop" type="view-on-desktop" onclick="ContextCommands.viewOnDesktop();">
-          <label value="&appbarViewOnDesktop2.label;"/>
-        </richlistitem>
-      </richlistbox>
-    </flyout>
-
     <box onclick="event.stopPropagation();" id="context-container" class="menu-container" hidden="true">
       <!-- onclick is dom bug 835175 -->
       <vbox id="context-popup" class="menu-popup">
@@ -816,6 +795,21 @@
         <richlistbox id="menupopup-commands" onclick="if (event.target != this) AutofillMenuUI.selectByIndex(this.selectedIndex);" flex="1"/>
       </vbox>
     </box>
+
+    <flyoutmenu id="navbar-menu" hidden="true" position="before_end">
+      <flyoutmenuitem id="errorconsole-menuitem"
+                      label="&appbarErrorConsole.label;"
+                      oncommand="ContextCommands.errorConsole();"/>
+      <flyoutmenuitem id="jsshell-menuitem"
+                      label="&appbarJSShell.label;"
+                      oncommand="ContextCommands.jsShell();"/>
+      <flyoutmenuitem id="findinpage-menuitem"
+                      label="&appbarFindInPage2.label;"
+                      oncommand="ContextCommands.findInPage();"/>
+      <flyoutmenuitem id="viewondesktop-menuitem"
+                      label="&appbarViewOnDesktop2.label;"
+                      oncommand="ContextCommands.viewOnDesktop();"/>
+    </flyoutmenu>
 
     <!-- alerts for content -->
     <hbox id="alerts-container" hidden="true" align="start" bottom="0" onclick="AlertsHelper.click(event);">

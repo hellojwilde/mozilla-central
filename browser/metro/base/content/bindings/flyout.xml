@@ -8,7 +8,7 @@
           xmlns:xbl="http://www.mozilla.org/xbl"
           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 
-  <binding id="flyoutBinding" extends="xul:box">
+  <binding id="flyoutBinding" extends="xul:vbox">
     <implementation implements="nsIDOMEventListener">
       <field name="_isRtl">
         <![CDATA[
@@ -205,6 +205,8 @@
         </body>
       </method>
 
+      <!-- nsIDOMEventListener -->
+
       <method name="handleEvent">
         <parameter name="aEvent"/>
         <body>
@@ -330,5 +332,38 @@
         </body>
       </method>
     </implementation>
+  </binding>
+
+  <binding id="flyoutmenuBinding" extends="#flyoutBinding">
+    <content>
+      <xul:richlistbox class="flyoutmenu-list" flex="1">
+        <children/>
+      </xul:richlistbox>
+    </content>
+
+    <handlers>
+      <handler event="click" phase="bubble">
+        <![CDATA[
+          this.hideFlyout();
+        ]]>
+      </handler>
+    </handlers>
+  </binding>
+
+  <binding id="flyoutmenuitemBinding" extends="chrome://browser/content/bindings/bindings.xml#richlistitem">
+    <content>
+      <xul:label xbl:inherits="value=label" />
+    </content>
+
+    <handlers>
+      <handler event="click">
+        <![CDATA[
+          let evt = document.createEvent("XULCommandEvent");
+          evt.initCommandEvent("command", true, true, window, 0, false, false,
+                               false, false, null);
+          this.dispatchEvent(evt);
+        ]]>
+      </handler>
+    </handlers>
   </binding>
 </bindings>

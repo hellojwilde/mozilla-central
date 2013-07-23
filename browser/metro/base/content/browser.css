@@ -34,6 +34,14 @@ flyout {
   -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutBinding");
 }
 
+flyoutmenu {
+  -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutmenuBinding");
+}
+
+flyoutmenuitem {
+  -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutmenuitemBinding");
+}
+
 settings {
   -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#settings");
 }
