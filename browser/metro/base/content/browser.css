@@ -30,6 +30,10 @@ cssthrobber {
   -moz-binding: url('chrome://browser/content/bindings/cssthrobber.xml#cssthrobberBinding');
 }
 
+flyout {
+  -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutBinding");
+}
+
 settings {
   -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#settings");
 }
@@ -172,10 +176,6 @@ dialog {
 /* Do not allow these to inherit from the toolkit binding */
 dialog.content-dialog {
   -moz-binding: none;
-}
-
-flyout {
-  -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyout");
 }
 
 /* Disable context menus in textboxes */
