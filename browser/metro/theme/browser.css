@@ -865,6 +865,12 @@ setting[type="radio"] > vbox {
   white-space: pre-wrap;
 }
 
+/* Bookmark Creator -------------------------------------------------------- */
+
+.bookmarkpreview-wrapper {
+  margin: 10px;
+}
+
 /* Context Menu ------------------------------------------------------------ */
 
 #context-commands richlistitem[disabled] {

@@ -710,10 +710,10 @@
       </richlistbox>
     </flyout>
 
-    <flyout id="navbar-bookmarkpreview" hidden="true">
-      <vbox class="bookmarkpreview">
+    <flyout id="bookmarkcreator" hidden="true">
+      <vbox class="bookmarkpreview-wrapper">
         <box class="bookmarkpreview-item" align="center" pack="center">
-          <richgriditem label="woot"/>
+          <richgriditem id="bookmarkcreator-preview" label="woot"/>
         </box>
         <hbox>
           <checkbox label="No thumbnail"/>
