@@ -718,25 +718,14 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
-    <flyout id="navbar-menu" class="menu-popup menu" hidden="true">
-      <richlistbox id="navbar-menu-commands" flex="1">
-        <!-- App bar: 'more' button context menu -->
-        <!-- developer buttons - shown in metrodesktop mode only -->
-        <richlistitem id="context-error-console" type="open-error-console" onclick="ContextCommands.errorConsole();">
-          <label value="&appbarErrorConsole.label;"/>
-        </richlistitem>
-        <richlistitem id="context-jsshell" type="open-jsshell" onclick="ContextCommands.jsShell();">
-          <label value="&appbarJSShell.label;"/>
-        </richlistitem>
+    <flyout id="navbar-menu" type="menu" hidden="true">
+      <!-- developer buttons: only shown in -metrodesktop mode -->
+      <menuitem label="&appbarErrorConsole.label;"/>
+      <menuitem label="&appbarJSShell.label;"/>
 
-        <!-- standard buttons -->
-        <richlistitem id="context-findinpage" type="find-in-page" onclick="ContextCommands.findInPage();">
-          <label value="&appbarFindInPage2.label;"/>
-        </richlistitem>
-        <richlistitem id="context-viewondesktop" type="view-on-desktop" onclick="ContextCommands.viewOnDesktop();">
-          <label value="&appbarViewOnDesktop2.label;"/>
-        </richlistitem>
-      </richlistbox>
+      <!-- standard buttons -->
+      <menuitem label="&appbarFindInPage2.label;"/>
+      <menuitem label="&appbarViewOnDesktop2.label;"/>
     </flyout>
 
     <flyout id="bookmarkcreator" hidden="true">

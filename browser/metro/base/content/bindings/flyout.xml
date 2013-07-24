@@ -330,4 +330,20 @@
       </method>
     </implementation>
   </binding>
+
+  <binding id="flyoutMenuBinding" extends="#flyoutBinding">
+    <content role="menu">
+      <xul:vbox flex="1">
+        <children/>
+      </xul:vbox>
+    </content>
+
+    <handlers>
+      <handler event="click">
+        <![CDATA[
+          this.hideFlyout();
+        ]]>
+      </handler>
+    </handlers>
+  </binding>
 </bindings>
