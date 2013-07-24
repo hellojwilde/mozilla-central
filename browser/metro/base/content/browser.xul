@@ -290,8 +290,8 @@
           </hbox>
 
           <toolbarbutton id="download-button" class="appbar-secondary" oncommand="Appbar.onDownloadButton()"/>
-          <toolbarbutton id="star-button" class="appbar-primary" type="checkbox" oncommand="Appbar.onStarButton()"/>
-          <toolbarbutton id="pin-button" class="appbar-primary" type="checkbox" oncommand="Appbar.onPinButton()"/>
+          <toolbarbutton id="star-button" class="appbar-primary" type="checkbox" oncommand="BookmarkCreatorUI.onStarButton()"/>
+          <toolbarbutton id="pin-button" class="appbar-primary" type="checkbox" oncommand="BookmarkCreatorUI.onPinButton()"/>
           <toolbarbutton id="menu-button" class="appbar-primary" oncommand="Appbar.onMenuButton(event)"/>
         </toolbar>
       </vbox>
@@ -689,7 +689,7 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
-    <flyout id="navbar-menu" class="menu-popup" hidden="true">
+    <flyout id="navbar-menu" class="menu-popup menu" hidden="true">
       <richlistbox id="navbar-menu-commands" flex="1">
         <!-- App bar: 'more' button context menu -->
         <!-- developer buttons - shown in metrodesktop mode only -->
@@ -710,9 +710,16 @@
       </richlistbox>
     </flyout>
 
-    <flyout id="navbar-bookmark" hidden="true">
-      <checkbox label="No thumbnail"/>
-      <button>Save Changes</button>
+    <flyout id="navbar-bookmarkpreview" hidden="true">
+      <vbox class="bookmarkpreview">
+        <box class="bookmarkpreview-item" align="center" pack="center">
+          <richgriditem label="woot"/>
+        </box>
+        <hbox>
+          <checkbox label="No thumbnail"/>
+          <button class="button-default">Save Changes</button>
+        </hbox>
+      </vbox>
     </flyout>
 
     <box onclick="event.stopPropagation();" id="context-container" class="menu-container" hidden="true">

@@ -41,8 +41,6 @@
             this.setAttribute("showingfrom", this._getFromDirection(aPosition));
             this.hidden = false;
 
-            Util.dumpLn("showingfrom " + this.getAttribute("showingfrom"));
-
             // `anchorAt` triggers a reflow (which updates transitionability),
             // so we need to do all of our transition setup before this.
             this.anchorAt(aAnchor, aPosition, aX, aY);
@@ -90,7 +88,6 @@
             let maxWidth = styles.getPropertyValue("max-width");
             let maxHeight = styles.getPropertyValue("max-height");
 
-            // If we're off the left or right edge, push us in to fit.
             if (aX < kPositionPadding) {
               aX = kPositionPadding;
             } else if (aX + width + kPositionPadding > screenWidth) {
@@ -99,7 +96,6 @@
             }
             this.style.left = aX + "px";
 
-            // If we're off the top or bottom edge, push us in to fit.
             if (aY < kPositionPadding) {
               aY = kPositionPadding;
             } else if (aY + height + kPositionPadding > screenHeight) {
@@ -108,13 +104,11 @@
             }
             this.style.top = aY + "px";
 
-            // Set a maximum width if one isn't set.
             if (maxWidth == "none") {
               let popupWidth = screenWidth - aX - kPositionPadding;
               this.style.maxWidth = popupWidth + "px";
             }
 
-            // Set a maximum height if one isn't set.
             if (maxHeight == "none") {
               let popupHeight = screenHeight - aY - kPositionPadding;
               this.style.maxHeight = popupHeight + "px";

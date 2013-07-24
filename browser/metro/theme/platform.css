@@ -183,8 +183,8 @@ flyout.menu {
   border: 0 none;
 }
 
-#flyout-bookmark {
-  padding: 10px;
+.bookmarkpreview {
+  margin: 10px;
 }
 
 /* Menu List --------------------------------------------------------------- */

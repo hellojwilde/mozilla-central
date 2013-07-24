@@ -108,6 +108,7 @@ let ScriptContexts = {};
   ["FormHelperUI", "chrome://browser/content/helperui/FormHelperUI.js"],
   ["BrowserTouchHandler", "chrome://browser/content/BrowserTouchHandler.js"],
   ["AlertsHelper", "chrome://browser/content/helperui/AlertsHelper.js"],
+  ["BookmarkCreatorUI", "chrome://browser/content/helperui/BookmarkUI.js"],
   ["AutofillMenuUI", "chrome://browser/content/helperui/MenuUI.js"],
   ["ContextMenuUI", "chrome://browser/content/helperui/MenuUI.js"],
   ["MenuControlUI", "chrome://browser/content/helperui/MenuUI.js"],
