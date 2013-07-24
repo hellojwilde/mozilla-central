@@ -1137,6 +1137,18 @@ setting > vbox {
   -moz-box-flex: 1;
 }
 
+/* Bookmark Creator -------------------------------------------------------- */
+
+.bookmarkpreview-wrapper {
+  margin: 10px;
+}
+
+/* Context Menu ------------------------------------------------------------ */
+
+#context-commands richlistitem[disabled] {
+  display: none;
+}
+
 settings {
   margin-top: 32px;
 }

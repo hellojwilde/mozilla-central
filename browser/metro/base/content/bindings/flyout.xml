@@ -324,7 +324,7 @@
           <![CDATA[
             let event = document.createEvent("Events");
             event.initEvent(aName, true, false);
-            self.dispatchEvent(event);
+            this.dispatchEvent(event);
           ]]>
         </body>
       </method>
