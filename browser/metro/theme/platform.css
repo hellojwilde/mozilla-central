@@ -147,6 +147,9 @@ flyout {
   position: fixed;
   opacity: 0;
   -moz-stack-sizing: ignore;
+  -moz-appearance: none;
+  background: white;
+  border: gray solid @metro_border_thick@;
 }
 
 flyout[showingfrom="below"] {
@@ -174,6 +177,14 @@ flyout[hiding] {
 flyout[showing] {
   opacity: 1;
   transform: none;
+}
+
+flyout.menu {
+  border: 0 none;
+}
+
+#flyout-bookmark {
+  padding: 10px;
 }
 
 /* Menu List --------------------------------------------------------------- */

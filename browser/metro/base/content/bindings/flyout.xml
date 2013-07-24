@@ -40,6 +40,11 @@
 
             this.setAttribute("showingfrom", this._getFromDirection(aPosition));
             this.hidden = false;
+
+            Util.dumpLn("showingfrom " + this.getAttribute("showingfrom"));
+
+            // `anchorAt` triggers a reflow (which updates transitionability),
+            // so we need to do all of our transition setup before this.
             this.anchorAt(aAnchor, aPosition, aX, aY);
 
             this._open();
@@ -59,6 +64,9 @@
 
             this.setAttribute("showingfrom", aShowingFrom || "below");
             this.hidden = false;
+
+            // `moveTo` triggers a reflow (which updates transitionability),
+            // so we need to do all of our transition setup before this.
             this.moveTo(aX, aY);
 
             this._open();
@@ -190,7 +198,7 @@
             let self = this;
             this.addEventListener("transitionend", function () {
               self.removeEventListener("transitionend", arguments.callee);
-              self.removeAttribute("showingfrom");
+              self.removeAttribute("hiding");
               self._state = "closed";
               self._dispatchEvent("flyouthidden");
             });
@@ -252,27 +260,24 @@
         <parameter name="aPosition"/>
         <body>
           <![CDATA[
-            let showingFrom = null;
             switch (aPosition) {
               case "before_start":
+              case "before_center": // Non-standard.
               case "before_end":
-                showingFrom = "below";
-                break;
+                return "below";
               case "overlay":
               case "after_start":
               case "after_end":
-                showingFrom = "above";
-                break;
+                return "above";
               case "start_before":
               case "start_after":
-                showingFrom = this._isRtl ? "left" : "right";
-                break;
+                return this._isRtl ? "left" : "right";
               case "end_before":
               case "end_after":
-                showingFrom = this._isRtl ? "right" : "left";
-                break;
+                return this._isRtl ? "right" : "left";
+              default:
+                return "below";
             }
-            return showingFrom;
           ]]>
         </body>
       </method>
