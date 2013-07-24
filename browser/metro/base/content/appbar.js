@@ -4,7 +4,6 @@
 "use strict";
 
 var Appbar = {
-  get starButton()    { return document.getElementById('star-button'); },
   get pinButton()     { return document.getElementById('pin-button'); },
   get menuButton()    { return document.getElementById('menu-button'); },
 
@@ -13,15 +12,10 @@ var Appbar = {
 
   init: function Appbar_init() {
     // fired from appbar bindings
-    Elements.contextappbar.addEventListener('MozAppbarShowing', this, false);
     Elements.contextappbar.addEventListener('MozAppbarDismissing', this, false);
 
     // fired when a context sensitive item (bookmarks) changes state
     window.addEventListener('MozContextActionsChange', this, false);
-
-    // browser events we need to update button state on
-    Elements.browsers.addEventListener('URLChanged', this, true);
-    Elements.tabList.addEventListener('TabSelect', this, true);
 
     // tilegroup selection events for all modules get bubbled up
     window.addEventListener("selectionchange", this, false);
@@ -29,12 +23,6 @@ var Appbar = {
 
   handleEvent: function Appbar_handleEvent(aEvent) {
     switch (aEvent.type) {
-      case 'URLChanged':
-      case 'TabSelect':
-      case 'MozAppbarShowing':
-        this.update();
-        break;
-
       case 'MozAppbarDismissing':
         if (this.activeTileset) {
           this.activeTileset.clearSelection();
@@ -59,47 +47,10 @@ var Appbar = {
     }
   },
 
-  /*
-   * Called from various places when the visible content
-   * has changed such that button states may need to be
-   * updated.
-   */
-  update: function update() {
-    this._updatePinButton();
-    this._updateStarButton();
-  },
-
   onDownloadButton: function() {
     // TODO: Bug 883962: Toggle the downloads infobar when the
     // download button is clicked
     ContextUI.dismiss();
-  },
-
-  onPinButton: function() {
-    if (this.pinButton.checked) {
-      Browser.pinSite();
-    } else {
-      Browser.unpinSite();
-    }
-  },
-
-  onStarButton: function(aValue) {
-    let preview = document.getElementById("navbar-bookmark");
-    preview.openFlyout(this.starButton, "before_center");
-
-    if (aValue === undefined) {
-      aValue = this.starButton.checked;
-    }
-
-    if (aValue) {
-      Browser.starSite(function () {
-        Appbar._updateStarButton();
-      });
-    } else {
-      Browser.unstarSite(function () {
-        Appbar._updateStarButton();
-      });
-    }
   },
 
   onMenuButton: function(aEvent) {
@@ -249,15 +200,5 @@ var Appbar = {
     } else {
       Elements.contextappbar.dismiss();
     }
-  },
-
-  _updatePinButton: function() {
-    this.pinButton.checked = Browser.isSitePinned();
-  },
-
-  _updateStarButton: function() {
-    Browser.isSiteStarredAsync(function (isStarred) {
-      this.starButton.checked = isStarred;
-    }.bind(this));
-  },
+  }
 };
