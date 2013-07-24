@@ -124,12 +124,10 @@ let ScriptContexts = {};
   ["ContextCommands", "chrome://browser/content/ContextCommands.js"],
   ["Bookmarks", "chrome://browser/content/bookmarks.js"],
   ["Downloads", "chrome://browser/content/downloads.js"],
-  ["BookmarksPanelView", "chrome://browser/content/bookmarks.js"],
   ["ConsolePanelView", "chrome://browser/content/console.js"],
   ["BookmarksStartView", "chrome://browser/content/bookmarks.js"],
   ["HistoryView", "chrome://browser/content/history.js"],
   ["HistoryStartView", "chrome://browser/content/history.js"],
-  ["HistoryPanelView", "chrome://browser/content/history.js"],
   ["Site", "chrome://browser/content/Site.js"],
   ["TopSites", "chrome://browser/content/TopSites.js"],
   ["TopSitesView", "chrome://browser/content/TopSites.js"],
@@ -143,7 +141,6 @@ let ScriptContexts = {};
   ["FlyoutPanelsUI", "chrome://browser/content/flyoutpanels/FlyoutPanelsUI.js"],
 #ifdef MOZ_SERVICES_SYNC
   ["RemoteTabsView", "chrome://browser/content/RemoteTabs.js"],
-  ["RemoteTabsPanelView", "chrome://browser/content/RemoteTabs.js"],
   ["RemoteTabsStartView", "chrome://browser/content/RemoteTabs.js"],
 #endif
 ].forEach(function (aScript) {
