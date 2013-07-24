@@ -85,6 +85,9 @@ var Appbar = {
   },
 
   onStarButton: function(aValue) {
+    let preview = document.getElementById("navbar-bookmark");
+    preview.openFlyout(this.starButton, "before_center");
+
     if (aValue === undefined) {
       aValue = this.starButton.checked;
     }
@@ -117,13 +120,8 @@ var Appbar = {
     } catch(ex) {
     }*/
 
-    try {
-      let menu = document.getElementById("navbar-menu");
-      menu.openFlyout(this.menuButton, "before_end", 0, 0);
-    } catch(e) {
-      Util.dumpLn(e);
-    }
-
+    let menu = document.getElementById("navbar-menu");
+    menu.openFlyout(this.menuButton, "before_end");
   },
 
   onViewOnDesktop: function() {
