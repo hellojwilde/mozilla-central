@@ -118,7 +118,7 @@ var Appbar = {
 
     try {
       let menu = document.getElementById("navbar-menu");
-      menu.openFlyout(this.menuButton);
+      menu.openFlyout(this.menuButton, "before_end", 0, 0);
     } catch(e) {
       Util.dumpLn(e);
     }
