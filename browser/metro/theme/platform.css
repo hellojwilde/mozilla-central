@@ -147,7 +147,6 @@ flyout {
   position: fixed;
   opacity: 0;
   -moz-stack-sizing: ignore;
-  -moz-appearance: none;
 }
 
 flyout[showingfrom="below"] {
@@ -175,47 +174,6 @@ flyout[hiding] {
 flyout[showing] {
   opacity: 1;
   transform: none;
-}
-
-/* Flyouts used as menus */
-
-flyoutmenu > richlistbox {
-  padding: 3px 0;
-  border: black solid @metro_border_thick@;
-  -moz-appearance: none;
-  display: -moz-box;
-}
-
-flyoutmenu > richlistbox > scrollbox {
-  width: 100%;
-  overflow-x: hidden !important;
-}
-
-flyoutmenuitem {
-  width: 100%;
-  min-height: @touch_button_small@;
-  min-width: @touch_action_minwidth@; /* keep the button from being too narrow */
-  border: 0 none;
-  -moz-box-align: center;
-  font-weight: 600;
-}
-
-flyoutmenuitem:not([disabled]):hover {
-  background-color: #ccc;
-  color: black;
-}
-
-flyoutmenuitem:not([disabled]):active {
-  background-color: black;
-  color: white;
-}
-
-flyoutmenu[left-hand="true"] > flyoutmenuitem {
-  padding-left: 50px;
-}
-
-flyoutmenu[left-hand="false"] > flyoutmenuitem {
-  padding-right: 50px;
 }
 
 /* Menu List --------------------------------------------------------------- */
