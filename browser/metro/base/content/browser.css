@@ -38,6 +38,10 @@ flyout[type="menu"] {
   -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutMenuBinding");
 }
 
+flyout[type="menu"] menuitem {
+  -moz-binding: url("chrome://browser/content/bindings/flyout.xml#flyoutMenuItemBinding");
+}
+
 settings {
   -moz-binding: url("chrome://mozapps/content/extensions/setting.xml#settings");
 }

@@ -965,6 +965,9 @@ var BrowserUI = {
       case "cmd_actions":
       case "cmd_panel":
       case "cmd_flyout_back":
+      case "cmd_viewOnDesktop":
+      case "cmd_openErrorConsole":
+      case "cmd_openJSShell":
       case "cmd_sanitize":
       case "cmd_volumeLeft":
       case "cmd_volumeRight":
@@ -1065,6 +1068,15 @@ var BrowserUI = {
         break;
       case "cmd_flyout_back":
         FlyoutPanelsUI.onBackButton();
+        break;
+      case "cmd_viewOnDesktop":
+        ContextCommands.viewOnDesktop();
+        break;
+      case "cmd_openErrorConsole":
+        ContextCommands.errorConsole();
+        break;
+      case "cmd_openJSShell":
+        ContextCommands.jsShell();
         break;
       case "cmd_panel":
         PanelUI.toggle();
