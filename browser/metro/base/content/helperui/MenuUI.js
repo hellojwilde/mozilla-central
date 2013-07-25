@@ -75,25 +75,9 @@ var AutofillMenuUI = {
 
 var ContextMenuUI = {
   _popupState: null,
-  __menuPopup: null,
-  _defaultPositionOptions: {
-    bottomAligned: true,
-    rightAligned: false,
-    centerHorizontally: true,
-    moveBelowToFit: true
-  },
 
-  get _panel() { return document.getElementById("context-container"); },
-  get _popup() { return document.getElementById("context-popup"); },
-  get _commands() { return this._popup.childNodes[0]; },
-
-  get _menuPopup() {
-    if (!this.__menuPopup) {
-      this.__menuPopup = new MenuPopup(this._panel, this._popup);
-      this.__menuPopup.controller = this;
-    }
-    return this.__menuPopup;
-  },
+  get _flyout() { return document.getElementById("context-menu"); },
+  get _commands() { return this._flyout.childNodes[0]; },
 
   /*******************************************
    * External api
@@ -143,7 +127,7 @@ var ContextMenuUI = {
      */
 
     Util.dumpLn("contentTypes:", contentTypes);
-
+try{
     // Defines whether or not low priority items in images, text, and
     // links are displayed.
     let multipleMediaTypes = false;
@@ -159,6 +143,7 @@ var ContextMenuUI = {
 
     let optionsAvailable = false;
     for (let command of Array.slice(this._commands.childNodes)) {
+
       let types = command.getAttribute("type").split(",");
       let lowPriority = (command.hasAttribute("priority") &&
         command.getAttribute("priority") == "low");
@@ -183,6 +168,7 @@ var ContextMenuUI = {
           break;
         }
       }
+
     }
 
     if (!optionsAvailable) {
@@ -197,17 +183,16 @@ var ContextMenuUI = {
     if (aMessage.target && aMessage.target.localName === "browser") {
       coords = aMessage.target.msgBrowserToClient(aMessage, true);
     }
-    this._menuPopup.show(Util.extend({}, this._defaultPositionOptions, {
-      xPos: coords.x,
-      yPos: coords.y,
-      source: aMessage.json.source
-    }));
+
+    Util.dumpLn("about to show " + this._flyout + " at " + coords.x + ", " + coords.y)
+    this._flyout.showFlyoutAtScreen(coords.x, coords.y);
+    } catch (e) { Util.dumpLn(e); }
     return true;
   },
 
   hide: function hide () {
-    this._menuPopup.hide();
-    this._popupState = null;
+    this._flyout.hideFlyout();
+    this.reset();
   },
 
   reset: function reset() {
