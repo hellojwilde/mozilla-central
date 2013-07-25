@@ -4,7 +4,6 @@
 "use strict";
 
 var Appbar = {
-  get pinButton()     { return document.getElementById('pin-button'); },
   get menuButton()    { return document.getElementById('menu-button'); },
 
   // track selected/active richgrid/tilegroup - the context for contextual action buttons
@@ -71,21 +70,8 @@ var Appbar = {
     } catch(ex) {
     }*/
 
-    let menu = document.getElementById("navbar-menu");
+    let menu = document.getElementById("extras");
     menu.openFlyout(this.menuButton, "before_end");
-  },
-
-  onViewOnDesktop: function() {
-    try {
-      // Make sure we have a valid URI so Windows doesn't prompt
-      // with an unrecognized command, select default program window
-      var uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
-                                   null, null);
-      if (uri.schemeIs('http') || uri.schemeIs('https')) {
-        MetroUtils.launchInDesktop(Browser.selectedBrowser.currentURI.spec, "");
-      }
-    } catch(ex) {
-    }
   },
 
   dispatchContextualAction: function(aActionName){

@@ -93,6 +93,11 @@
     <command id="cmd_history" oncommand="CommandUpdater.doCommand(this.id);"/>
     <command id="cmd_sanitize" oncommand="CommandUpdater.doCommand(this.id);"/>
     <command id="cmd_contextUI" oncommand="CommandUpdater.doCommand(this.id);"/>
+    <command id="cmd_viewOnDesktop" oncommand="CommandUpdater.doCommand(this.id);"/>
+
+    <!-- devtools -->
+    <command id="cmd_openErrorConsole" oncommand="CommandUpdater.doCommand(this.id);"/>
+    <command id="cmd_openJSShell" oncommand="CommandUpdater.doCommand(this.id);"/>
 
     <!-- screen/display -->
     <command id="cmd_lockscreen" oncommand="CommandUpdater.doCommand(this.id);"/>
@@ -715,14 +720,18 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
-    <flyout id="navbar-menu" type="menu" hidden="true">
+    <flyout id="extras" type="menu" hidden="true">
       <!-- developer buttons: only shown in -metrodesktop mode -->
-      <menuitem label="&appbarErrorConsole.label;"/>
-      <menuitem label="&appbarJSShell.label;"/>
+      <menuitem label="&appbarErrorConsole.label;"
+                command="cmd_openErrorConsole"/>
+      <menuitem label="&appbarJSShell.label;"
+                command="cmd_openJSShell"/>
 
       <!-- standard buttons -->
-      <menuitem label="&appbarFindInPage2.label;"/>
-      <menuitem label="&appbarViewOnDesktop2.label;"/>
+      <menuitem label="&appbarFindInPage2.label;"
+                command="cmd_find"/>
+      <menuitem label="&appbarViewOnDesktop2.label;"
+                command="cmd_viewOnDesktop"/>
     </flyout>
 
     <flyout id="bookmarkcreator" hidden="true">

@@ -332,17 +332,30 @@
   </binding>
 
   <binding id="flyoutMenuBinding" extends="#flyoutBinding">
-    <content role="menu">
-      <xul:vbox flex="1">
+    <content>
+      <xul:richlistbox flex="1">
         <children/>
-      </xul:vbox>
+      </xul:richlistbox>
+    </content>
+
+    <handlers>
+      <handler event="click" action="this.hideFlyout();"/>
+    </handlers>
+  </binding>
+
+  <binding id="flyoutMenuItemBinding"
+           extends="chrome://browser/content/bindings/bindings.xml#richlistitem">
+    <content>
+      <xul:label xbl:inherits="value=label"/>
     </content>
 
     <handlers>
       <handler event="click">
-        <![CDATA[
-          this.hideFlyout();
-        ]]>
+        let cmdEvent = document.createEvent("xulcommandevent");
+        cmdEvent.initCommandEvent("command", true, true, window, 0,
+                                  event.ctrlKey, event.altKey, event.shiftKey,
+                                  event.metaKey, null);
+        this.dispatchEvent(cmdEvent);
       </handler>
     </handlers>
   </binding>
