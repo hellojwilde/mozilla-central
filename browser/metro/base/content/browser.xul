@@ -720,19 +720,7 @@
     <!-- onclick addresses dom bug 835175 -->
     <box onclick="false" class="selection-overlay-hidden" id="chrome-selection-overlay"/>
 
-    <flyout id="bookmarkcreator" hidden="true">
-      <vbox class="bookmarkpreview-wrapper">
-        <box class="bookmarkpreview-item" align="center" pack="center">
-          <richgriditem id="bookmarkcreator-preview" label="woot"/>
-        </box>
-        <hbox>
-          <checkbox label="No thumbnail"/>
-          <button class="button-default">Save Changes</button>
-        </hbox>
-      </vbox>
-    </flyout>
-
-    <flyout id="extras-menu" type="menu" hidden="true">
+    <flyout id="extras" type="menu" hidden="true">
       <!-- developer buttons: only shown in -metrodesktop mode -->
       <menuitem label="&appbarErrorConsole.label;"
                 command="cmd_openErrorConsole"/>
@@ -746,71 +734,106 @@
                 command="cmd_viewOnDesktop"/>
     </flyout>
 
-    <flyout id="context-menu" type="menu" hidden="true">
-      <!-- priority="low" items are hidden by default when a context is being
-           displayed for two or more media types. (e.g. a linked image) -->
-      <!-- content types preceeded by '!' act as exclusion rules, the menu item
-           will not be displayed if the content type is present. -->
-      <!-- Note the order of richlistitem here is important as it is reflected
-           in the menu itself. -->
-      <!-- ux spec: https://bug782810.bugzilla.mozilla.org/attachment.cgi?id=714804 -->
-
-      <!-- Text related -->
-      <!-- for text inputs, this will cut selected text -->
-      <menuitem label="&contextTextCut.label;" type="cut"
-                command="cmd_cut"/>
-      <!-- for text inputs, this will copy selected text -->
-      <menuitem label="&contextTextCopy.label;" type="copy"
-                command="cmd_copy"/>
-      <!-- Search Bing for "(text..)", displayed on selected content text only -->
-      <menuitem label="" type="selected-text,!input-text"
-                oncommand="ContextCommands.searchText(this);"/>
-      <!-- only displayed in inputs with text that do not have selection -->
-      <menuitem label="&contextTextSelect.label;" type="selectable"
-                oncommand="ContextCommands.select();"/>
-      <!-- only displayed in inputs with text that do not have selection -->
-      <menuitem label="&contextTextSelectAll.label;" type="selectable"
-                oncommand="ContextCommands.selectAll();"/>
-      <!-- only displayed if there is text on the clipboard -->
-      <menuitem label="&contextTextPaste.label;" type="paste"
-                command="cmd_paste"/>
-      <!-- only display if there is text on the clipboard and the target is the urlbar -->
-      <menuitem label="&contextTextPasteAndGo.label;" type="paste-url"
-                oncommand="ContextCommands.pasteAndGo();"/>
-
-      <!-- Image related -->
-      <!-- save image to user pictures library -->
-      <menuitem label="&contextSaveImageLib.label;" type="image"
-                oncommand="ContextCommands.saveImageToLib();"/>
-      <!-- copy image data to clipboard -->
-      <menuitem label="&contextCopyImage.label;" type="image"
-                oncommand="ContextCommands.copyImage();"/>
-      <!-- copy the uri of the image src -->
-      <menuitem label="&contextCopyImageLocation.label;" type="image"
-                oncommand="ContextCommands.copyImageSrc();"/>
-      <menuitem label="&contextOpenImageTab.label;" type="image" priority="low"
-                oncommand="ContextCommands.openImageInNewTab();"/>
-
-      <!-- Video related -->
-      <!-- save video to user videos library -->
-      <menuitem label="&contextSaveVideoLib.label;" type="video"
-                oncommand="ContextCommands.saveVideoToLib();"/>
-      <!-- copy the uri of the video src -->
-      <menuitem label="&contextCopyVideoLocation.label;" type="video"
-                oncommand="ContextCommands.copyVideoSrc();"/>
-      <!-- open the uri of the video src in a new tab -->
-      <menuitem label="&contextOpenVideoTab.label;" type="video" priority="low"
-                oncommand="ContextCommands.openVideoInNewTab();"/>
-
-      <!-- Link related -->
-      <!-- all of these apply to underlying link href values -->
-      <menuitem label="&contextOpenLinkTab.label;" type="link"
-                oncommand="ContextCommands.openLinkInNewTab();"/>
-      <menuitem label="&contextCopyLinkHref.label;" type="link"
-                oncommand="ContextCommands.copyLink();"/>
-      <menuitem label="&contextBookmarkLinkHref.label;" type="link"
-                priority="low" oncommand="ContextCommands.bookmarkLink();"/>
+    <flyout id="bookmarkcreator" hidden="true">
+      <vbox class="bookmarkpreview-wrapper">
+        <box class="bookmarkpreview-item" align="center" pack="center">
+          <richgriditem id="bookmarkcreator-preview" label="woot"/>
+        </box>
+        <hbox>
+          <checkbox label="No thumbnail"/>
+          <button class="button-default">Save Changes</button>
+        </hbox>
+      </vbox>
     </flyout>
+
+    <box onclick="event.stopPropagation();" id="context-container" class="menu-container" hidden="true">
+      <!-- onclick is dom bug 835175 -->
+      <vbox id="context-popup" class="menu-popup">
+        <richlistbox id="context-commands" bindingType="contextmenu" flex="1">
+          <!-- priority="low" items are hidden by default when a context is being displayed
+               for two or more media types. (e.g. a linked image) -->
+          <!-- content types preceeded by '!' act as exclusion rules, the menu item will not
+               be displayed if the content type is present. -->
+          <!-- Note the order of richlistitem here is important as it is reflected in the
+               menu itself. -->
+          <!-- ux spec: https://bug782810.bugzilla.mozilla.org/attachment.cgi?id=714804 -->
+
+          <!-- Text related -->
+          <!-- for text inputs, this will cut selected text -->
+          <richlistitem id="context-cut" type="cut" onclick="ContextCommands.cut();">
+            <label value="&contextTextCut.label;"/>
+          </richlistitem>
+          <!-- for text inputs, this will copy selected text -->
+          <richlistitem id="context-copy" type="copy" onclick="ContextCommands.copy();">
+            <label value="&contextTextCopy.label;"/>
+          </richlistitem>
+          <!-- Search Bing for "(text..)", displayed on selected content text only -->
+          <richlistitem id="context-search" type="selected-text,!input-text" onclick="ContextCommands.searchText(this);">
+            <label id="context-search-label" value=""/>
+          </richlistitem>
+          <!-- only displayed in inputs with text that do not have selection -->
+          <richlistitem id="context-select" type="selectable" onclick="ContextCommands.select();">
+            <label value="&contextTextSelect.label;"/>
+          </richlistitem>
+          <!-- only displayed in inputs with text that do not have selection -->
+          <richlistitem id="context-select-all" type="selectable" onclick="ContextCommands.selectAll();">
+            <label value="&contextTextSelectAll.label;"/>
+          </richlistitem>
+          <!-- only displayed if there is text on the clipboard -->
+          <richlistitem id="context-paste" type="paste" onclick="ContextCommands.paste();">
+            <label value="&contextTextPaste.label;"/>
+          </richlistitem>
+          <!-- only display if there is text on the clipboard and the target is the urlbar -->
+          <richlistitem id="context-paste-n-go" type="paste-url" onclick="ContextCommands.pasteAndGo();">
+            <label value="&contextTextPasteAndGo.label;"/>
+          </richlistitem>
+
+          <!-- Image related -->
+          <!-- save image to user pictures library -->
+          <richlistitem id="context-save-image-lib" type="image" onclick="ContextCommands.saveImageToLib();">
+            <label value="&contextSaveImageLib.label;"/>
+          </richlistitem>
+          <!-- copy image data to clipboard -->
+          <richlistitem id="context-copy-image" type="image" onclick="ContextCommands.copyImage();">
+            <label value="&contextCopyImage.label;"/>
+          </richlistitem>
+          <!-- copy the uri of the image src -->
+          <richlistitem id="context-copy-image-loc" type="image" onclick="ContextCommands.copyImageSrc();">
+            <label value="&contextCopyImageLocation.label;"/>
+          </richlistitem>
+          <!-- open the uri of the image src in a new tab -->
+          <richlistitem id="context-open-image-tab" type="image" priority="low" onclick="ContextCommands.openImageInNewTab();">
+            <label value="&contextOpenImageTab.label;"/>
+          </richlistitem>
+
+          <!-- Video related -->
+          <!-- save video to user videos library -->
+          <richlistitem id="context-save-video-lib" type="video" onclick="ContextCommands.saveVideoToLib();">
+            <label value="&contextSaveVideoLib.label;"/>
+          </richlistitem>
+          <!-- copy the uri of the video src -->
+          <richlistitem id="context-copy-video-loc" type="video" onclick="ContextCommands.copyVideoSrc();">
+            <label value="&contextCopyVideoLocation.label;"/>
+          </richlistitem>
+          <!-- open the uri of the video src in a new tab -->
+          <richlistitem id="context-open-video-tab" type="video" priority="low" onclick="ContextCommands.openVideoInNewTab();">
+            <label value="&contextOpenVideoTab.label;"/>
+          </richlistitem>
+
+          <!-- Link related -->
+          <!-- all of these apply to underlying link href values -->
+          <richlistitem id="context-open-in-new-tab" type="link" onclick="ContextCommands.openLinkInNewTab();">
+            <label value="&contextOpenLinkTab.label;"/>
+          </richlistitem>
+          <richlistitem id="context-copy-link" type="link" onclick="ContextCommands.copyLink();">
+            <label value="&contextCopyLinkHref.label;"/>
+          </richlistitem>
+          <richlistitem id="context-bookmark-link" type="link" priority="low" onclick="ContextCommands.bookmarkLink();">
+            <label value="&contextBookmarkLinkHref.label;"/>
+          </richlistitem>
+        </richlistbox>
+      </vbox>
+    </box>
 
     <vbox id="select-container" class="menu-container" hidden="true">
       <vbox id="select-popup" class="select-popup">
