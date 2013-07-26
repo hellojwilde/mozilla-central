@@ -69,7 +69,7 @@ var Appbar = {
     } catch(ex) {
     }*/
 
-    let menu = document.getElementById("extras-menu");
+    let menu = document.getElementById("extras");
     menu.openFlyout(this.menuButton, "before_end");
   },
 
