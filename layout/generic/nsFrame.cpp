@@ -958,9 +958,10 @@ nsIFrame::GetUsedPadding() const
 }
 
 void
-nsIFrame::ApplySkipSides(nsMargin& aMargin) const
+nsIFrame::ApplySkipSides(nsMargin& aMargin,
+                         const nsHTMLReflowState* aReflowState) const
 {
-  int skipSides = GetSkipSides();
+  int skipSides = GetSkipSides(aReflowState);
   if (skipSides & (1 << NS_SIDE_TOP))
     aMargin.top = 0;
   if (skipSides & (1 << NS_SIDE_RIGHT))
@@ -4964,7 +4965,7 @@ ComputeOutlineAndEffectsRect(nsIFrame* aFrame,
     // For SVG frames, we only need to account for filters.
     // TODO: We could also take account of clipPath and mask to reduce the
     // visual overflow, but that's not essential.
-    if (aFrame->StyleSVGReset()->mFilter) {
+    if (aFrame->StyleSVGReset()->SingleFilter()) {
       if (aStoreRectProperties) {
         aFrame->Properties().
           Set(nsIFrame::PreEffectsBBoxProperty(), new nsRect(r));
