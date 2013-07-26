@@ -333,7 +333,7 @@
 
   <binding id="flyoutMenuBinding" extends="#flyoutBinding">
     <content>
-      <xul:richlistbox anonid="flyoutmenu-list" flex="1">
+      <xul:richlistbox flex="1">
         <children/>
       </xul:richlistbox>
     </content>
