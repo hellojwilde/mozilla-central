@@ -1133,6 +1133,19 @@ setting {
   -moz-box-orient: vertical;
 }
 
+
+/* Bookmark Creator -------------------------------------------------------- */
+
+.bookmarkpreview-wrapper {
+  margin: 10px;
+}
+
+/* Context Menu ------------------------------------------------------------ */
+
+#context-commands richlistitem[disabled] {
+  display: none;
+}
+
 setting > vbox {
   -moz-box-flex: 1;
 }
