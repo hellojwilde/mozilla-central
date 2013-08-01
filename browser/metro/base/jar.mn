@@ -54,6 +54,7 @@ chrome.jar:
   content/contenthandlers/ContextMenuHandler.js (content/contenthandlers/ContextMenuHandler.js)
   content/contenthandlers/PluginCTPHandler.js  (content/contenthandlers/PluginCTPHandler.js)
   content/contenthandlers/SelectionHandler.js  (content/contenthandlers/SelectionHandler.js)
+  content/contenthandlers/SnippetsHandler.js   (content/contenthandlers/SnippetsHandler.js)
   content/contenthandlers/FormHelper.js        (content/contenthandlers/FormHelper.js)
   content/contenthandlers/FindHandler.js       (content/contenthandlers/FindHandler.js)
   content/contenthandlers/ViewportHandler.js   (content/contenthandlers/ViewportHandler.js)
