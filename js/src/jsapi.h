@@ -12,11 +12,11 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/RangedPtr.h"
-#include "mozilla/StandardInteger.h"
 #include "mozilla/ThreadLocal.h"
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include "js-config.h"
@@ -2154,9 +2154,6 @@ extern JS_PUBLIC_API(void)
 JS_IterateCompartments(JSRuntime *rt, void *data,
                        JSIterateCompartmentCallback compartmentCallback);
 
-extern JS_PUBLIC_API(void)
-JS_SetGlobalObject(JSContext *cx, JSObject *obj);
-
 /*
  * Initialize standard JS class constructors, prototypes, and any top-level
  * functions and constants associated with the standard classes (e.g. isNaN
@@ -2230,8 +2227,12 @@ JS_IsGlobalObject(JSObject *obj);
 extern JS_PUBLIC_API(JSObject *)
 JS_GetGlobalForCompartmentOrNull(JSContext *cx, JSCompartment *c);
 
+namespace JS {
+
 extern JS_PUBLIC_API(JSObject *)
-JS_GetGlobalForScopeChain(JSContext *cx);
+CurrentGlobalOrNull(JSContext *cx);
+
+}
 
 /*
  * This method returns the global corresponding to the most recent scripted
@@ -3180,10 +3181,10 @@ JS_GetInstancePrivate(JSContext *cx, JSObject *obj, JSClass *clasp,
                       jsval *argv);
 
 extern JS_PUBLIC_API(JSBool)
-JS_GetPrototype(JSContext *cx, JSObject *obj, JSObject **protop);
+JS_GetPrototype(JSContext *cx, JS::Handle<JSObject*> obj, JS::MutableHandle<JSObject*> protop);
 
 extern JS_PUBLIC_API(JSBool)
-JS_SetPrototype(JSContext *cx, JSObject *obj, JSObject *proto);
+JS_SetPrototype(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<JSObject*> proto);
 
 extern JS_PUBLIC_API(JSObject *)
 JS_GetParent(JSObject *obj);

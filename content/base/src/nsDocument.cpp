@@ -1578,7 +1578,6 @@ NS_INTERFACE_TABLE_HEAD(nsDocument)
     NS_INTERFACE_TABLE_ENTRY(nsDocument, nsIRadioGroupContainer)
     NS_INTERFACE_TABLE_ENTRY(nsDocument, nsIMutationObserver)
     NS_INTERFACE_TABLE_ENTRY(nsDocument, nsIApplicationCacheContainer)
-    NS_INTERFACE_TABLE_ENTRY(nsDocument, nsIInlineEventHandlers)
     NS_INTERFACE_TABLE_ENTRY(nsDocument, nsIObserver)
   NS_INTERFACE_TABLE_END
   NS_INTERFACE_TABLE_TO_MAP_SEGUE_CYCLE_COLLECTION(nsDocument)
@@ -5243,7 +5242,7 @@ nsDocument::Register(JSContext* aCx, const nsAString& aName,
 
     // Check the proto chain for HTMLElement prototype.
     JS::Rooted<JSObject*> protoProto(aCx);
-    if (!JS_GetPrototype(aCx, protoObject, protoProto.address())) {
+    if (!JS_GetPrototype(aCx, protoObject, &protoProto)) {
       rv.Throw(NS_ERROR_UNEXPECTED);
       return nullptr;
     }
@@ -5251,7 +5250,7 @@ nsDocument::Register(JSContext* aCx, const nsAString& aName,
       if (protoProto == htmlProto) {
         break;
       }
-      if (!JS_GetPrototype(aCx, protoProto, protoProto.address())) {
+      if (!JS_GetPrototype(aCx, protoProto, &protoProto)) {
         rv.Throw(NS_ERROR_UNEXPECTED);
         return nullptr;
       }
@@ -11025,18 +11024,6 @@ nsDocument::XPCOMShutdown()
 {
   gPendingPointerLockRequest = nullptr;
 }
-
-#define EVENT(name_, id_, type_, struct_)                                     \
-  NS_IMETHODIMP nsDocument::GetOn##name_(JSContext *cx, JS::Value *vp) {      \
-    return nsINode::GetOn##name_(cx, vp);                                     \
-  }                                                                           \
-  NS_IMETHODIMP nsDocument::SetOn##name_(JSContext *cx, const JS::Value &v) { \
-    return nsINode::SetOn##name_(cx, v);                                      \
-  }
-#define DOCUMENT_ONLY_EVENT EVENT
-#include "nsEventNameList.h"
-#undef DOCUMENT_ONLY_EVENT
-#undef EVENT
 
 void
 nsDocument::UpdateVisibilityState()

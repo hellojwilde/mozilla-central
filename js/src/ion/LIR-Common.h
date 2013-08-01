@@ -219,6 +219,23 @@ class LCallee : public LInstructionHelper<1, 0, 0>
     LIR_HEADER(Callee)
 };
 
+class LForceUseV : public LInstructionHelper<0, BOX_PIECES, 0>
+{
+  public:
+    LIR_HEADER(ForceUseV)
+};
+
+class LForceUseT : public LInstructionHelper<0, 1, 0>
+{
+  public:
+    LIR_HEADER(ForceUseT)
+
+    LForceUseT(const LAllocation &value)
+    {
+        setOperand(0, value);
+    }
+};
+
 // Base class for control instructions (goto, branch, etc.)
 template <size_t Succs, size_t Operands, size_t Temps>
 class LControlInstructionHelper : public LInstructionHelper<0, Operands, Temps> {
@@ -530,6 +547,29 @@ class LInitElem : public LCallInstructionHelper<0, 1 + 2*BOX_PIECES, 0>
     }
 };
 
+class LInitElemGetterSetter : public LCallInstructionHelper<0, 2 + BOX_PIECES, 0>
+{
+  public:
+    LIR_HEADER(InitElemGetterSetter)
+
+    LInitElemGetterSetter(const LAllocation &object, const LAllocation &value) {
+        setOperand(0, object);
+        setOperand(1, value);
+    }
+
+    static const size_t IdIndex = 2;
+
+    const LAllocation *object() {
+        return getOperand(0);
+    }
+    const LAllocation *value() {
+        return getOperand(1);
+    }
+    MInitElemGetterSetter *mir() const {
+        return mir_->toInitElemGetterSetter();
+    }
+};
+
 // Takes in an Object and a Value.
 class LInitProp : public LCallInstructionHelper<0, 1 + BOX_PIECES, 0>
 {
@@ -551,6 +591,28 @@ class LInitProp : public LCallInstructionHelper<0, 1 + BOX_PIECES, 0>
 
     MInitProp *mir() const {
         return mir_->toInitProp();
+    }
+};
+
+class LInitPropGetterSetter : public LCallInstructionHelper<0, 2, 0>
+{
+  public:
+    LIR_HEADER(InitPropGetterSetter)
+
+    LInitPropGetterSetter(const LAllocation &object, const LAllocation &value) {
+        setOperand(0, object);
+        setOperand(1, value);
+    }
+
+    const LAllocation *object() {
+        return getOperand(0);
+    }
+    const LAllocation *value() {
+        return getOperand(1);
+    }
+
+    MInitPropGetterSetter *mir() const {
+        return mir_->toInitPropGetterSetter();
     }
 };
 
@@ -1015,6 +1077,12 @@ class LCallDOMNative : public LJSCallInstructionHelper<BOX_PIECES, 0, 4>
     const LAllocation *getArgArgs() {
         return getTemp(3)->output();
     }
+};
+
+class LBail : public LInstructionHelper<0, 0, 0>
+{
+  public:
+    LIR_HEADER(Bail)
 };
 
 template <size_t defs, size_t ops>
@@ -4358,10 +4426,6 @@ class LGuardThreadLocalObject : public LCallInstructionHelper<0, 2, 1>
         setTemp(0, temp1);
     }
 
-    bool isCall() const {
-        return true;
-    }
-
     const LAllocation *forkJoinSlice() {
         return getOperand(0);
     }
@@ -4807,7 +4871,7 @@ class LAsmJSCall MOZ_FINAL : public LInstruction
 
     bool isCall() const {
         return true;
-    };
+    }
 
     // LInstruction interface
     size_t numDefs() const {

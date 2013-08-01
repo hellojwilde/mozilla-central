@@ -337,7 +337,7 @@ private:
 
     JSFunction* adaptor =
       js::NewFunctionWithReserved(aCx, UnwrapErrorEvent, 1, 0,
-                                  JS_GetGlobalForScopeChain(aCx), "unwrap");
+                                  JS::CurrentGlobalOrNull(aCx), "unwrap");
     if (!adaptor) {
       return false;
     }
@@ -979,14 +979,14 @@ CreateDedicatedWorkerGlobalScope(JSContext* aCx)
     return NULL;
   }
 
-  JSObject* scopeProto =
-    WorkerGlobalScope::InitClass(aCx, global, eventTargetProto);
+  JS::Rooted<JSObject*> scopeProto(aCx,
+    WorkerGlobalScope::InitClass(aCx, global, eventTargetProto));
   if (!scopeProto) {
     return NULL;
   }
 
-  JSObject* dedicatedScopeProto =
-    DedicatedWorkerGlobalScope::InitClass(aCx, global, scopeProto);
+  JS::Rooted<JSObject*> dedicatedScopeProto(aCx,
+    DedicatedWorkerGlobalScope::InitClass(aCx, global, scopeProto));
   if (!dedicatedScopeProto) {
     return NULL;
   }

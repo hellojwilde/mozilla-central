@@ -440,7 +440,10 @@ GetGlobalForObjectCrossCompartment(JSObject *obj);
 
 // For legacy consumers only. This whole concept is going away soon.
 JS_FRIEND_API(JSObject *)
-GetDefaultGlobalForContext(JSContext *cx);
+DefaultObjectForContextOrNull(JSContext *cx);
+
+JS_FRIEND_API(void)
+SetDefaultObjectForContext(JSContext *cx, JSObject *obj);
 
 JS_FRIEND_API(void)
 NotifyAnimationActivity(JSObject *obj);
@@ -492,7 +495,7 @@ GetObjectProto(JSContext *cx, JS::Handle<JSObject*> obj, JS::MutableHandle<JSObj
         clasp == js::OuterWindowProxyClassPtr ||
         clasp == js::FunctionProxyClassPtr)
     {
-        return JS_GetPrototype(cx, obj, proto.address());
+        return JS_GetPrototype(cx, obj, proto);
     }
 
     proto.set(reinterpret_cast<const shadow::Object*>(obj.get())->type->proto);

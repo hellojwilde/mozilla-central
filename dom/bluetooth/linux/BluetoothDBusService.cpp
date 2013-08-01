@@ -795,7 +795,7 @@ static DBusCallback sBluetoothDBusPropCallbacks[] =
   GetDevicePropertiesCallback
 };
 
-MOZ_STATIC_ASSERT(
+static_assert(
   sizeof(sBluetoothDBusPropCallbacks) == sizeof(sBluetoothDBusIfaces),
   "DBus Property callback array and DBus interface array must be same size");
 
@@ -1850,8 +1850,7 @@ BluetoothDBusService::SendSinkMessage(const nsAString& aDeviceAddress,
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mConnection);
-
-  NS_ENSURE_TRUE(IsReady(), NS_ERROR_FAILURE);
+  MOZ_ASSERT(IsEnabled());
 
   SinkCallback callback;
   if (aMessage.EqualsLiteral("Connect")) {

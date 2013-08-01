@@ -24,7 +24,6 @@
 #include "ClientLayerManager.h"
 #include "BasicLayers.h"
 #include "FrameMetrics.h"
-#include "nsIObserver.h"
 #include "Windows.Graphics.Display.h"
 #ifdef MOZ_CRASHREPORTER
 #include "nsExceptionHandler.h"
@@ -140,7 +139,7 @@ namespace {
 NS_IMPL_ISUPPORTS_INHERITED0(MetroWidget, nsBaseWidget)
 
 
-nsRefPtr<mozilla::layers::AsyncPanZoomController> MetroWidget::sAPZC;
+nsRefPtr<mozilla::layers::APZCTreeManager> MetroWidget::sAPZC;
 
 MetroWidget::MetroWidget() :
   mTransparencyMode(eTransparencyOpaque),
@@ -166,7 +165,6 @@ MetroWidget::~MetroWidget()
 
   // Global shutdown
   if (!gInstanceCount) {
-    MetroWidget::sAPZC->Destroy();
     MetroWidget::sAPZC = nullptr;
     nsTextStore::Terminate();
   } // !gInstanceCount
@@ -796,77 +794,16 @@ MetroWidget::ShouldUseAPZC()
          Preferences::GetBool(kPrefName, false);
 }
 
-class MetroCompositorParent : public CompositorParent,
-                              public nsIObserver
-{
-public:
-  NS_DECL_ISUPPORTS
-  MetroCompositorParent(MetroWidget* aMetroWidget, bool aRenderToEGLSurface,
-                        int aSurfaceWidth, int aSurfaceHeight) :
-    CompositorParent(aMetroWidget, aRenderToEGLSurface,
-                     aSurfaceHeight, aSurfaceHeight),
-    mMetroWidget(aMetroWidget)
-  {
-    nsresult rv;
-    nsCOMPtr<nsIObserverService> observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
-    if (NS_SUCCEEDED(rv)) {
-      observerService->AddObserver(this, "viewport-needs-updating", false);
-    }
-
-    if (MetroWidget::sAPZC) {
-        MetroWidget::sAPZC->SetCompositorParent(this);
-    }
-  }
-
-  virtual void ShadowLayersUpdated(LayerTransactionParent* aLayerTree, const TargetConfig& aTargetConfig,
-                                   bool isFirstPaint) MOZ_OVERRIDE
-  {
-    CompositorParent::ShadowLayersUpdated(aLayerTree, aTargetConfig, isFirstPaint);
-    Layer* targetLayer = GetLayerManager()->GetPrimaryScrollableLayer();
-    if (targetLayer && targetLayer->AsContainerLayer() && MetroWidget::sAPZC &&
-        targetLayer->AsContainerLayer()->GetFrameMetrics().IsScrollable()) {
-      targetLayer->AsContainerLayer()->SetAsyncPanZoomController(MetroWidget::sAPZC);
-      MetroWidget::sAPZC->NotifyLayersUpdated(targetLayer->AsContainerLayer()->GetFrameMetrics(),
-                                              isFirstPaint);
-    }
-  }
-
-  NS_IMETHODIMP Observe(nsISupports *subject, const char *topic, const PRUnichar *data)
-  {
-    LogFunction();
-
-    NS_ENSURE_ARG_POINTER(topic);
-    if (!strcmp(topic, "viewport-needs-updating")) {
-      Layer* targetLayer = GetLayerManager()->GetPrimaryScrollableLayer();
-      if (targetLayer && targetLayer->AsContainerLayer() && MetroWidget::sAPZC) {
-        FrameMetrics frameMetrics =
-          targetLayer->AsContainerLayer()->GetFrameMetrics();
-        frameMetrics.mDisplayPort =
-          AsyncPanZoomController::CalculatePendingDisplayPort(frameMetrics,
-                                                              mozilla::gfx::Point(0.0f, 0.0f),
-                                                              mozilla::gfx::Point(0.0f, 0.0f),
-                                                              0.0);
-        MetroWidget::sAPZC->NotifyLayersUpdated(frameMetrics, true);
-        mMetroWidget->RequestContentRepaint(frameMetrics);
-      }
-    }
-    return NS_OK;
-  }
-
-protected:
-  nsCOMPtr<MetroWidget> mMetroWidget;
-};
-
-NS_IMPL_ISUPPORTS1(MetroCompositorParent, nsIObserver)
-
-
 CompositorParent* MetroWidget::NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight)
 {
+  CompositorParent *compositor = nsBaseWidget::NewCompositorParent(aSurfaceWidth, aSurfaceHeight);
+
   if (ShouldUseAPZC()) {
-    return new MetroCompositorParent(this, true, aSurfaceWidth, aSurfaceHeight);
-  } else {
-    return nsBaseWidget::NewCompositorParent(aSurfaceWidth, aSurfaceHeight);
+    CompositorParent::SetControllerForLayerTree(compositor->RootLayerTreeId(), this);
+    MetroWidget::sAPZC = CompositorParent::GetAPZCTreeManager(compositor->RootLayerTreeId());
   }
+
+  return compositor;
 }
 
 LayerManager*
@@ -910,10 +847,6 @@ MetroWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
     if (ShouldUseOffMainThreadCompositing()) {
       NS_ASSERTION(aShadowManager == nullptr, "Async Compositor not supported with e10s");
       CreateCompositor();
-      if (ShouldUseAPZC()) {
-        sAPZC = new AsyncPanZoomController(this, AsyncPanZoomController::USE_GESTURE_DETECTOR);
-        sAPZC->SetCompositorParent(mCompositorParent);
-      }
     } else if (ShouldUseMainThreadD3D10Manager()) {
       nsRefPtr<mozilla::layers::LayerManagerD3D10> layerManager =
         new mozilla::layers::LayerManagerD3D10(this);
@@ -1385,11 +1318,13 @@ public:
 
         NS_ConvertASCIItoUTF16 data(nsPrintfCString("{ " \
                                                     "  \"resolution\": %.2f, " \
+                                                    "  \"scrollId\": %d, " \
                                                     "  \"compositedRect\": { \"width\": %d, \"height\": %d }, " \
                                                     "  \"displayPort\":    { \"x\": %d, \"y\": %d, \"width\": %d, \"height\": %d }, " \
                                                     "  \"scrollTo\":       { \"x\": %d, \"y\": %d }" \
                                                     "}",
                                                     (float)(resolution.scale / mFrameMetrics.mDevPixelsPerCSSPixel.scale),
+                                                    (int)mFrameMetrics.mScrollId,
                                                     (int)compositedRect.width,
                                                     (int)compositedRect.height,
                                                     (int)mFrameMetrics.mDisplayPort.x,
@@ -1457,7 +1392,7 @@ MetroWidget::HandleLongTap(const CSSIntPoint& aPoint)
 }
 
 void
-MetroWidget::SendAsyncScrollDOMEvent(const CSSRect &aContentRect, const CSSSize &aScrollableSize)
+MetroWidget::SendAsyncScrollDOMEvent(FrameMetrics::ViewID aScrollId, const CSSRect &aContentRect, const CSSSize &aScrollableSize)
 {
   LogFunction();
 }

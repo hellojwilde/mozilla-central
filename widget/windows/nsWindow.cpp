@@ -280,6 +280,12 @@ static const int32_t kResizableBorderMinSize = 3;
 // this, other hardware we expect to report correctly in D3D9.
 #define MAX_ACCELERATED_DIMENSION 8192
 
+// On window open (as well as after), Windows has an unfortunate habit of
+// sending rather a lot of WM_NCHITTEST messages. Because we have to do point
+// to DOM target conversions for these, we cache responses for a given
+// coordinate this many milliseconds:
+#define HITTEST_CACHE_LIFETIME_MS 50
+
 
 /**************************************************************
  **************************************************************
@@ -338,6 +344,10 @@ nsWindow::nsWindow() : nsWindowBase()
   mLastKeyboardLayout   = 0;
   mBlurSuppressLevel    = 0;
   mLastPaintEndTime     = TimeStamp::Now();
+  mCachedHitTestPoint.x = 0;
+  mCachedHitTestPoint.y = 0;
+  mCachedHitTestTime    = TimeStamp::Now();
+  mCachedHitTestResult  = 0;
 #ifdef MOZ_XUL
   mTransparentSurface   = nullptr;
   mMemoryDC             = nullptr;
@@ -2348,6 +2358,7 @@ NS_METHOD nsWindow::SetCursor(nsCursor aCursor)
     }
 
     case eCursor_standard:
+    case eCursor_context_menu: // XXX See bug 258960.
       newCursor = ::LoadCursor(NULL, IDC_ARROW);
       break;
 
@@ -2405,10 +2416,6 @@ NS_METHOD nsWindow::SetCursor(nsCursor aCursor)
 
     case eCursor_spinning:
       newCursor = ::LoadCursor(NULL, IDC_APPSTARTING);
-      break;
-
-    case eCursor_context_menu:
-      // XXX this CSS3 cursor needs to be implemented
       break;
 
     case eCursor_zoom_in:
@@ -5559,22 +5566,30 @@ nsWindow::ClientMarginHitTestPoint(int32_t mx, int32_t my)
   }
 
   if (!sIsInMouseCapture && allowContentOverride) {
-    nsMouseEvent event(true, NS_MOUSE_MOZHITTEST, this, nsMouseEvent::eReal,
-                       nsMouseEvent::eNormal);
     POINT pt = { mx, my };
     ::ScreenToClient(mWnd, &pt);
-    event.refPoint = nsIntPoint(pt.x, pt.y);
-    event.inputSource = MOUSE_INPUT_SOURCE();
-    event.mFlags.mOnlyChromeDispatch = true;
-    bool result = DispatchWindowEvent(&event);
-    if (result) {
-      // The mouse is over a blank area
-      testResult = testResult == HTCLIENT ? HTCAPTION : testResult;
-
+    if (pt.x == mCachedHitTestPoint.x && pt.y == mCachedHitTestPoint.y &&
+        TimeStamp::Now() - mCachedHitTestTime < TimeDuration::FromMilliseconds(HITTEST_CACHE_LIFETIME_MS)) {
+      testResult = mCachedHitTestResult;
     } else {
-      // There's content over the mouse pointer. Set HTCLIENT
-      // to possibly override a resizer border.
-      testResult = HTCLIENT;
+      nsMouseEvent event(true, NS_MOUSE_MOZHITTEST, this, nsMouseEvent::eReal,
+                         nsMouseEvent::eNormal);
+      event.refPoint = nsIntPoint(pt.x, pt.y);
+      event.inputSource = MOUSE_INPUT_SOURCE();
+      event.mFlags.mOnlyChromeDispatch = true;
+      bool result = DispatchWindowEvent(&event);
+      if (result) {
+        // The mouse is over a blank area
+        testResult = testResult == HTCLIENT ? HTCAPTION : testResult;
+
+      } else {
+        // There's content over the mouse pointer. Set HTCLIENT
+        // to possibly override a resizer border.
+        testResult = HTCLIENT;
+      }
+      mCachedHitTestPoint = pt;
+      mCachedHitTestTime = TimeStamp::Now();
+      mCachedHitTestResult = testResult;
     }
   }
 

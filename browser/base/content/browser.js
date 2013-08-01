@@ -3011,8 +3011,7 @@ const DOMLinkHandler = {
             type = type.replace(/^\s+|\s*(?:;.*)?$/g, "");
 
             if (type == "application/opensearchdescription+xml" && link.title &&
-                /^(?:https?|ftp):/i.test(link.href) &&
-                !PrivateBrowsingUtils.isWindowPrivate(window)) {
+                /^(?:https?|ftp):/i.test(link.href)) {
               var engine = { title: link.title, href: link.href };
               BrowserSearch.addEngine(engine, link.ownerDocument);
               searchAdded = true;
@@ -6407,7 +6406,7 @@ var gIdentityHandler = {
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_DISPLAY_LOADED] =
       gNavigatorBundle.getString("identity.mixed_display_loaded");
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_ACTIVE_LOADED] =
-      gNavigatorBundle.getString("identity.mixed_active_loaded");
+      gNavigatorBundle.getString("identity.mixed_active_loaded2");
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_DISPLAY_LOADED_ACTIVE_BLOCKED] =
       gNavigatorBundle.getString("identity.mixed_display_loaded_active_blocked");
     return this._encryptionLabel;

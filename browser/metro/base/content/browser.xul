@@ -202,31 +202,35 @@
           <!-- portrait/landscape/filled view -->
 
           <scrollbox id="start-scrollbox" observes="bcast_preciseInput" flex="1">
-            <vbox id="start-topsites" class="meta-section">
+            <vbox id="start-topsites" class="meta-section" expanded="true">
               <label class="meta-section-title wide-title" value="&topSitesHeader.label;"/>
-              <label class="meta-section-title narrow-title" value="&snappedTopSitesHeader.label;"
-                onclick="StartUI.onNarrowTitleClick('start-topsites-grid')"/>
-              <richgrid id="start-topsites-grid" set-name="topSites" rows="3" columns="3" tiletype="thumbnail" seltype="multiple" flex="1" expanded="true"/>
+              <html:div class="meta-section-title narrow-title" onclick="StartUI.onNarrowTitleClick('start-topsites')">
+                &narrowTopSitesHeader.label;
+              </html:div>
+              <richgrid id="start-topsites-grid" set-name="topSites" rows="3" columns="3" tiletype="thumbnail" seltype="multiple" flex="1"/>
             </vbox>
 
             <vbox id="start-bookmarks" class="meta-section">
               <label class="meta-section-title wide-title" value="&bookmarksHeader.label;"/>
-              <label class="meta-section-title narrow-title" value="&snappedBookmarksHeader.label;"
-                onclick="StartUI.onNarrowTitleClick('start-bookmarks-grid')"/>
+              <html:div class="meta-section-title narrow-title" onclick="StartUI.onNarrowTitleClick('start-bookmarks')">
+                &narrowBookmarksHeader.label;
+              </html:div>
               <richgrid id="start-bookmarks-grid" set-name="bookmarks" seltype="multiple" flex="1"/>
             </vbox>
 
             <vbox id="start-history" class="meta-section">
               <label class="meta-section-title wide-title" value="&recentHistoryHeader.label;"/>
-              <label class="meta-section-title narrow-title" value="&snappedRecentHistoryHeader.label;"
-                onclick="StartUI.onNarrowTitleClick('start-history-grid')"/>
+              <html:div class="meta-section-title narrow-title" onclick="StartUI.onNarrowTitleClick('start-history')">
+                &narrowRecentHistoryHeader.label;
+              </html:div>
               <richgrid id="start-history-grid" set-name="recentHistory" seltype="multiple" flex="1"/>
             </vbox>
 
             <vbox id="start-remotetabs" class="meta-section">
               <label class="meta-section-title wide-title" value="&remoteTabsHeader.label;"/>
-              <label id="snappedRemoteTabsLabel" class="meta-section-title narrow-title" value="&snappedRemoteTabsHeader.label;"
-                onclick="StartUI.onNarrowTitleClick('start-remotetabs-grid')"/>
+              <html:div id="snappedRemoteTabsLabel" class="meta-section-title narrow-title" onclick="StartUI.onNarrowTitleClick('start-remotetabs')">
+                &narrowRemoteTabsHeader.label;
+              </html:div>
               <richgrid id="start-remotetabs-grid" set-name="remoteTabs" seltype="multiple" flex="1"/>
             </vbox>
 
@@ -401,7 +405,7 @@
 
     <autoscroller class="autoscroller" id="autoscrollerid"/>
 
-    <flyoutpanel id="about-flyoutpanel" headertext="&aboutHeader.title;">
+    <flyoutpanel id="about-flyoutpanel" class="flyout-narrow" headertext="&aboutHeader.title;">
       <label id="about-product-label" value="&aboutHeader.product.label;"/>
       <label value="&aboutHeader.company.label;"/>
 #expand <label id="about-version-label">__MOZ_APP_VERSION__</label>
@@ -456,7 +460,7 @@
     </flyoutpanel>
 
 #ifdef MOZ_SERVICES_SYNC
-    <flyoutpanel id="sync-flyoutpanel" headertext="&sync.flyout.title;">
+    <flyoutpanel id="sync-flyoutpanel" class="flyout-narrow" headertext="&sync.flyout.title;">
 
       <vbox id="sync-presetup-container" collapsed="true">
         <description>&sync.flyout.presetup.description1;</description>
@@ -658,7 +662,7 @@
     </flyoutpanel>
 #endif
 
-    <flyoutpanel id="prefs-flyoutpanel" headertext="&optionsHeader.title;">
+    <flyoutpanel id="prefs-flyoutpanel" class="flyout-narrow" headertext="&optionsHeader.title;">
       <settings id="prefs-startup" label="&optionsHeader.startup.title;"> <!-- note, this element has a custom margin-top -->
         <setting id="prefs-homepage" title="&optionsHeader.homepage.title;" type="menulist" pref="browser.startup.sessionRestore" class="setting-expanded">
           <menulist id="prefs-homepage-options">

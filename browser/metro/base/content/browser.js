@@ -49,6 +49,7 @@ var Browser = {
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/FormHelper.js", true);
       messageManager.loadFrameScript("chrome://browser/content/library/SelectionPrototype.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/SelectionHandler.js", true);
+      messageManager.loadFrameScript("chrome://browser/content/contenthandlers/SnippetsHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ContextMenuHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/FindHandler.js", true);
       // XXX Viewport resizing disabled because of bug 766142

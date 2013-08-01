@@ -469,6 +469,23 @@ nsLayoutUtils::FindContentFor(ViewID aId)
   }
 }
 
+nsIScrollableFrame*
+nsLayoutUtils::FindScrollableFrameFor(ViewID aId)
+{
+  nsIContent* content = FindContentFor(aId);
+  if (!content) {
+    return nullptr;
+  }
+
+  nsIFrame* scrolledFrame = content->GetPrimaryFrame();
+  if (scrolledFrame && content->OwnerDoc()->GetRootElement() == content) {
+    // The content is the root element of a subdocument, so return the root scrollable
+    // for the subdocument.
+    scrolledFrame = scrolledFrame->PresContext()->PresShell()->GetRootScrollFrame();
+  }
+  return scrolledFrame ? scrolledFrame->GetScrollTargetFrame() : nullptr;
+}
+
 bool
 nsLayoutUtils::GetDisplayPort(nsIContent* aContent, nsRect *aResult)
 {
@@ -1148,14 +1165,16 @@ nsLayoutUtils::GetNearestScrollableFrameForDirection(nsIFrame* aFrame,
 
 // static
 nsIScrollableFrame*
-nsLayoutUtils::GetNearestScrollableFrame(nsIFrame* aFrame)
+nsLayoutUtils::GetNearestScrollableFrame(nsIFrame* aFrame, uint32_t aFlags)
 {
   NS_ASSERTION(aFrame, "GetNearestScrollableFrame expects a non-null frame");
-  for (nsIFrame* f = aFrame; f; f = nsLayoutUtils::GetCrossDocParentFrame(f)) {
+  for (nsIFrame* f = aFrame; f; f = (aFlags & SCROLLABLE_SAME_DOC) ?
+       f->GetParent() : nsLayoutUtils::GetCrossDocParentFrame(f)) {
     nsIScrollableFrame* scrollableFrame = do_QueryFrame(f);
     if (scrollableFrame) {
       nsPresContext::ScrollbarStyles ss = scrollableFrame->GetScrollbarStyles();
-      if (ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN ||
+      if ((aFlags & SCROLLABLE_INCLUDE_HIDDEN) ||
+          ss.mVertical != NS_STYLE_OVERFLOW_HIDDEN ||
           ss.mHorizontal != NS_STYLE_OVERFLOW_HIDDEN)
         return scrollableFrame;
     }
@@ -1596,9 +1615,15 @@ TransformGfxRectFromAncestor(nsIFrame *aFrame,
 static gfxRect
 TransformGfxRectToAncestor(nsIFrame *aFrame,
                            const gfxRect &aRect,
-                           const nsIFrame *aAncestor)
+                           const nsIFrame *aAncestor,
+                           bool* aPreservesAxisAlignedRectangles = nullptr)
 {
   gfx3DMatrix ctm = nsLayoutUtils::GetTransformToAncestor(aFrame, aAncestor);
+  if (aPreservesAxisAlignedRectangles) {
+    gfxMatrix matrix2d;
+    *aPreservesAxisAlignedRectangles =
+      ctm.Is2D(&matrix2d) && matrix2d.PreservesAxisAlignedRectangles();
+  }
   return ctm.TransformBounds(aRect);
 }
 
@@ -1666,7 +1691,8 @@ nsLayoutUtils::TransformAncestorRectToFrame(nsIFrame* aFrame,
 nsRect
 nsLayoutUtils::TransformFrameRectToAncestor(nsIFrame* aFrame,
                                             const nsRect& aRect,
-                                            const nsIFrame* aAncestor)
+                                            const nsIFrame* aAncestor,
+                                            bool* aPreservesAxisAlignedRectangles /* = nullptr */)
 {
   nsSVGTextFrame2* text = GetContainingSVGTextFrame(aFrame);
 
@@ -1676,12 +1702,16 @@ nsLayoutUtils::TransformFrameRectToAncestor(nsIFrame* aFrame,
   if (text) {
     result = text->TransformFrameRectFromTextChild(aRect, aFrame);
     result = TransformGfxRectToAncestor(text, result, aAncestor);
+    // TransformFrameRectFromTextChild could involve any kind of transform, we
+    // could drill down into it to get an answer out of it but we don't yet.
+    if (aPreservesAxisAlignedRectangles)
+      *aPreservesAxisAlignedRectangles = false;
   } else {
     result = gfxRect(NSAppUnitsToFloatPixels(aRect.x, srcAppUnitsPerDevPixel),
                      NSAppUnitsToFloatPixels(aRect.y, srcAppUnitsPerDevPixel),
                      NSAppUnitsToFloatPixels(aRect.width, srcAppUnitsPerDevPixel),
                      NSAppUnitsToFloatPixels(aRect.height, srcAppUnitsPerDevPixel));
-    result = TransformGfxRectToAncestor(aFrame, result, aAncestor);
+    result = TransformGfxRectToAncestor(aFrame, result, aAncestor, aPreservesAxisAlignedRectangles);
   }
 
   float destAppUnitsPerDevPixel = aAncestor->PresContext()->AppUnitsPerDevPixel();
