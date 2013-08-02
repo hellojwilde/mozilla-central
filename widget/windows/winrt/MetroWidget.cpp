@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -976,10 +977,10 @@ MetroWidget::InitEvent(nsGUIEvent& event, nsIntPoint* aPoint)
   if (!aPoint) {
     event.refPoint.x = event.refPoint.y = 0;
   } else {
-    // convert CSS pixels to device pixels for event.refPoint
-    double scale = GetDefaultScale(); 
-    event.refPoint.x = int32_t(NS_round(aPoint->x * scale));
-    event.refPoint.y = int32_t(NS_round(aPoint->y * scale));
+    CSSIntPoint cssPoint(aPoint->x, aPoint->y);
+    LayoutDeviceIntPoint layoutDeviceIntPoint = CSSIntPointToLayoutDeviceIntPoint(cssPoint);
+    event.refPoint.x = layoutDeviceIntPoint.x;
+    event.refPoint.y = layoutDeviceIntPoint.y;
   }
   event.time = ::GetMessageTime();
 }
@@ -1064,6 +1065,15 @@ double MetroWidget::GetDefaultScaleInternal()
     }
   }
   return 1.0;
+}
+
+LayoutDeviceIntPoint
+MetroWidget::CSSIntPointToLayoutDeviceIntPoint(const CSSIntPoint &aCSSPoint)
+{
+  double scale = GetDefaultScale();
+  LayoutDeviceIntPoint devPx(int32_t(NS_round(scale * aCSSPoint.x)),
+                             int32_t(NS_round(scale * aCSSPoint.y)));
+  return devPx;
 }
 
 float MetroWidget::GetDPI()
@@ -1364,7 +1374,7 @@ MetroWidget::HandleDoubleTap(const CSSIntPoint& aPoint)
     return;
   }
 
-  mMetroInput->HandleDoubleTap(aPoint);
+  mMetroInput->HandleDoubleTap(CSSIntPointToLayoutDeviceIntPoint(aPoint));
 }
 
 void
@@ -1376,7 +1386,7 @@ MetroWidget::HandleSingleTap(const CSSIntPoint& aPoint)
     return;
   }
 
-  mMetroInput->HandleSingleTap(aPoint);
+  mMetroInput->HandleSingleTap(CSSIntPointToLayoutDeviceIntPoint(aPoint));
 }
 
 void
@@ -1388,7 +1398,7 @@ MetroWidget::HandleLongTap(const CSSIntPoint& aPoint)
     return;
   }
 
-  mMetroInput->HandleLongTap(aPoint);
+  mMetroInput->HandleLongTap(CSSIntPointToLayoutDeviceIntPoint(aPoint));
 }
 
 void

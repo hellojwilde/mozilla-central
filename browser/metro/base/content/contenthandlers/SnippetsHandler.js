@@ -58,7 +58,9 @@ let SnippetsHandler = {
   },
 
   update: function Snippets_update(aConsumptionType) {
-    sendAsyncMessage("Browser:Snippets", this.getSnippets());
+    let q = this.getSnippets();
+    sendAsyncMessage("Browser:Snippets", q);
+    Util.dumpLn(JSON.stringify(q));
   },
 
   getSnippets: function Snippets_getSnippets() {

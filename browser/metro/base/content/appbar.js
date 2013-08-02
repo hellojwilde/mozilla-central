@@ -57,6 +57,10 @@ var Appbar = {
     menu.openFlyout(this.menuButton, "before_end");
   },
 
+  onAutocompleteCloseButton: function () {
+    Elements.autocomplete.closePopup();
+  },
+
   dispatchContextualAction: function(aActionName){
     let activeTileset = this.activeTileset;
     if (activeTileset && ('isBound' in this.activeTileset)) {
