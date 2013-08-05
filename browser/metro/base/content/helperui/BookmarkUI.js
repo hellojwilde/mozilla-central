@@ -9,13 +9,9 @@ var BookmarkUI = {
   get _starButton() { return document.getElementById("star-button"); },
 
   init: function B_init() {
-    // Events that signal that we need to update the star and pin buttons
     Elements.browsers.addEventListener('URLChanged', this, true);
     Elements.tabList.addEventListener('TabSelect', this, true);
     Elements.navbar.addEventListener('MozAppbarShowing', this, false);
-
-    // Event that signals that there may have been a user cancellation
-    this._flyout.addEventListener('flyouthiding', this, false);
   },
 
   /*********************************
@@ -32,7 +28,7 @@ var BookmarkUI = {
     }.bind(this));
   },
 
-  handlePinButton: function B_handlePinButton() {
+  onPinButton: function B_onPinButton() {
     if (this._pinButton.checked) {
       Browser.pinSite();
     } else {
@@ -40,7 +36,7 @@ var BookmarkUI = {
     }
   },
 
-  handleStarButton: function B_handleStarButton() {
+  onStarButton: function B_onStarButton() {
     this.showFlyout();
   },
 
@@ -73,8 +69,6 @@ var BookmarkUI = {
       case "MozAppbarShowing":
         this._updateStarButton();
         this._updatePinButton();
-        break;
-      case "flyouthiding":
         break;
     }
   }

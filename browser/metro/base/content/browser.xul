@@ -300,19 +300,19 @@
 
           <circularprogressindicator id="download-progress"
                                      oncommand="Appbar.onDownloadButton()"/>
+
           <stack id="toolbar-contextual">
             <observes element="bcast_windowState" attribute="*"/>
             <observes element="bcast_urlbarState" attribute="*"/>
 
             <hbox id="toolbar-context-page" pack="end">
-              <toolbarbutton id="download-button" class="appbar-secondary"
-                             oncommand="Appbar.onDownloadButton()"/>
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="Appbar.onStarButton()"/>
+                             oncommand="BookmarkUI.onStarButton()"/>
               <toolbarbutton id="pin-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="Appbar.onPinButton()"/>
+                             oncommand="BookmarkUI.onPinButton()"/>
+
               <toolbarbutton id="menu-button" class="appbar-primary"
                              oncommand="Appbar.onMenuButton(event)"/>
             </hbox>
