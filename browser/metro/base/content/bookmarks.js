@@ -19,50 +19,42 @@ var Bookmarks = {
     }
   },
 
-  addForURI: function bh_addForURI(aURI, aTitle, callback) {
+  addForURI: function bh_addForURI(aURI, aTitle) {
+    let def = Promise.defer();
     this.isURIBookmarked(aURI, function (isBookmarked) {
       if (isBookmarked)
         return;
 
-      let bookmarkTitle = aTitle || aURI.spec;
-      let bookmarkService = PlacesUtils.bookmarks;
-      let bookmarkId = bookmarkService.insertBookmark(Bookmarks.metroRoot,
-                                                      aURI,
-                                                      bookmarkService.DEFAULT_INDEX,
-                                                      bookmarkTitle);
+      let title = aTitle || aURI.spec;
+      let service = PlacesUtils.bookmarks;
+      let id = service.insertBookmark(Bookmarks.metroRoot,
+                                      aURI,
+                                      service.DEFAULT_INDEX,
+                                      title);
 
-      // XXX Used for browser-chrome tests
-      let event = document.createEvent("Events");
-      event.initEvent("BookmarkCreated", true, false);
-      window.dispatchEvent(event);
-
-      if (callback)
-        callback(bookmarkId);
+      def.resolve(id);
     });
+    return def.promise;
   },
 
-  isURIBookmarked: function bh_isURIBookmarked(aURI, callback) {
-    if (!callback)
-      return;
+  isURIBookmarked: function bh_isURIBookmarked(aURI) {
+    let def = Promise.defer();
     PlacesUtils.asyncGetBookmarkIds(aURI, function(aItemIds) {
-      callback(aItemIds && aItemIds.length > 0);
-    }, this);
+      def.resolve(aItemIds && aItemIds.length > 0);
+    });
+    return def.promise;
   },
 
-  removeForURI: function bh_removeForURI(aURI, callback) {
+  removeForURI: function bh_removeForURI(aURI) {
+    let def = Promise.defer();
     // XXX blargle xpconnect! might not matter, but a method on
     // nsINavBookmarksService that takes an array of items to
-    // delete would be faster. better yet, a method that takes a URI!
+    // delete would be faster. better yet, a method that takes a URI
     PlacesUtils.asyncGetBookmarkIds(aURI, function(aItemIds) {
       aItemIds.forEach(PlacesUtils.bookmarks.removeItem);
-      if (callback)
-        callback(aURI, aItemIds);
-
-      // XXX Used for browser-chrome tests
-      let event = document.createEvent("Events");
-      event.initEvent("BookmarkRemoved", true, false);
-      window.dispatchEvent(event);
+      def.resolve(aURI, aItemIds)
     });
+    return def.promise;
   }
 };
 
