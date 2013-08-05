@@ -211,7 +211,7 @@ js::NewContext(JSRuntime *rt, size_t stackChunkSize)
     }
 
     JSContextCallback cxCallback = rt->cxCallback;
-    if (cxCallback && !cxCallback(cx, JSCONTEXT_NEW)) {
+    if (cxCallback && !cxCallback(cx, JSCONTEXT_NEW, rt->cxCallbackData)) {
         DestroyContext(cx, DCM_NEW_FAILED);
         return NULL;
     }
@@ -241,7 +241,8 @@ js::DestroyContext(JSContext *cx, DestroyContextMode mode)
              * JSCONTEXT_DESTROY callback is not allowed to fail and must
              * return true.
              */
-            JS_ALWAYS_TRUE(cxCallback(cx, JSCONTEXT_DESTROY));
+            JS_ALWAYS_TRUE(cxCallback(cx, JSCONTEXT_DESTROY,
+                                      rt->cxCallbackData));
         }
     }
 
@@ -531,7 +532,7 @@ js::ReportUsageError(JSContext *cx, HandleObject callee, const char *msg)
     JS_ASSERT(shape->hasDefaultGetter());
 
     RootedValue usage(cx);
-    if (!JS_LookupProperty(cx, callee, "usage", usage.address()))
+    if (!JS_LookupProperty(cx, callee, "usage", &usage))
         return;
 
     if (JSVAL_IS_VOID(usage)) {

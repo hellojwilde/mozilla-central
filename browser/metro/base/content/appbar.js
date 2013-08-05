@@ -26,7 +26,7 @@ var Appbar = {
         if (this.activeTileset && ('isBound' in this.activeTileset)) {
           this.activeTileset.clearSelection();
         }
-        this.clearContextualActions();
+        this._clearContextualActions();
         this.activeTileset = null;
         break;
 
@@ -83,8 +83,6 @@ var Appbar = {
 
     if (aVerbs.length) {
       Elements.contextappbar.show();
-    } else {
-      Elements.contextappbar.hide();
     }
 
     // Look up all of the buttons for the verbs that should be visible.
@@ -136,7 +134,7 @@ var Appbar = {
     });
   },
 
-  clearContextualActions: function() {
+  _clearContextualActions: function() {
     this.showContextualActions([]);
   },
 

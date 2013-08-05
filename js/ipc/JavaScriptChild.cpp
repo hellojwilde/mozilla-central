@@ -7,6 +7,7 @@
 
 #include "JavaScriptChild.h"
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/BindingUtils.h"
 #include "nsContentUtils.h"
 #include "xpcprivate.h"
 #include "jsfriendapi.h"
@@ -284,7 +285,7 @@ JavaScriptChild::AnswerDelete(const ObjectId &objId, const nsString &id, ReturnS
         return fail(cx, rs);
 
     RootedValue v(cx);
-    if (!JS_DeletePropertyById2(cx, obj, internedId, v.address()))
+    if (!JS_DeletePropertyById2(cx, obj, internedId, &v))
         return fail(cx, rs);
 
     JSBool b;
@@ -622,6 +623,30 @@ JavaScriptChild::AnswerInstanceOf(const ObjectId &objId, const JSIID &iid, Retur
     nsresult rv = xpc::HasInstance(cx, obj, &nsiid, instanceof);
     if (rv != NS_OK)
         return fail(cx, rs);
+
+    return ok(rs);
+}
+
+bool
+JavaScriptChild::AnswerDOMInstanceOf(const ObjectId &objId, const int &prototypeID,
+                                     const int &depth,
+                                     ReturnStatus *rs, bool *instanceof)
+{
+    AutoSafeJSContext cx;
+    JSAutoRequest request(cx);
+
+    *instanceof = false;
+
+    RootedObject obj(cx, findObject(objId));
+    if (!obj)
+        return false;
+
+    JSAutoCompartment comp(cx, obj);
+
+    JSBool tmp;
+    if (!mozilla::dom::InterfaceHasInstance(cx, prototypeID, depth, obj, &tmp))
+        return fail(cx, rs);
+    *instanceof = tmp;
 
     return ok(rs);
 }

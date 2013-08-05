@@ -4823,10 +4823,12 @@ IonBuilder::makeCallsiteClone(HandleFunction target, MDefinition *fun)
 {
     // Bake in the clone eagerly if we have a known target. We have arrived here
     // because TI told us that the known target is a should-clone-at-callsite
-    // function, which means that target already is the clone.
+    // function, which means that target already is the clone. Make sure to ensure
+    // that the old definition remains in resume points.
     if (target) {
         MConstant *constant = MConstant::New(ObjectValue(*target));
         current->add(constant);
+        fun->setFoldedUnchecked();
         return constant;
     }
 
@@ -7215,16 +7217,23 @@ IonBuilder::jsop_arguments_setelem(MDefinition *object, MDefinition *index, MDef
     return abort("NYI arguments[]=");
 }
 
+static JSObject *
+CreateRestArgumentsTemplateObject(JSContext *cx, unsigned length)
+{
+    JSObject *templateObject = NewDenseUnallocatedArray(cx, 0, NULL, TenuredObject);
+    if (templateObject)
+        types::FixRestArgumentsType(cx, templateObject);
+    return templateObject;
+}
+
 bool
 IonBuilder::jsop_rest()
 {
     // We don't know anything about the callee.
     if (inliningDepth_ == 0) {
-        // Get an empty template array that doesn't have a pc-tracked type.
-        JSObject *templateObject = NewDenseUnallocatedArray(cx, 0, NULL, TenuredObject);
+        JSObject *templateObject = CreateRestArgumentsTemplateObject(cx, 0);
         if (!templateObject)
             return false;
-
         MArgumentsLength *numActuals = MArgumentsLength::New();
         current->add(numActuals);
 
@@ -7240,7 +7249,9 @@ IonBuilder::jsop_rest()
     unsigned numActuals = inlineCallInfo_->argv().length();
     unsigned numFormals = info().nargs() - 1;
     unsigned numRest = numActuals > numFormals ? numActuals - numFormals : 0;
-    JSObject *templateObject = NewDenseUnallocatedArray(cx, numRest, NULL, TenuredObject);
+    JSObject *templateObject = CreateRestArgumentsTemplateObject(cx, numRest);
+    if (!templateObject)
+        return false;
 
     MNewArray *array = new MNewArray(numRest, templateObject, MNewArray::NewArray_Allocating);
     current->add(array);

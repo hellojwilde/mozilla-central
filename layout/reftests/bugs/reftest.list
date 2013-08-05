@@ -1561,7 +1561,7 @@ fails-if(Android) == 579323-1.html 579323-1-ref.html
 == 579349-1.html 579349-1-ref.html
 == 579655-1.html 579655-1-ref.html
 skip-if(B2G) fails-if(Android) == 579808-1.html 579808-1-ref.html
-skip-if(B2G) fails-if(Android) random-if(layersGPUAccelerated) fails-if(/^Windows\x20NT\x205\.1/.test(http.oscpu))  == 579985-1.html 579985-1-ref.html # bug 623452 for WinXP; this bug was only for a regression in BasicLayers anyway
+skip-if(B2G) fails-if(Android) random-if(layersGPUAccelerated) == 579985-1.html 579985-1-ref.html # bug 623452 for WinXP; this bug was only for a regression in BasicLayers anyway
 skip-if(B2G) fails-if(Android) == 580160-1.html 580160-1-ref.html
 HTTP(..) == 580863-1.html 580863-1-ref.html
 skip-if(B2G) fails-if(Android) random-if(layersGPUAccelerated) fails-if(/^Windows\x20NT\x205\.1/.test(http.oscpu))  == 581317-1.html 581317-1-ref.html # bug 623456 for WinXP
@@ -1641,14 +1641,14 @@ fuzzy-if(Android&&AndroidVersion>=15,8,100) == 625409-1.html 625409-1-ref.html
 == 630835-1.html about:blank
 == 631352-1.html 631352-1-ref.html
 skip-if(B2G) fails-if(Android) == 632423-1.html 632423-1-ref.html
-skip-if(Android||B2G) random-if(/^Windows\x20NT\x205\.1/.test(http.oscpu)) == 632781-verybig.html 632781-ref.html
+skip-if(Android||B2G) random-if(winWidget&&!d2d) == 632781-verybig.html 632781-ref.html
 == 632781-normalsize.html 632781-ref.html
 fails-if(Android) == 633344-1.html 633344-1-ref.html
 == 634232-1.html 634232-1-ref.html
 fails-if(Android) == 635302-1.html 635302-1-ref.html
-skip-if(B2G) random-if(d2d) fails-if(Android) == 635373-1.html 635373-1-ref.html
-skip-if(B2G) random-if(d2d) fails-if(Android) == 635373-2.html 635373-2-ref.html
-skip-if(B2G) random-if(d2d) fails-if(Android) == 635373-3.html 635373-3-ref.html
+skip-if(B2G) random-if(d2d) fails-if(Android) fuzzy-if(winWidget&&!d2d,1,11) == 635373-1.html 635373-1-ref.html
+skip-if(B2G) random-if(d2d) fails-if(Android) fuzzy-if(winWidget&&!d2d,1,15) == 635373-2.html 635373-2-ref.html
+skip-if(B2G) random-if(d2d) fails-if(Android) fuzzy-if(winWidget&&!d2d,1,15) == 635373-3.html 635373-3-ref.html
 HTTP(..) == 635639-1.html 635639-1-ref.html
 HTTP(..) == 635639-2.html 635639-2-ref.html
 random == 637597-1.html 637597-1-ref.html # bug 637597 was never really fixed!
@@ -1659,7 +1659,7 @@ skip-if(B2G) == 641770-1.html 641770-1-ref.html
 == 641856-1.html 641856-1-ref.html
 == 645491-1.html 645491-1-ref.html
 == 645768-1.html 645768-1-ref.html
-fails-if(layersGPUAccelerated&&cocoaWidget) fails-if(Android) == 650228-1.html 650228-1-ref.html # Quartz alpha blending doesn't match GL alpha blending
+== 650228-1.html 650228-1-ref.html
 needs-focus == 652301-1a.html 652301-1-ref.html
 needs-focus == 652301-1b.html 652301-1-ref.html
 == 652775-1.html 652775-1-ref.html
