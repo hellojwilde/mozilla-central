@@ -4,19 +4,11 @@
 
 dump("### SnippetsHandler.js loaded\n");
 
-function ImageSnippet(aURL, aWidth, aHeight) {
+function ImageSnippet(aURL, aCaption) {
   this.url = aURL;
-  this.width = aWidth;
-  this.height = aHeight;
-}
-
-function SummarySnippet(aTitle, aDesc) {
-  this.title = aTitle;
-  this.desc = "";
-}
-
-function PersonSnippet(aName) {
-  this.name = aName;
+  this.caption = aCaption;
+  this.width = null;
+  this.height = null;
 }
 
 let SnippetsHandler = {
@@ -24,7 +16,7 @@ let SnippetsHandler = {
 
   init: function Snippets_init() {
     addEventListener("DOMWindowCreated", this, false);
-    addEventListener("DOMMetaAdded", this, false);
+    addEventListener("load", this, false);
     addEventListener("DOMContentLoaded", this, false);
     addEventListener("pageshow", this, false);
   },
@@ -36,18 +28,15 @@ let SnippetsHandler = {
     if (!isRootDocument)
       return;
 
+    Util.dumpLn("trigger: " + aEvent.type);
     switch (aEvent.type) {
       case "DOMWindowCreated":
         this.reset();
         break;
 
-      case "DOMMetaAdded":
-        if (target.name == "viewport")
-          this.update();
-        break;
-
       case "DOMContentLoaded":
       case "pageshow":
+      case "load":
         this.update();
         break;
     }
@@ -57,15 +46,21 @@ let SnippetsHandler = {
     sendAsyncMessage("Browser:Snippets", {});
   },
 
-  update: function Snippets_update(aConsumptionType) {
-    let q = this.getSnippets();
-    sendAsyncMessage("Browser:Snippets", q);
-    Util.dumpLn(JSON.stringify(q));
+  update: function Snippets_update(aSelector) {
+    try {
+    let snippets = this.getSnippets();
+    sendAsyncMessage("Browser:Snippets", snippets);
+    Util.dumpLn(JSON.stringify(snippets));
+    } catch (e) { Util.dumpLn(e);}
   },
 
   getSnippets: function Snippets_getSnippets() {
     let snippets = { images: [], summary: null, author: null };
 
+    // Trying to do large-scale queries for items on the page is rather
+    // expensive and we run getSnippets several times per page view.
+    // To reduce the load, we pool the results of the selector queries
+    // that we perform here so we can reuse them among the different consumers.
     let pool = {};
     let getSelection = function (aSelector) {
       if (!pool[aSelector]) {
@@ -74,11 +69,18 @@ let SnippetsHandler = {
       return pool[aSelector];
     }
 
-    for (let consumer of consumers) {
+    for (let name in this.consumers) {
+      let consumer = this.consumers[name];
       let selection = getSelection(consumer.selector);
       for (let tag of selection) {
-        let values = consumer.attrs.map((aAttr) => tag.getAttribute(aAttr));
-        consumer.processor.call(snippets, [tag].concat(values));
+        let values = consumer.attrs.map(function (aAttrs) {
+          // Allows us to retreive multiple attributes (separated in the attrs
+          // list with a "|" and merge them into the same field value.
+          return Array.reduce(aAttrs.split("|"),
+            (aPrev, aAttr) => aPrev ? aPrev : tag.getAttribute(aAttr), false);
+        });
+
+        consumer.processor.apply(snippets, [tag].concat(values));
       }
     }
 
@@ -86,83 +88,28 @@ let SnippetsHandler = {
   }
 };
 
-function setPropertyOnLastItem(aArray, aField, aValue) {
-  let len = aArray.length;
-  if (len > 0) {
-    aArray[len - 1][aField] = aValue;
-  }
-}
-
 SnippetsHandler.consumers.OpenGraph = {
   selector: "meta",
-  attrs: ["name", "content"],
+  attrs: ["property", "content"],
   processor: function (aTag, aName, aContent) {
+    function setProperty(aField, aValue) {
+      let len = this.images.length;
+      if (len > 0) {
+        this.images[len - 1][aField] = aValue;
+      }
+    }
+
     switch(aName) {
       case "og:image":
         this.images.push(new ImageSnippet(aContent));
         break;
       case "og:image:width":
-        setPropertyOnLastItem(this.images, "width", parseInt(aContent));
+        setProperty("width", parseInt(aContent));
         break;
       case "og:image:height":
-        setPropertyOnLastItem(this.images, "height", parseInt(aContent));
+        setProperty("height", parseInt(aContent));
         break;
     }
-  }
-};
-
-SnippetsHandler.consumers.Cards = {
-  selector: "meta",
-  attrs: ["name", "content"],
-  processor: function (aTag, aName, aContent) {
-    switch (aName) {
-      case "twitter:image":
-      case "twitter:image0":
-      case "twitter:image1":
-      case "twitter:image2":
-      case "twitter:image3":
-        this.images.push(new ImageSnippet(aContent));
-        break;
-      case "twitter:image:width":
-        setPropertyOnLastItem(this.images, "width", parseInt(aContent));
-        break;
-      case "twitter:image:height":
-        setPropertyOnLastItem(this.images, "height", parseInt(aContent));
-        break;
-    }
-  }
-};
-
-SnippetsHandler.consumers.Microdata = {
-  selector: "meta",
-  attrs: ["itemprop", "content"],
-  processor: function (aTag, aItemProp, aContent) {
-    switch (aName) {
-      case "image":
-        this.images.push(new ImageSnippet(aContent));
-        break;
-    }
-  }
-};
-
-SnippetsHandler.consumers.TouchIcons = {
-  selector: "link[rel='apple-touch-icon']",
-  attrs: ["href", "sizes"],
-  processor: function (aTag, aHref, aSizes) {
-    let image = new ImageSnippet(aHref, 57, 57);
-    if (aSizes) {
-      [image.width, image.height] = String.split(aSizes, "x");
-    }
-    this.images.push(image);
-  }
-};
-
-SnippetsHandler.consumers.Images = {
-  selector: "image",
-  attrs: ["href"],
-  processor: function (aTag, aHref) {
-    let image = new ImageSnippet(aHref, aTag.naturalWidth, aTag.naturalHeight);
-    this.images.push(image);
   }
 };
 
