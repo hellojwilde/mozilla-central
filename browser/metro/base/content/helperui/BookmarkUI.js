@@ -15,6 +15,27 @@ var BookmarkUI = {
   },
 
   /*********************************
+   * Flyout
+   */
+
+  showFlyout: function B_showFlyout() {
+    // TODO load images from snippets
+
+    this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
+    this._flyoutPreview.url = Browser.selectedBrowser.currentURI;
+
+    this._flyout.openFlyout(this._starButton, "before_center");
+  },
+
+  onSaveChangesButton: function BC_onSaveChangesButton() {
+    Browser.starSite().
+      then(() => {
+        this._updateStarButton()
+        this._flyout.hide();
+      });
+  },
+
+  /*********************************
    * Star & Pin Buttons
    */
 
@@ -23,9 +44,8 @@ var BookmarkUI = {
   },
 
   _updateStarButton: function B__updateStarButton() {
-    Browser.isSiteStarredAsync(function (isStarred) {
-      this._starButton.checked = isStarred;
-    }.bind(this));
+    return Browser.isSiteStarred().
+      then((isStarred) => this._starButton.checked = isStarred);
   },
 
   onPinButton: function B_onPinButton() {
@@ -37,25 +57,8 @@ var BookmarkUI = {
   },
 
   onStarButton: function B_onStarButton() {
-    this.showFlyout();
-  },
-
-  /*********************************
-   * Flyout
-   */
-
-  showFlyout: function B_showFlyout() {
-    this._updateStarButton();
-
-    // TODO: add code for managing whether the star button is checked
-    this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
-    this._flyoutPreview.url = Browser.selectedBrowser.currentURI;
-    this._flyout.openFlyout(this._starButton, "before_center");
-  },
-
-  onSaveChangesButton: function BC_onSaveChangesButton() {
-    Browser.starSite(() => this._updateStarButton());
-    this._flyout.hide();
+    this._updateStarButton().
+      then(() => this.showFlyout());
   },
 
   /*********************************
