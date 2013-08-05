@@ -1466,6 +1466,10 @@ Tab.prototype = {
     this.updateViewportSize();
   },
 
+  /**
+   * Update the stored snippet data when we receive new snippet data.
+   * @param aSnippets An object featuring snippet data.
+   */
   updateSnippets: function updateSnippets(aSnippets) {
     this._snippets = aSnippets;
   },

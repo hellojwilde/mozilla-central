@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var BookmarkCreatorUI = {
+var BookmarkUI = {
   get _flyout() { return document.getElementById("bookmarkcreator"); },
   get _flyoutPreview () { return document.getElementById("bookmarkcreator-preview"); },
   get _pinButton() { return document.getElementById("pin-button"); },
   get _starButton() { return document.getElementById("star-button"); },
 
-  init: function BC_init() {
+  init: function B_init() {
     // Events that signal that we need to update the star and pin buttons
     Elements.browsers.addEventListener('URLChanged', this, true);
     Elements.tabList.addEventListener('TabSelect', this, true);
@@ -18,49 +18,53 @@ var BookmarkCreatorUI = {
     this._flyout.addEventListener('flyouthiding', this, false);
   },
 
-  /* Star and pin toolbar buttons */
+  /*********************************
+   * Star & Pin Buttons
+   */
 
-  _updatePinButton: function() {
+  _updatePinButton: function B__updatePinButton() {
     this._pinButton.checked = Browser.isSitePinned();
   },
 
-  onPinButton: function BC_onPinButton() {
-    if (this._pinButton.checked) {
-      this.show();
-    } else {
-      Browser.unpinSite();
-    }
-  },
-
-  _updateStarButton: function BP__updateStarButton() {
+  _updateStarButton: function B__updateStarButton() {
     Browser.isSiteStarredAsync(function (isStarred) {
       this._starButton.checked = isStarred;
     }.bind(this));
   },
 
-  onStarButton: function BC_onStarButton() {
-    if (this._starButton.checked) {
-      this.show();
+  handlePinButton: function B_handlePinButton() {
+    if (this._pinButton.checked) {
+      Browser.pinSite();
     } else {
-      Browser.unstarSite(() => BookmarkCreatorUI._updateStarButton());
+      Browser.unpinSite();
     }
   },
 
-  /* Flyout for creating a bookmark */
+  handleStarButton: function B_handleStarButton() {
+    this.showFlyout();
+  },
 
-  show: function BC_show() {
+  /*********************************
+   * Flyout
+   */
+
+  showFlyout: function B_showFlyout() {
+    this._updateStarButton();
+
+    // TODO: add code for managing whether the star button is checked
     this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
-    this._flyoutPreview.url = Browser.selectedBrowser.currentURI
-
+    this._flyoutPreview.url = Browser.selectedBrowser.currentURI;
     this._flyout.openFlyout(this._starButton, "before_center");
   },
 
   onSaveChangesButton: function BC_onSaveChangesButton() {
-    Browser.starSite(() => BookmarkCreatorUI._updateStarButton());
+    Browser.starSite(() => this._updateStarButton());
     this._flyout.hide();
   },
 
-  /* Event handling */
+  /*********************************
+   * Event Handling
+   */
 
   handleEvent: function BC_handleEvent(aEvent) {
     switch (aEvent.type) {

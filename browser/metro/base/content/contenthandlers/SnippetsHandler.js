@@ -47,11 +47,7 @@ let SnippetsHandler = {
   },
 
   update: function Snippets_update(aSelector) {
-    try {
-    let snippets = this.getSnippets();
-    sendAsyncMessage("Browser:Snippets", snippets);
-    Util.dumpLn(JSON.stringify(snippets));
-    } catch (e) { Util.dumpLn(e);}
+    sendAsyncMessage("Browser:Snippets", this.getSnippets());
   },
 
   getSnippets: function Snippets_getSnippets() {
