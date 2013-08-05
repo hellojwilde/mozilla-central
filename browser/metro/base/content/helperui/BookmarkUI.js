@@ -19,7 +19,7 @@ var BookmarkUI = {
    */
 
   showFlyout: function B_showFlyout() {
-    // TODO load images from snippets
+    let snippets = Browser.selectedTab.snippets;
 
     this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
     this._flyoutPreview.url = Browser.selectedBrowser.currentURI;

@@ -1445,6 +1445,10 @@ Tab.prototype = {
     return this._metadata || kDefaultMetadata;
   },
 
+  get snippets() {
+    return this._snippets;
+  },
+
   get pageShowPromise() {
     return this._eventDeferred ? this._eventDeferred.promise : null;
   },

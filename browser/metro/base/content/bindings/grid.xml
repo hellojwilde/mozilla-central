@@ -798,10 +798,13 @@
 
   <binding id="richgrid-item">
     <content>
-      <html:div anonid="anon-tile" class="tile-content" xbl:inherits="customImage">
+      <html:div anonid="anon-tile" class="tile-content" xbl:inherits="customImage,editing">
         <html:div class="tile-start-container" xbl:inherits="customImage">
+          <xul:button class="tile-start-next"/>
+          <xul:button class="tile-start-prev"/>
           <html:div class="tile-icon-box"><xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/></html:div>
         </html:div>
+        <html:div class="tile-quote" xbl:inherits="customQuote"/>
         <html:div anonid="anon-tile-label" class="tile-desc" xbl:inherits="xbl:text=label"/>
       </html:div>
     </content>
@@ -818,10 +821,15 @@
       <property name="_top" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-start-container');"/>
       <property name="_icon" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-icon');"/>
       <property name="_label" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-label');"/>
+      <property name="_quote" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-quote');"/>
+
       <property name="iconSrc"
                 onset="this._icon.src = val; this.setAttribute('iconURI', val);"
                 onget="return this._icon.src;" />
 
+      <property name="editing"
+                onget="return this.hasAttribute('editing')"
+                onset="if (val) this.setAttribute('editing', val); else this.removeAttribute('editing');"/>
       <property name="selected"
                 onget="return this.hasAttribute('selected');"
                 onset="if (val) this.setAttribute('selected', val); else this.removeAttribute('selected');" />
@@ -831,6 +839,9 @@
       <property name="label"
                 onget="return this._label.getAttribute('value')"
                 onset="this.setAttribute('label', val); this._label.setAttribute('value', val);"/>
+      <property name="quote"
+                onget="return this._quote.getAttribute('value')"
+                onset="this.setAttribute('quote', val); this._label.setAttribute('value', val);"/>
       <property name="pinned"
                 onget="return this.hasAttribute('pinned')"
                 onset="if (val) { this.setAttribute('pinned', val) } else this.removeAttribute('pinned');"/>
