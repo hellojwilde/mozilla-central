@@ -234,6 +234,12 @@ richgriditem[pinned]:-moz-locale-dir(rtl) > .tile-content::before {
   right: auto;
 }
 
+/* bookmark editing controls */
+richgriditem:not([editing]) .tile-start-next,
+richgriditem:not([editing]) .tile-start-prev {
+  display: none;
+}
+
 richgriditem[customColor] {
   color: #f1f1f1;
 }

@@ -20,21 +20,18 @@ var Bookmarks = {
   },
 
   addForURI: function bh_addForURI(aURI, aTitle) {
-    let def = Promise.defer();
-    this.isURIBookmarked(aURI, function (isBookmarked) {
-      if (isBookmarked)
-        return;
+    return this.isURIBookmarked(aURI).
+      then(function (isBookmarked) {
+        if (isBookmarked)
+          return;
 
-      let title = aTitle || aURI.spec;
-      let service = PlacesUtils.bookmarks;
-      let id = service.insertBookmark(Bookmarks.metroRoot,
-                                      aURI,
-                                      service.DEFAULT_INDEX,
-                                      title);
-
-      def.resolve(id);
-    });
-    return def.promise;
+        let title = aTitle || aURI.spec;
+        let service = PlacesUtils.bookmarks;
+        let id = service.insertBookmark(Bookmarks.metroRoot,
+                                        aURI,
+                                        service.DEFAULT_INDEX,
+                                        title);
+      });
   },
 
   isURIBookmarked: function bh_isURIBookmarked(aURI) {

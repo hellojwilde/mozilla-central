@@ -767,7 +767,10 @@
         </box>
         <hbox>
           <checkbox label="No thumbnail"/>
-          <button class="button-default">Save Changes</button>
+          <button class="button-default"
+                  oncommand="BookmarkUI.onSaveChangesButton()">
+            Save Changes
+          </button>
         </hbox>
       </vbox>
     </flyout>

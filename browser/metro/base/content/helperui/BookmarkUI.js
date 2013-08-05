@@ -21,17 +21,20 @@ var BookmarkUI = {
   showFlyout: function B_showFlyout() {
     let snippets = Browser.selectedTab.snippets;
 
+    // TODO: add some sort of remove bookmark button,
+    //       enable it if we have a bookmark already added
+
     this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
     this._flyoutPreview.url = Browser.selectedBrowser.currentURI;
 
     this._flyout.openFlyout(this._starButton, "before_center");
   },
 
-  onSaveChangesButton: function BC_onSaveChangesButton() {
+  onSaveChangesButton: function B_onSaveChangesButton() {
     Browser.starSite().
       then(() => {
-        this._updateStarButton()
-        this._flyout.hide();
+        this._flyout.hideFlyout();
+        this._updateStarButton();
       });
   },
 
