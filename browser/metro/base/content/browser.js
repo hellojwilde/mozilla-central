@@ -919,6 +919,13 @@ var Browser = {
           tab.updateViewportMetadata(json);
         break;
       }
+      case "Browser:Snippets": {
+        let tab = this.getTabForBrowser(browser);
+        if (tab) {
+          tab.updateSnippets(json);
+        }
+        break;
+      }
       case "Browser:FormSubmit":
         browser.lastLocation = null;
         break;
@@ -1405,6 +1412,7 @@ function Tab(aURI, aParams, aOwner) {
   this._loading = false;
   this._chromeTab = null;
   this._metadata = null;
+  this._snippets = null;
   this._eventDeferred = null;
 
   this.owner = aOwner || null;
@@ -1456,6 +1464,10 @@ Tab.prototype = {
     }
     this._metadata = aMetadata;
     this.updateViewportSize();
+  },
+
+  updateSnippets: function updateSnippets(aSnippets) {
+    this._snippets = aSnippets;
   },
 
   /**
