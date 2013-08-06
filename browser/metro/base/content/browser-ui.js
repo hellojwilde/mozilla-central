@@ -115,6 +115,7 @@ var BrowserUI = {
     PageThumbs.init();
     SettingsCharm.init();
     NavButtonSlider.init();
+    BookmarkUI.init();
 
     // show the right toolbars, awesomescreen, etc for the os viewstate
     BrowserUI._adjustDOMforViewState();
