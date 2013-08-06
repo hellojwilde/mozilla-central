@@ -968,7 +968,6 @@
           <![CDATA[
             let length = this._backgroundImageSet.length;
             this.editing = length > 0;
-            Util.dumpLn("length: " + length);
 
             if (this._backgroundImageSetIndex > 0) {
               this._prev.removeAttribute("disabled");
