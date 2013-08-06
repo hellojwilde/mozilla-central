@@ -940,8 +940,11 @@
     <handlers>
       <handler event="click" button="0">
         <![CDATA[
+          let gridParent = this.control;
+          if(!this.isBound || !gridParent)
+            return;
           // left-click/touch handler
-          this.control.handleItemClick(this, event);
+          gridParent.handleItemClick(this, event);
           // Stop this from bubbling, when the richgrid container
           // receives click events, we blur the nav bar.
           event.stopPropagation();
@@ -950,12 +953,12 @@
 
       <handler event="contextmenu">
         <![CDATA[
-          // fires for right-click, long-click and (keyboard) contextmenu input
-          // toggle the selected state of tiles in a grid
-          let gridParent = this.control;
-          if(!this.isBound || !gridParent)
-            return;
-          gridParent.handleItemContextMenu(this, event);
+            // fires for right-click, long-click and (keyboard) contextmenu input
+            // toggle the selected state of tiles in a grid
+            let gridParent = this.control;
+            if(!this.isBound || !gridParent)
+              return;
+            gridParent.handleItemContextMenu(this, event);
         ]]>
       </handler>
     </handlers>
