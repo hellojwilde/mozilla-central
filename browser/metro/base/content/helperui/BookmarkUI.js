@@ -4,7 +4,6 @@
 
 var BookmarkUI = {
   init: function B_init() {
-    this._initFlyout();
     this._initSelectionStar();
     this._initButtons();
   },
@@ -23,27 +22,6 @@ var BookmarkUI = {
   get _saveButton () { return document.getElementById("bookmark-save-changes"); },
   get _deleteButton () { return document.getElementById("bookmark-delete"); },
 
-  _thumbnails: [],
-  __thumbnailIndex: 0,
-
-  get _thumbnailIndex () { return this.__thumbnailIndex; },
-  set _thumbnailIndex (value) {
-    this.__thumbnailIndex = value;
-    if (!this._noThumbnail.checked) {
-      let background = 'url("'+this._thumbnails[value].url+'")';
-      this._preview.setAttribute("customImage", background);
-      if (this._preview.refresh) {
-        this._preview.refresh()
-      }
-      Util.dumpLn("thumb " + this._thumbnails[value].url);
-    }
-  },
-
-  _initFlyout: function B__initFlyout() {
-    this._preview.addEventListener("ThumbnailNext", this, false);
-    this._preview.addEventListener("ThumbnailPrev", this, false);
-  },
-
   _updateFlyoutTask: function B__updateFlyoutTask() {
     let isStarred = yield Browser.isSiteStarred();
     let tab = Browser.selectedTab;
@@ -60,11 +38,10 @@ var BookmarkUI = {
 
     if (self._noThumbnail.checked || self._noThumbnail.hidden) {
       self._preview.removeAttribute("tiletype");
-      self._preview.backgroundImage = null;
+      self._preview.backgroundImageSet = [];
     } else {
       self._preview.setAttribute("tiletype", "thumbnail");
-      self._thumbnails = tab.snippets.images;
-      self._thumbnailIndex = 0;
+      self._preview.backgroundImageSet = tab.snippets.images;
     }
   },
 
@@ -79,18 +56,6 @@ var BookmarkUI = {
 
   resetNoThumbnail: function B_resetNoThumbnail() {
     this._noThumbnail.checked = false;
-  },
-
-  _onNextThumbnail: function B__onNextThumbnail() {
-    if (this._thumbnailIndex < this._thumbnails.length - 1) {
-      this._thumbnailIndex++;
-    }
-  },
-
-  _onPrevThumbnail: function B__onPrevThumbnail() {
-    if (this._thumbnailIndex > 0) {
-      this._thumbnailIndex--;
-    }
   },
 
   onNoThumbnailChange: function B_onNoThumbnailChange() {
@@ -183,12 +148,6 @@ var BookmarkUI = {
         this.resetNoThumbnail();
       case "MozAppbarShowing":
         this.updateButtons();
-        break;
-      case "ThumbnailNext":
-        this._onNextThumbnail();
-        break;
-      case "ThumbnailPrev":
-        this._onrPrevThumbnail();
         break;
     }
   },

@@ -254,14 +254,15 @@ richgriditem .tile-start-button:active:not([disabled]) {
 
 richgriditem .tile-start-button[disabled] {
   opacity: 0.5;
+  pointer-events: none;
 }
 
-richgriditem .tile-start-next {
+richgriditem .tile-start-prev {
   left: 10px;
   background: url(chrome://browser/skin/images/arrowleftdark-16.png) no-repeat center center;
 }
 
-richgriditem .tile-start-prev {
+richgriditem .tile-start-next {
   right: 10px;
   background: url(chrome://browser/skin/images/arrowrightdark-16.png) no-repeat center center;
 }

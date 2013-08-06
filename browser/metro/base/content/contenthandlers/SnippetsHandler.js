@@ -28,7 +28,6 @@ let SnippetsHandler = {
     if (!isRootDocument)
       return;
 
-    Util.dumpLn("trigger: " + aEvent.type);
     switch (aEvent.type) {
       case "DOMWindowCreated":
         this.reset();
@@ -105,6 +104,21 @@ SnippetsHandler.consumers.OpenGraph = {
       case "og:image:height":
         setProperty("height", parseInt(aContent));
         break;
+    }
+  }
+};
+
+SnippetsHandler.consumers.ArticleImages = {
+  selector: ":-moz-any(.entry-content, #article, article) img",
+  attrs: ["src", "alt"],
+  processor: function (aTag, aSrc, aAlt) {
+    let image = new ImageSnippet(aSrc, aAlt);
+    image.width = aTag.naturalWidth;
+    image.height = aTag.naturalHeight;
+
+    if (image.width > 100 && image.height > 100) {
+      Util.dumpLn("image: " + JSON.stringify(image));
+      this.images.push(image);
     }
   }
 };

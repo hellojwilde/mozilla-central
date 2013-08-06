@@ -798,24 +798,34 @@
 
   <binding id="richgrid-item">
     <content>
-      <html:div anonid="anon-tile" class="tile-content" xbl:inherits="customImage,editing">
+      <html:div anonid="anon-tile" class="tile-content"
+                xbl:inherits="customImage,editing">
         <html:div class="tile-start-container" xbl:inherits="customImage">
-          <html:div class="tile-start-button tile-start-next"/>
-          <html:div class="tile-start-button tile-start-prev"/>
-          <html:div class="tile-icon-box"><xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/></html:div>
+          <html:div anonid="anon-tile-prev"
+                    class="tile-start-button tile-start-prev"
+                    onclick="document.getBindingParent(this)._onPrevButton()"/>
+          <html:div anonid="anon-tile-next"
+                    class="tile-start-button tile-start-next"
+                    onclick="document.getBindingParent(this)._onNextButton()"/>
+          <html:div class="tile-icon-box">
+            <xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/>
+          </html:div>
         </html:div>
         <html:div class="tile-quote" xbl:inherits="customQuote"/>
-        <html:div anonid="anon-tile-label" class="tile-desc" xbl:inherits="xbl:text=label"/>
+        <html:div anonid="anon-tile-label" class="tile-desc"
+                  xbl:inherits="xbl:text=label"/>
       </html:div>
     </content>
 
     <implementation>
       <property name="isBound" readonly="true" onget="return !!this._icon"/>
+
       <constructor>
         <![CDATA[
             this.refresh();
         ]]>
       </constructor>
+
       <property name="_contentBox" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-content');"/>
       <property name="_textbox" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-desc');"/>
       <property name="_top" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-start-container');"/>
@@ -823,13 +833,16 @@
       <property name="_label" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-label');"/>
       <property name="_quote" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-quote');"/>
 
+      <property name="_next" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-next');"/>
+      <property name="_prev" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-prev');"/>
+
       <property name="iconSrc"
                 onset="this._icon.src = val; this.setAttribute('iconURI', val);"
                 onget="return this._icon.src;" />
 
       <property name="editing"
-                onget="return this.hasAttribute('editing')"
-                onset="if (val) this.setAttribute('editing', val); else this.removeAttribute('editing');"/>
+                onget="return this.hasAttribute('editing');"
+                onset="if (val) this.setAttribute('editing', val); else this.removeAttribute('editing');" />
       <property name="selected"
                 onget="return this.hasAttribute('selected');"
                 onset="if (val) this.setAttribute('selected', val); else this.removeAttribute('selected');" />
@@ -894,6 +907,39 @@
         ]]></setter>
       </property>
 
+      <field name="_backgroundImageSet">[]</field>
+      <field name="_backgroundImageSetIndex">0</field>
+
+      <property name="backgroundImageSetIndex"
+                onget="return this._backgroundImageSetIndex;">
+        <setter>
+          <![CDATA[
+            if (val >= 0 && val < this._backgroundImageSet.length) {
+              this._backgroundImageSetIndex = val;
+
+              let image = this._backgroundImageSet[val];
+              this.backgroundImage = "url('" + image.url + "')";
+
+              this.refreshEditingButtons();
+            }
+          ]]>
+        </setter>
+      </property>
+
+      <property name="backgroundImageSet"
+                onget="return this.backgroundImageSet;">
+        <setter>
+          <![CDATA[
+            this._backgroundImageSet = val;
+            this.refreshEditingButtons();
+
+            if (val && val.length > 0) {
+              this.backgroundImageSetIndex = 0;
+            }
+          ]]>
+        </setter>
+      </property>
+
       <property name="backgroundImage" onget="return this.getAttribute('customImage');">
         <setter><![CDATA[
           if (val) {
@@ -915,6 +961,44 @@
             this._top.style.setProperty("background-image", this.backgroundImage);
           }
         ]]></body>
+      </method>
+
+      <method name="refreshEditingButtons">
+        <body>
+          <![CDATA[
+            let length = this._backgroundImageSet.length;
+            this.editing = length > 0;
+            Util.dumpLn("length: " + length);
+
+            if (this._backgroundImageSetIndex > 0) {
+              this._prev.removeAttribute("disabled");
+            } else {
+              this._prev.setAttribute("disabled", "true");
+            }
+
+            if (this._backgroundImageSetIndex < length - 1) {
+              this._next.removeAttribute("disabled");
+            } else {
+              this._next.setAttribute("disabled", "true");
+            }
+          ]]>
+        </body>
+      </method>
+
+      <method name="_onNextButton">
+        <body>
+          <![CDATA[
+            this.backgroundImageSetIndex++;
+          ]]>
+        </body>
+      </method>
+
+      <method name="_onPrevButton">
+        <body>
+          <![CDATA[
+            this.backgroundImageSetIndex--;
+          ]]>
+        </body>
       </method>
 
       <field name="_contextActions">null</field>

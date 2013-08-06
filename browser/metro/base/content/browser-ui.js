@@ -186,6 +186,7 @@ var BrowserUI = {
 
     PanelUI.uninit();
     StartUI.uninit();
+    BookmarkUI.uninit();
     Downloads.uninit();
     SettingsCharm.uninit();
     messageManager.removeMessageListener("Content:StateChange", this);

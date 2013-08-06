@@ -152,6 +152,7 @@ flyout {
   -moz-appearance: none;
   background: white;
   border: gray solid @metro_border_thick@;
+  overflow: hidden;
 }
 
 flyout[showingfrom="below"] {
