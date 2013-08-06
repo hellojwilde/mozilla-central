@@ -235,27 +235,38 @@ richgriditem[pinned]:-moz-locale-dir(rtl) > .tile-content::before {
 }
 
 /* bookmark editing controls */
-richgriditem .content {
-  position: relative;
-}
-
-richgriditem .tile-start-next,
-richgriditem .tile-start-prev {
+richgriditem .tile-start-button {
   display: none;
   position: absolute;
   top: 40%;
+  width: 32px;
+  height: 32px;
+  border-radius: 100%;
+}
+
+richgriditem .tile-start-button:hover:not(:active):not([disabled]) {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+richgriditem .tile-start-button:active:not([disabled]) {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+richgriditem .tile-start-button[disabled] {
+  opacity: 0.5;
 }
 
 richgriditem .tile-start-next {
-  left: 0;
+  left: 10px;
+  background: url(chrome://browser/skin/images/arrowleftdark-16.png) no-repeat center center;
 }
 
 richgriditem .tile-start-prev {
-  right: 0;
+  right: 10px;
+  background: url(chrome://browser/skin/images/arrowrightdark-16.png) no-repeat center center;
 }
 
-richgriditem[editing][customImage] .tile-start-next,
-richgriditem[editing][customImage] .tile-start-prev {
+richgriditem[editing][customImage] .tile-start-button {
   display: block;
 }
 
