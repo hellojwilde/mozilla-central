@@ -5,7 +5,12 @@
 var BookmarkUI = {
   init: function B_init() {
     this._initFlyout();
+    this._initSelectionStar();
     this._initButtons();
+  },
+
+  uninit: function B_uninit() {
+    this._uninitSelectionStar();
   },
 
   /*********************************
@@ -72,20 +77,20 @@ var BookmarkUI = {
     this._flyout.hideFlyout();
   },
 
-  nextThumbnail: function B_nextThumbnail() {
+  resetNoThumbnail: function B_resetNoThumbnail() {
+    this._noThumbnail.checked = false;
+  },
+
+  _onNextThumbnail: function B__onNextThumbnail() {
     if (this._thumbnailIndex < this._thumbnails.length - 1) {
       this._thumbnailIndex++;
     }
   },
 
-  prevThumbnail: function B_prevThumbnail() {
+  _onPrevThumbnail: function B__onPrevThumbnail() {
     if (this._thumbnailIndex > 0) {
       this._thumbnailIndex--;
     }
-  },
-
-  resetNoThumbnail: function B_resetNoThumbnail() {
-    this._noThumbnail.checked = false;
   },
 
   onNoThumbnailChange: function B_onNoThumbnailChange() {
@@ -107,6 +112,24 @@ var BookmarkUI = {
         this.hideFlyout();
         this._updateStarButton();
       });
+  },
+
+  /*********************************
+   * Selection Star
+   */
+
+  get _selectionStarButton() { return null; },
+
+  _initSelectionStar: function B__initSelectionStar() {
+    messageManager.addMessageListener("Content:SelectionRange", this);
+  },
+
+  _uninitSelectionStar: function B__uninitSelectionStar() {
+    messageManager.removeMessageListener("Content:SelectionRange", this);
+  },
+
+  _onSelectionRangeChange: function B__onSelectionRangeChange(json) {
+    alert("range change");
   },
 
   /*********************************
@@ -162,10 +185,19 @@ var BookmarkUI = {
         this.updateButtons();
         break;
       case "ThumbnailNext":
-        this.nextThumbnail();
+        this._onNextThumbnail();
         break;
       case "ThumbnailPrev":
-        this.prevThumbnail();
+        this._onrPrevThumbnail();
+        break;
+    }
+  },
+
+  receiveMessage: function B_receiveMessage(aMessage) {
+    let json = aMessage.json;
+    switch (aMessage.name) {
+      case "Content:SelectionRange":
+        this._onSelectionRangeChange(json);
         break;
     }
   }
