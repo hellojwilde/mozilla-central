@@ -181,6 +181,10 @@ flyout[showing] {
   transform: none;
 }
 
+flyout:not([showing]) {
+  pointer-events: none;
+}
+
 /* Flyouts - Menus */
 
 flyout[type="menu"] {

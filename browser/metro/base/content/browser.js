@@ -149,6 +149,7 @@ var Browser = {
     messageManager.addMessageListener("DOMLinkAdded", this);
     messageManager.addMessageListener("MozScrolledAreaChanged", this);
     messageManager.addMessageListener("Browser:ViewportMetadata", this);
+    messageManager.addMessageListener("Browser:Snippets", this);
     messageManager.addMessageListener("Browser:FormSubmit", this);
     messageManager.addMessageListener("Browser:ZoomToPoint:Return", this);
     messageManager.addMessageListener("Browser:CanUnload:Return", this);

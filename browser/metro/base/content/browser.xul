@@ -763,7 +763,7 @@
     <flyout id="bookmark" hidden="true">
       <vbox class="bookmark-inner">
         <box class="bookmark-preview-wrapper" align="center" pack="center">
-          <richgriditem id="bookmark-preview"/>
+          <richgriditem id="bookmark-preview" editing="true"/>
         </box>
 
         <box class="bookmark-nothumbnail-wrapper">

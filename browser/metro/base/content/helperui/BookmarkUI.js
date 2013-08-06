@@ -25,7 +25,12 @@ var BookmarkUI = {
   set _thumbnailIndex (value) {
     this.__thumbnailIndex = value;
     if (!this._noThumbnail.checked) {
-      this._preview.customImage = this._thumbnails[value].url;
+      let background = 'url("'+this._thumbnails[value].url+'")';
+      this._preview.setAttribute("customImage", background);
+      if (this._preview.refresh) {
+        this._preview.refresh()
+      }
+      Util.dumpLn("thumb " + this._thumbnails[value].url);
     }
   },
 
@@ -37,21 +42,24 @@ var BookmarkUI = {
   _updateFlyoutTask: function B__updateFlyoutTask() {
     let isStarred = yield Browser.isSiteStarred();
     let tab = Browser.selectedTab;
+    let self = BookmarkUI;
 
-    this._preview.label = Browser.selectedBrowser.contentTitle;
-    this._preview.url = Browser.selectedBrowser.currentURI;
-    View.prototype._gotIcon(this._preview, tab.browser.mIconURL);
+    self._preview.label = Browser.selectedBrowser.contentTitle;
+    self._preview.url = Browser.selectedBrowser.currentURI;
+    View.prototype._gotIcon(self._preview, tab.browser.mIconURL);
 
-    this._deleteButton.hidden = !isStarred;
-    this._saveButton.label = isStarred ? "Save Changes" : "Add Bookmark";
+    self._deleteButton.hidden = !isStarred;
+    self._saveButton.label = isStarred ? "Save Changes" : "Add Bookmark";
 
-    if (this._noThumbnail.checked || tab.snippets.images.length == 0) {
-      this._preview.editing = false;
-      this._preview.customImage = null;
+    self._noThumbnail.hidden = tab.snippets.images.length == 0;
+
+    if (self._noThumbnail.checked || self._noThumbnail.hidden) {
+      self._preview.removeAttribute("tiletype");
+      self._preview.backgroundImage = null;
     } else {
-      this._preview.editing = true;
-      this._thumbnails = tab.snippets.images;
-      this._thumbnailIndex = 0;
+      self._preview.setAttribute("tiletype", "thumbnail");
+      self._thumbnails = tab.snippets.images;
+      self._thumbnailIndex = 0;
     }
   },
 
@@ -76,8 +84,13 @@ var BookmarkUI = {
     }
   },
 
+  resetNoThumbnail: function B_resetNoThumbnail() {
+    this._noThumbnail.checked = false;
+  },
+
   onNoThumbnailChange: function B_onNoThumbnailChange() {
-    Task.spawn(this._updateFlyoutTask);
+    Task.spawn(this._updateFlyoutTask).
+      then(() => this._flyout.anchorAt(this._starButton, "before_center"));
   },
 
   onSaveChangesButton: function B_onSaveChangesButton() {
@@ -140,10 +153,11 @@ var BookmarkUI = {
    * Event Handling
    */
 
-  handleEvent: function BC_handleEvent(aEvent) {
+  handleEvent: function B_handleEvent(aEvent) {
     switch (aEvent.type) {
       case "URLChanged":
       case "TabSelect":
+        this.resetNoThumbnail();
       case "MozAppbarShowing":
         this.updateButtons();
         break;
