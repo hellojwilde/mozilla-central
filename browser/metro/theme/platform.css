@@ -60,6 +60,7 @@ button {
   min-width: @field_sizing@;
   min-height: 32px;
   padding: 3px 16px;
+  text-align: center;
 }
 
 /* Non-default button colors */

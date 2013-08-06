@@ -3,8 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var BookmarkUI = {
-  get _flyout() { return document.getElementById("bookmarkcreator"); },
-  get _flyoutPreview () { return document.getElementById("bookmarkcreator-preview"); },
+  get _flyout() { return document.getElementById("bookmark"); },
+  get _preview () { return document.getElementById("bookmark-preview"); },
+  get _noThumbnail () { return document.getElementById("bookmark-nothumbnail"); },
+  get _saveButton () { return document.getElementById("bookmark-save-changes"); },
+  get _deleteButton () { return document.getElementById("bookmark-delete"); },
+
   get _pinButton() { return document.getElementById("pin-button"); },
   get _starButton() { return document.getElementById("star-button"); },
 
@@ -18,20 +22,38 @@ var BookmarkUI = {
    * Flyout
    */
 
+  updateFlyoutTask: function B_updateFlyoutTask() {
+    let isStarred = yield Browser.isSiteStarred();
+    let tab = Browser.selectedTab;
+    let snippets = tab.snippets;
+
+    this._preview.label = Browser.selectedBrowser.contentTitle;
+    this._preview.url = Browser.selectedBrowser.currentURI;
+    View.prototype._gotIcon(this._preview, tab.browser.mIconURL);
+
+    this._deleteButton.hidden = !isStarred;
+    this._saveButton.label = isStarred ? "Save Changes" : "Add Bookmark";
+  },
+
   showFlyout: function B_showFlyout() {
-    let snippets = Browser.selectedTab.snippets;
+    Task.spawn(this.updateFlyoutTask).
+      then(() => this._flyout.openFlyout(this._starButton, "before_center"));
+  },
 
-    // TODO: add some sort of remove bookmark button,
-    //       enable it if we have a bookmark already added
-
-    this._flyoutPreview.label = Browser.selectedBrowser.contentTitle;
-    this._flyoutPreview.url = Browser.selectedBrowser.currentURI;
-
-    this._flyout.openFlyout(this._starButton, "before_center");
+  onNoThumbnailChange: function B_onNoThumbnailChange() {
+    Task.spawn(this.updateFlyoutTask);
   },
 
   onSaveChangesButton: function B_onSaveChangesButton() {
     Browser.starSite().
+      then(() => {
+        this._flyout.hideFlyout();
+        this._updateStarButton();
+      });
+  },
+
+  onDeleteButton: function B_onDeleteButton () {
+    Browser.unstarSite().
       then(() => {
         this._flyout.hideFlyout();
         this._updateStarButton();

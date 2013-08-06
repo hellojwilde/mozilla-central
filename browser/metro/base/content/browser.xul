@@ -760,17 +760,23 @@
                 command="cmd_viewOnDesktop"/>
     </flyout>
 
-    <flyout id="bookmarkcreator" hidden="true">
-      <vbox class="bookmarkpreview-wrapper">
-        <box class="bookmarkpreview-item" align="center" pack="center">
-          <richgriditem id="bookmarkcreator-preview" label="woot"/>
+    <flyout id="bookmark" hidden="true">
+      <vbox class="bookmark-inner">
+        <box class="bookmark-preview-wrapper" align="center" pack="center">
+          <richgriditem id="bookmark-preview"/>
         </box>
-        <hbox>
-          <checkbox label="No thumbnail"/>
-          <button class="button-default"
-                  oncommand="BookmarkUI.onSaveChangesButton()">
-            Save Changes
-          </button>
+
+        <box class="bookmark-nothumbnail-wrapper">
+          <checkbox id="bookmark-nothumbnail" label="No thumbnail"
+                    oncommand="BookmarkUI.onNoThumbnailChange()"/>
+        </box>
+
+        <hbox class="bookmark-controls">
+          <button id="bookmark-save-changes" class="button-default" flex="1"
+                  label="Save Changes"
+                  oncommand="BookmarkUI.onSaveChangesButton()"/>
+          <button id="bookmark-delete" label="Delete"
+                  oncommand="BookmarkUI.onDeleteButton()"/>
         </hbox>
       </vbox>
     </flyout>
