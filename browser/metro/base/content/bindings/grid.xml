@@ -807,11 +807,15 @@
           <html:div anonid="anon-tile-next"
                     class="tile-start-button tile-start-next"
                     onclick="document.getBindingParent(this)._onNextButton()"/>
+
           <html:div class="tile-icon-box">
             <xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/>
           </html:div>
         </html:div>
-        <html:div class="tile-quote" xbl:inherits="customQuote"/>
+        <html:div class="tile-quote-overlay" xbl:inherits="quote,customQuote">
+            this is some example text
+          </html:div>
+
         <html:div anonid="anon-tile-label" class="tile-desc"
                   xbl:inherits="xbl:text=label"/>
       </html:div>
@@ -900,9 +904,11 @@
           if (val) {
             this.setAttribute("customColor", val);
             this._contentBox.style.backgroundColor = val;
+            this._quote.style.backgroundColor = val;
           } else {
             this.removeAttribute("customColor");
             this._contentBox.style.removeProperty("background-color");
+            this._quote.style.removeProperty("background-color");
           }
         ]]></setter>
       </property>

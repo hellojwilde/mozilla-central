@@ -4,12 +4,11 @@
 
 var BookmarkUI = {
   init: function B_init() {
-    this._initSelectionStar();
     this._initButtons();
   },
 
   uninit: function B_uninit() {
-    this._uninitSelectionStar();
+
   },
 
   /*********************************
@@ -46,8 +45,7 @@ var BookmarkUI = {
       } catch (e) { /* snippets not set yet */ }
 
       model.label = PlacesUtils.bookmarks.getItemTitle(model.id);
-      // TODO
-      //model.icon = yield Bookmarks.getFaviconForURI(model.url);
+      model.icon = (yield Util.getFaviconForURI(model.url)).spec;
 
       model.noImage = snippets.noImage || false;
       if (snippets.image) {
@@ -93,7 +91,6 @@ var BookmarkUI = {
   },
 
   _updateFlyout: function B__updateFlyout() {
-    try{
     let model = this._flyoutModel;
 
     this._preview.label = model.label;
@@ -118,16 +115,13 @@ var BookmarkUI = {
     if (!this._flyout.hidden) {
       this._flyout.anchorAt(this._starButton, "before_center", 0, -10);
     }
-    } catch (e){ Util.dumpLn(e);}
   },
 
   showFlyout: function B_showFlyout() {
     return Task.spawn(function _showFlyoutTask() {
-      try {
       yield Task.spawn(BookmarkUI._loadFlyoutModelTask);
       BookmarkUI._updateFlyout();
       BookmarkUI._flyout.openFlyout(BookmarkUI._starButton, "before_center", 0, -10);
-      } catch (e) { Util.dumpLn(e); }
     });
   },
 
@@ -142,12 +136,10 @@ var BookmarkUI = {
 
   onAddButton: function B_onAddButton() {
     Task.spawn(function onAddButtonTask() {
-      try {
-      yield Browser.starSite();
-      yield BookmarkUI._updateStarButton();
+      BookmarkUI._flyoutModel.id = yield Browser.starSite();
       BookmarkUI._saveFlyoutModel();
+      yield BookmarkUI._updateStarButton();
       BookmarkUI.hideFlyout();
-      } catch (e) { Util.dumpLn(e);}
     });
   },
 
@@ -165,22 +157,10 @@ var BookmarkUI = {
   },
 
   /*********************************
-   * Selection Star
+   * Context Command
    */
 
-  get _selectionStarButton() { return null; },
 
-  _initSelectionStar: function B__initSelectionStar() {
-    messageManager.addMessageListener("Content:SelectionRange", this);
-  },
-
-  _uninitSelectionStar: function B__uninitSelectionStar() {
-    messageManager.removeMessageListener("Content:SelectionRange", this);
-  },
-
-  _onSelectionRangeChange: function B__onSelectionRangeChange(json) {
-    alert("range change");
-  },
 
   /*********************************
    * Star & Pin Buttons
@@ -243,11 +223,6 @@ var BookmarkUI = {
   },
 
   receiveMessage: function B_receiveMessage(aMessage) {
-    let json = aMessage.json;
-    switch (aMessage.name) {
-      case "Content:SelectionRange":
-        this._onSelectionRangeChange(json);
-        break;
-    }
+
   }
 };

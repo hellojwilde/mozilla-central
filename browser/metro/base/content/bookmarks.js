@@ -248,6 +248,7 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     item.setAttribute("bookmarkId", aBookmarkId);
     this._setContextActions(item);
     this._updateFavicon(item, uri);
+    this._updateSnippets(item);
   },
 
   _setContextActions: function bv__setContextActions(aItem) {
@@ -261,6 +262,22 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     let event = document.createEvent("Events");
     event.initEvent("BookmarksNeedsRefresh", true, false);
     window.dispatchEvent(event);
+  },
+
+  _updateSnippets: function bv__updateSnippets(aItem) {
+    try {
+      let id = this._getBookmarkIdForItem(aItem);
+      let anno = PlacesUtils.annotations.
+                 getItemAnnotation(id, "metro/snippets");
+      let snippets = JSON.parse(anno);
+
+      if (snippets.noImage) {
+        aItem.removeAttribute("tiletype");
+      } else {
+        aItem.setAttribute("tiletype", "thumbnail");
+        aItem.backgroundImage = "url('" + snippets.image.url + "')";
+      }
+    } catch(e) { Util.dumpLn(e);/* there are no snippets */ }
   },
 
   updateBookmark: function bv_updateBookmark(aBookmarkId) {
@@ -285,6 +302,7 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     item.setAttribute("label", title);
 
     this._updateFavicon(item, uri);
+    this._updateSnippets(item);
   },
 
   removeBookmark: function bv_removeBookmark(aBookmarkId) {

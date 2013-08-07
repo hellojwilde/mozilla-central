@@ -117,7 +117,6 @@ SnippetsHandler.consumers.ArticleImages = {
     image.height = aTag.naturalHeight;
 
     if (image.width > 100 && image.height > 100) {
-      Util.dumpLn("image: " + JSON.stringify(image));
       this.images.push(image);
     }
   }
