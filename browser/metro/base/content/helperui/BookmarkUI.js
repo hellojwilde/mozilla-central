@@ -19,6 +19,7 @@ var BookmarkUI = {
   get _flyout() { return document.getElementById("bookmark"); },
   get _preview () { return document.getElementById("bookmark-preview"); },
   get _noThumbnail () { return document.getElementById("bookmark-nothumbnail"); },
+  get _addButton () { return document.getElementById("bookmark-add"); },
   get _saveButton () { return document.getElementById("bookmark-save-changes"); },
   get _deleteButton () { return document.getElementById("bookmark-delete"); },
 
@@ -65,13 +66,30 @@ var BookmarkUI = {
   },
 
   _updateFlyout: function B__updateFlyout() {
+    let model = this._flyoutModel;
 
-    // TODO: make sure to reanchor flyout
+    this._preview.label = model.label;
+    this._preview.url = model.url;
+    View._prototype._gotIcon(this._preview, model.icon);
+
+    if (model.noImage) {
+      this._preview.removeAttribute("tiletype");
+    } else {
+      this._preview.addAttribute("tiletype", "thumbnail");
+    }
+
+    this._preview.backgroundImageSet = model.images;
+    this._preview.backgroundImageIndex = model.imageIndex;
+
+    this._addButton.hidden = model.isStarred;
+    this._deleteButton.hidden = this._saveButton.hidden = !model.isStarred;
+
+    this._flyout.anchorAt(this._starButton, "before_center", 0, -10);
   },
 
   showFlyout: function B_showFlyout() {
     this._updateFlyout();
-    this._flyout.showFlyout();
+    this._flyout.openFlyout(this._starButton, "before_center", 0, -10);
   },
 
   hideFlyout: function B_hideFlyout() {
@@ -80,6 +98,7 @@ var BookmarkUI = {
 
   onNoThumbnailChange: function B_onNoThumbnailChange() {
     this._flyoutModel.noImage = this._noThumbnail.checked;
+    this._updateFlyout();
   },
 
   onAddButton: function B_onAddButton() {

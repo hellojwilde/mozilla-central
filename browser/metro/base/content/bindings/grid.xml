@@ -916,10 +916,8 @@
           <![CDATA[
             if (val >= 0 && val < this._backgroundImageSet.length) {
               this._backgroundImageSetIndex = val;
-
               let image = this._backgroundImageSet[val];
               this.backgroundImage = "url('" + image.url + "')";
-
               this.refreshEditingButtons();
             }
           ]]>
@@ -932,10 +930,6 @@
           <![CDATA[
             this._backgroundImageSet = val;
             this.refreshEditingButtons();
-
-            if (val && val.length > 0) {
-              this.backgroundImageSetIndex = 0;
-            }
           ]]>
         </setter>
       </property>
