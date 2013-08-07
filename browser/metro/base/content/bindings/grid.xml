@@ -812,9 +812,6 @@
             <xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/>
           </html:div>
         </html:div>
-        <html:div class="tile-quote-overlay" xbl:inherits="quote,customQuote">
-            this is some example text
-          </html:div>
 
         <html:div anonid="anon-tile-label" class="tile-desc"
                   xbl:inherits="xbl:text=label"/>
@@ -835,7 +832,6 @@
       <property name="_top" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-start-container');"/>
       <property name="_icon" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-icon');"/>
       <property name="_label" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-label');"/>
-      <property name="_quote" onget="return document.getAnonymousElementByAttribute(this, 'class', 'tile-quote');"/>
 
       <property name="_next" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-next');"/>
       <property name="_prev" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-prev');"/>
@@ -856,9 +852,6 @@
       <property name="label"
                 onget="return this._label.getAttribute('value')"
                 onset="this.setAttribute('label', val); this._label.setAttribute('value', val);"/>
-      <property name="quote"
-                onget="return this._quote.getAttribute('value')"
-                onset="this.setAttribute('quote', val); this._label.setAttribute('value', val);"/>
       <property name="pinned"
                 onget="return this.hasAttribute('pinned')"
                 onset="if (val) { this.setAttribute('pinned', val) } else this.removeAttribute('pinned');"/>
@@ -904,11 +897,9 @@
           if (val) {
             this.setAttribute("customColor", val);
             this._contentBox.style.backgroundColor = val;
-            this._quote.style.backgroundColor = val;
           } else {
             this.removeAttribute("customColor");
             this._contentBox.style.removeProperty("background-color");
-            this._quote.style.removeProperty("background-color");
           }
         ]]></setter>
       </property>

@@ -277,7 +277,7 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
         aItem.setAttribute("tiletype", "thumbnail");
         aItem.backgroundImage = "url('" + snippets.image.url + "')";
       }
-    } catch(e) { Util.dumpLn(e);/* there are no snippets */ }
+    } catch(e) { /* there are no snippets */ }
   },
 
   updateBookmark: function bv_updateBookmark(aBookmarkId) {

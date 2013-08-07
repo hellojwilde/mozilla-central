@@ -665,6 +665,8 @@ var BrowserUI = {
       Elements.urlbarState.setAttribute("mode", "loading");
     else if (!isLoading && mode != "edit")
       Elements.urlbarState.setAttribute("mode", "view");
+
+    Util.dumpLn(Elements.urlbarState.getAttribute("mode"));
   },
 
   _closeOrQuit: function _closeOrQuit() {
