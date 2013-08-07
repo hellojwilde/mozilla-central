@@ -769,6 +769,9 @@
         </box>
 
         <hbox class="bookmark-controls">
+          <button id="bookmark-add" class="button-default" flex="1"
+                  label="Add Bookmark"
+                  oncommand="BookmarkUI.onAddButton()"/>
           <button id="bookmark-save-changes" class="button-default" flex="1"
                   label="Save Changes"
                   oncommand="BookmarkUI.onSaveChangesButton()"/>

@@ -22,61 +22,87 @@ var BookmarkUI = {
   get _saveButton () { return document.getElementById("bookmark-save-changes"); },
   get _deleteButton () { return document.getElementById("bookmark-delete"); },
 
-  _updateFlyoutTask: function B__updateFlyoutTask() {
-    let isStarred = yield Browser.isSiteStarred();
-    let tab = Browser.selectedTab;
-    let self = BookmarkUI;
+  _flyoutModel: {},
 
-    self._preview.label = Browser.selectedBrowser.contentTitle;
-    self._preview.url = Browser.selectedBrowser.currentURI;
-    View.prototype._gotIcon(self._preview, tab.browser.mIconURL);
+  _loadFlyoutModelTask: function B__loadFlyoutModelTask() {
+    let browser = Browser.selectedBrowser;
+    let model = this._flyoutModel = {
+      isStarred: yield Browser.isSiteStarred(),
+      url: browser.currentURI,
+      images: tab.snippets.images || []
+    };
 
-    self._deleteButton.hidden = !isStarred;
-    self._saveButton.label = isStarred ? "Save Changes" : "Add Bookmark";
+    if (model.isStarred) {
+      let id = yield Bookmarks.getForURI(model.url);
+      let anno = PlacesUtils.annotations.getItemAnnotation(id, "snippets");
+      let snippets = JSON.parse(anno || "{}");
 
-    self._noThumbnail.hidden = tab.snippets.images.length == 0;
+      model.label = PlacesUtils.bookmarks.getItemTitle(id);
+      model.icon = yield Bookmarks.getFaviconForURI(model.url);
 
-    if (self._noThumbnail.checked || self._noThumbnail.hidden) {
-      self._preview.removeAttribute("tiletype");
-      self._preview.backgroundImageSet = [];
+      model.noImage = snippets.noImage;
+      model.imageIndex = -1;
+      model.images.forEach(function (item, index) {
+        if (snippets.image.url == item.url) {
+          model.imageIndex = index;
+        }
+      });
+      if (model.imageIndex == -1) {
+        model.imageIndex = model.images.length;
+        model.images.push(snippets.image);
+      }
     } else {
-      self._preview.setAttribute("tiletype", "thumbnail");
-      self._preview.backgroundImageSet = tab.snippets.images;
+      model.label = browser.contentTitle;
+      model.icon = browser.mIconURL;
+
+      model.noImage = false;
+      model.imageIndex = 0;
     }
   },
 
+  _saveFlyoutModelTask: function B__saveFlyoutModelTask() {
+    // TODO: sync all of these changes to places.
+  },
+
+  _updateFlyout: function B__updateFlyout() {
+
+    // TODO: make sure to reanchor flyout
+  },
+
   showFlyout: function B_showFlyout() {
-    Task.spawn(this._updateFlyoutTask).
-      then(() => this._flyout.openFlyout(this._starButton, "before_center"));
+    this._updateFlyout();
+    this._flyout.showFlyout();
   },
 
   hideFlyout: function B_hideFlyout() {
     this._flyout.hideFlyout();
   },
 
-  resetNoThumbnail: function B_resetNoThumbnail() {
-    this._noThumbnail.checked = false;
+  onNoThumbnailChange: function B_onNoThumbnailChange() {
+    this._flyoutModel.noImage = this._noThumbnail.checked;
   },
 
-  onNoThumbnailChange: function B_onNoThumbnailChange() {
-    Task.spawn(this._updateFlyoutTask).
-      then(() => this._flyout.anchorAt(this._starButton, "before_center"));
+  onAddButton: function B_onAddButton() {
+    Task.spawn(function onAddButtonTask() {
+      yield Browser.starSite();
+      yield Task.spawn(BookmarkUI._saveFlyoutModelTask);
+      BookmarkUI.hideFlyout();
+    });
   },
 
   onSaveChangesButton: function B_onSaveChangesButton() {
-    Browser.starSite().
-      then(() => {
-        this.hideFlyout();
-        this._updateStarButton();
-      });
+    Task.spawn(function onSaveChangesButtonTask() {
+      yield Task.spawn(BookmarkUI._saveFlyoutModelTask);
+      BookmarkUI.hideFlyout();
+    });
   },
 
-  onDeleteButton: function B_onDeleteButton () {
-    Browser.unstarSite().
-      then(() => {
-        this.hideFlyout();
-        this._updateStarButton();
-      });
+  onDeleteButton: function B_onDeleteButton() {
+    Task.spawn(function onDeleteButtonTask() {
+      yield Browser.unstarSite();
+      BookmarkUI._updateStarButton();
+      BookmarkUI.hideFlyout();
+    });
   },
 
   /*********************************
@@ -145,7 +171,6 @@ var BookmarkUI = {
     switch (aEvent.type) {
       case "URLChanged":
       case "TabSelect":
-        this.resetNoThumbnail();
       case "MozAppbarShowing":
         this.updateButtons();
         break;
