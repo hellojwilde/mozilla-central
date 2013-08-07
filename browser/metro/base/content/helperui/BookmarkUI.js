@@ -27,30 +27,43 @@ var BookmarkUI = {
 
   _loadFlyoutModelTask: function B__loadFlyoutModelTask() {
     let browser = Browser.selectedBrowser;
-    let model = this._flyoutModel = {
+    let tab = Browser.selectedTab;
+
+    let model = BookmarkUI._flyoutModel = {
       isStarred: yield Browser.isSiteStarred(),
       url: browser.currentURI,
       images: tab.snippets.images || []
     };
 
     if (model.isStarred) {
-      let id = yield Bookmarks.getForURI(model.url);
-      let anno = PlacesUtils.annotations.getItemAnnotation(id, "snippets");
-      let snippets = JSON.parse(anno || "{}");
+      model.id = yield Bookmarks.getForURI(model.url);
 
-      model.label = PlacesUtils.bookmarks.getItemTitle(id);
-      model.icon = yield Bookmarks.getFaviconForURI(model.url);
+      let snippets = {};
+      try {
+        let anno = PlacesUtils.annotations.
+                     getItemAnnotation(model.id, "metro/snippets");
+        snippets = JSON.parse(anno);
+      } catch (e) { /* snippets not set yet */ }
 
-      model.noImage = snippets.noImage;
-      model.imageIndex = -1;
-      model.images.forEach(function (item, index) {
-        if (snippets.image.url == item.url) {
-          model.imageIndex = index;
+      model.label = PlacesUtils.bookmarks.getItemTitle(model.id);
+      // TODO
+      //model.icon = yield Bookmarks.getFaviconForURI(model.url);
+
+      model.noImage = snippets.noImage || false;
+      if (snippets.image) {
+        model.imageIndex = -1;
+        model.images.forEach(function (item, index) {
+          if (snippets.image.url == item.url) {
+            model.imageIndex = index;
+          }
+        });
+
+        if (model.imageIndex == -1) {
+          model.imageIndex = model.images.length;
+          model.images.push(snippets.image);
         }
-      });
-      if (model.imageIndex == -1) {
-        model.imageIndex = model.images.length;
-        model.images.push(snippets.image);
+      } else {
+        model.imageIndex = 0;
       }
     } else {
       model.label = browser.contentTitle;
@@ -61,35 +74,61 @@ var BookmarkUI = {
     }
   },
 
-  _saveFlyoutModelTask: function B__saveFlyoutModelTask() {
-    // TODO: sync all of these changes to places.
+  _saveFlyoutModel: function B__saveFlyoutModel() {
+    let model = BookmarkUI._flyoutModel;
+    if (model.id) {
+      let snippets = { noImage: model.noImage };
+
+      if (!model.noImage) {
+        let index = BookmarkUI._preview.backgroundImageSetIndex;
+        snippets.image = model.images[index];
+      }
+
+      let anno = JSON.stringify(snippets);
+      PlacesUtils.annotations.
+        setItemAnnotation(model.id, "metro/snippets", anno, 0, 4);
+
+      Util.dumpLn(anno);
+    }
   },
 
   _updateFlyout: function B__updateFlyout() {
+    try{
     let model = this._flyoutModel;
 
     this._preview.label = model.label;
     this._preview.url = model.url;
-    View._prototype._gotIcon(this._preview, model.icon);
+    View.prototype._gotIcon(this._preview, model.icon);
 
     if (model.noImage) {
+      this._preview.backgroundImageSet = [];
+      this._preview.editing = false;
       this._preview.removeAttribute("tiletype");
     } else {
-      this._preview.addAttribute("tiletype", "thumbnail");
+      this._preview.backgroundImageSet = model.images;
+      this._preview.backgroundImageSetIndex = model.imageIndex;
+      this._preview.setAttribute("tiletype", "thumbnail");
     }
 
-    this._preview.backgroundImageSet = model.images;
-    this._preview.backgroundImageIndex = model.imageIndex;
+    this._noThumbnail.checked = model.noImage;
 
     this._addButton.hidden = model.isStarred;
     this._deleteButton.hidden = this._saveButton.hidden = !model.isStarred;
 
-    this._flyout.anchorAt(this._starButton, "before_center", 0, -10);
+    if (!this._flyout.hidden) {
+      this._flyout.anchorAt(this._starButton, "before_center", 0, -10);
+    }
+    } catch (e){ Util.dumpLn(e);}
   },
 
   showFlyout: function B_showFlyout() {
-    this._updateFlyout();
-    this._flyout.openFlyout(this._starButton, "before_center", 0, -10);
+    return Task.spawn(function _showFlyoutTask() {
+      try {
+      yield Task.spawn(BookmarkUI._loadFlyoutModelTask);
+      BookmarkUI._updateFlyout();
+      BookmarkUI._flyout.openFlyout(BookmarkUI._starButton, "before_center", 0, -10);
+      } catch (e) { Util.dumpLn(e); }
+    });
   },
 
   hideFlyout: function B_hideFlyout() {
@@ -103,23 +142,24 @@ var BookmarkUI = {
 
   onAddButton: function B_onAddButton() {
     Task.spawn(function onAddButtonTask() {
+      try {
       yield Browser.starSite();
-      yield Task.spawn(BookmarkUI._saveFlyoutModelTask);
+      yield BookmarkUI._updateStarButton();
+      BookmarkUI._saveFlyoutModel();
       BookmarkUI.hideFlyout();
+      } catch (e) { Util.dumpLn(e);}
     });
   },
 
   onSaveChangesButton: function B_onSaveChangesButton() {
-    Task.spawn(function onSaveChangesButtonTask() {
-      yield Task.spawn(BookmarkUI._saveFlyoutModelTask);
-      BookmarkUI.hideFlyout();
-    });
+    BookmarkUI._saveFlyoutModel()
+    BookmarkUI.hideFlyout();
   },
 
   onDeleteButton: function B_onDeleteButton() {
     Task.spawn(function onDeleteButtonTask() {
       yield Browser.unstarSite();
-      BookmarkUI._updateStarButton();
+      yield BookmarkUI._updateStarButton();
       BookmarkUI.hideFlyout();
     });
   },
@@ -156,8 +196,10 @@ var BookmarkUI = {
   },
 
   updateButtons: function B_updateButtons() {
-    this._updateStarButton();
-    this._updatePinButton();
+    return Task.spawn(function updateButtonsTask () {
+      yield BookmarkUI._updateStarButton();
+      BookmarkUI._updatePinButton();
+    });
   },
 
   _updatePinButton: function B__updatePinButton() {
@@ -165,8 +207,10 @@ var BookmarkUI = {
   },
 
   _updateStarButton: function B__updateStarButton() {
-    return Browser.isSiteStarred().
-      then((isStarred) => this._starButton.checked = isStarred);
+    return Task.spawn(function _updateStarButtonTask() {
+      let isStarred = yield Browser.isSiteStarred();
+      BookmarkUI._starButton.checked = isStarred;
+    });
   },
 
   onPinButton: function B_onPinButton() {
@@ -178,8 +222,10 @@ var BookmarkUI = {
   },
 
   onStarButton: function B_onStarButton() {
-    this._updateStarButton().
-      then(() => this.showFlyout());
+    Task.spawn(function onStarButtonTask() {
+      yield BookmarkUI._updateStarButton();
+      yield BookmarkUI.showFlyout();
+    });
   },
 
   /*********************************
