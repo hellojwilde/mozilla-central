@@ -225,8 +225,6 @@ using mozilla::dom::workers::ResolveWorkerClasses;
 #include "nsIDOMConnection.h"
 
 #ifdef MOZ_B2G_RIL
-#include "Telephony.h"
-#include "TelephonyCall.h"
 #include "nsIDOMMozVoicemail.h"
 #include "nsIDOMIccManager.h"
 #include "nsIDOMMozCellBroadcast.h"
@@ -640,10 +638,6 @@ static nsDOMClassInfoData sClassInfoData[] = {
                            DOM_DEFAULT_SCRIPTABLE_FLAGS)
 
 #ifdef MOZ_B2G_RIL
-  NS_DEFINE_CLASSINFO_DATA(Telephony, nsEventTargetSH,
-                           EVENTTARGET_SCRIPTABLE_FLAGS)
-  NS_DEFINE_CLASSINFO_DATA(TelephonyCall, nsEventTargetSH,
-                           EVENTTARGET_SCRIPTABLE_FLAGS)
   NS_DEFINE_CLASSINFO_DATA(MozVoicemail, nsEventTargetSH,
                            EVENTTARGET_SCRIPTABLE_FLAGS)
   NS_DEFINE_CLASSINFO_DATA(MozIccManager, nsDOMGenericSH,
@@ -1529,15 +1523,6 @@ nsDOMClassInfo::Init()
   DOM_CLASSINFO_MAP_END
 
 #ifdef MOZ_B2G_RIL
-  DOM_CLASSINFO_MAP_BEGIN(Telephony, nsIDOMTelephony)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMTelephony)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMEventTarget)
-  DOM_CLASSINFO_MAP_END
-
-  DOM_CLASSINFO_MAP_BEGIN(TelephonyCall, nsIDOMTelephonyCall)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMTelephonyCall)
-    DOM_CLASSINFO_MAP_ENTRY(nsIDOMEventTarget)
-  DOM_CLASSINFO_MAP_END
 
   DOM_CLASSINFO_MAP_BEGIN(MozVoicemail, nsIDOMMozVoicemail)
     DOM_CLASSINFO_MAP_ENTRY(nsIDOMMozVoicemail)
@@ -3540,6 +3525,14 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
       JS::Rooted<JSObject*> global(cx);
       bool defineOnXray = xpc::WrapperFactory::IsXrayWrapper(obj);
       if (defineOnXray) {
+        // Check whether to define this property on the Xray first.  This allows
+        // consumers to opt in to defining on the xray even if they don't want
+        // to define on the underlying global.
+        if (name_struct->mConstructorEnabled &&
+            !(*name_struct->mConstructorEnabled)(cx, obj)) {
+          return NS_OK;
+        }
+
         global = js::CheckedUnwrap(obj, /* stopAtOuter = */ false);
         if (!global) {
           return NS_ERROR_DOM_SECURITY_ERR;
@@ -3549,36 +3542,36 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
         global = obj;
       }
 
-      // Check whether our constructor is enabled after we unwrap Xrays, since
-      // we don't want to define an interface on the Xray if it's disabled in
-      // the target global, even if it's enabled in the Xray's global.
-      if (name_struct->mConstructorEnabled &&
-          !(*name_struct->mConstructorEnabled)(cx, global)) {
+      // Check whether to define on the global too.  Note that at this point cx
+      // is in the compartment of global even if we were coming in via an Xray.
+      bool defineOnGlobal = !name_struct->mConstructorEnabled ||
+        (*name_struct->mConstructorEnabled)(cx, global);
+
+      if (!defineOnGlobal && !defineOnXray) {
         return NS_OK;
       }
 
-      bool enabled;
-      JS::Rooted<JSObject*> interfaceObject(cx, define(cx, global, id, &enabled));
-      if (enabled) {
-        if (!interfaceObject) {
+      JS::Rooted<JSObject*> interfaceObject(cx, define(cx, global, id,
+                                                       defineOnGlobal));
+      if (!interfaceObject) {
+        return NS_ERROR_FAILURE;
+      }
+
+      if (defineOnXray) {
+        // This really should be handled by the Xray for the window.
+        ac.destroy();
+        if (!JS_WrapObject(cx, interfaceObject.address()) ||
+            !JS_DefinePropertyById(cx, obj, id,
+                                   JS::ObjectValue(*interfaceObject), JS_PropertyStub,
+                                   JS_StrictPropertyStub, 0)) {
           return NS_ERROR_FAILURE;
         }
 
-        if (defineOnXray) {
-          // This really should be handled by the Xray for the window.
-          ac.destroy();
-          if (!JS_WrapObject(cx, interfaceObject.address()) ||
-              !JS_DefinePropertyById(cx, obj, id,
-                                     JS::ObjectValue(*interfaceObject), JS_PropertyStub,
-                                     JS_StrictPropertyStub, 0)) {
-            return NS_ERROR_FAILURE;
-          }
-        }
-
-        *did_resolve = true;
-
-        return NS_OK;
       }
+
+      *did_resolve = true;
+
+      return NS_OK;
     }
   }
 

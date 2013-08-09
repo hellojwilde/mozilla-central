@@ -8,6 +8,8 @@ let Ci = Components.interfaces;
 let Cu = Components.utils;
 let Cr = Components.results;
 
+Cu.import("resource://gre/modules/PageThumbs.jsm");
+
 const kBrowserViewZoomLevelPrecision = 10000;
 
 // allow panning after this timeout on pages with registered touch listeners
@@ -15,6 +17,8 @@ const kTouchTimeout = 300;
 const kSetInactiveStateTimeout = 100;
 
 const kDefaultMetadata = { autoSize: false, allowZoom: true, autoScale: true };
+
+const kTabThumbnailDelayCapture = 500;
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
@@ -1463,6 +1467,7 @@ function Tab(aURI, aParams, aOwner) {
   this._metadata = null;
   this._snippets = null;
   this._eventDeferred = null;
+  this._updateThumbnailTimeout = null;
 
   this.owner = aOwner || null;
 
@@ -1624,13 +1629,45 @@ Tab.prototype = {
       self._eventDeferred = null;
     }
     browser.addEventListener("pageshow", onPageShowEvent, true);
+    browser.messageManager.addMessageListener("Content:StateChange", this);
+    Services.obs.addObserver(this, "metro_viewstate_changed", false);
 
     if (aOwner)
       this._copyHistoryFrom(aOwner);
     this._loadUsingParams(browser, aURI, aParams);
   },
 
+  receiveMessage: function(aMessage) {
+    switch (aMessage.name) {
+      case "Content:StateChange":
+        // update the thumbnail now...
+        this.updateThumbnail();
+        // ...and in a little while to capture page after load.
+        if (aMessage.json.stateFlags & Ci.nsIWebProgressListener.STATE_STOP) {
+          clearTimeout(this._updateThumbnailTimeout);
+          this._updateThumbnailTimeout = setTimeout(() => {
+            this.updateThumbnail();
+          }, kTabThumbnailDelayCapture);
+        }
+        break;
+    }
+  },
+
+  observe: function BrowserUI_observe(aSubject, aTopic, aData) {
+    switch (aTopic) {
+      case "metro_viewstate_changed":
+        if (aData !== "snapped") {
+          this.updateThumbnail();
+        }
+        break;
+    }
+  },
+
   destroy: function destroy() {
+    this._browser.messageManager.removeMessageListener("Content:StateChange", this);
+    Services.obs.removeObserver(this, "metro_viewstate_changed", false);
+    clearTimeout(this._updateThumbnailTimeout);
+
     Elements.tabList.removeTab(this._chromeTab);
     this._chromeTab = null;
     this._destroyBrowser();
@@ -1839,8 +1876,8 @@ Tab.prototype = {
     return this.metadata.allowZoom && !Util.isURLEmpty(this.browser.currentURI.spec);
   },
 
-  updateThumbnailSource: function updateThumbnailSource() {
-    this._chromeTab.updateThumbnailSource(this._browser);
+  updateThumbnail: function updateThumbnail() {
+    PageThumbs.captureToCanvas(this.browser.contentWindow, this._chromeTab.thumbnailCanvas);
   },
 
   updateFavicon: function updateFavicon() {
