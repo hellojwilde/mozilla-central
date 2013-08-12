@@ -22,6 +22,23 @@ var Appbar = {
 
   handleEvent: function Appbar_handleEvent(aEvent) {
     switch (aEvent.type) {
+<<<<<<< HEAD
+=======
+      case 'URLChanged':
+      case 'TabSelect':
+        this.update();
+        // Switching away from or loading a site into a startui tab that has actions
+        // pending, we consider this confirmation that the user wants to flush changes.
+        if (this.activeTileset && aEvent.lastTab && aEvent.lastTab.browser.currentURI.spec == kStartURI) {
+          ContextUI.dismiss();
+        }
+        break;
+
+      case 'MozAppbarShowing':
+        this.update();
+        break;
+
+>>>>>>> cbdebe184abff8b1d8f27507f28fe6c96ca40ca1
       case 'MozAppbarDismissing':
         if (this.activeTileset && ('isBound' in this.activeTileset)) {
           this.activeTileset.clearSelection();
@@ -53,8 +70,52 @@ var Appbar = {
   },
 
   onMenuButton: function(aEvent) {
-    let menu = document.getElementById("extras");
-    menu.openFlyout(this.menuButton, "before_end");
+      let typesArray = [];
+
+      if (!BrowserUI.isStartTabVisible)
+        typesArray.push("find-in-page");
+      if (ConsolePanelView.enabled)
+        typesArray.push("open-error-console");
+      if (!MetroUtils.immersive)
+        typesArray.push("open-jsshell");
+
+      try {
+        // If we have a valid http or https URI then show the view on desktop
+        // menu item.
+        let uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
+                                     null, null);
+        if (uri.schemeIs('http') || uri.schemeIs('https')) {
+          typesArray.push("view-on-desktop");
+        }
+      } catch(ex) {
+      }
+
+      var x = this.menuButton.getBoundingClientRect().left;
+      var y = Elements.toolbar.getBoundingClientRect().top;
+      ContextMenuUI.showContextMenu({
+        json: {
+          types: typesArray,
+          string: '',
+          xPos: x,
+          yPos: y,
+          leftAligned: true,
+          bottomAligned: true
+      }
+
+      });
+  },
+
+  onViewOnDesktop: function() {
+    try {
+      // Make sure we have a valid URI so Windows doesn't prompt
+      // with an unrecognized command, select default program window
+      var uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
+                                   null, null);
+      if (uri.schemeIs('http') || uri.schemeIs('https')) {
+        MetroUtils.launchInDesktop(Browser.selectedBrowser.currentURI.spec, "");
+      }
+    } catch(ex) {
+    }
   },
 
   onAutocompleteCloseButton: function () {

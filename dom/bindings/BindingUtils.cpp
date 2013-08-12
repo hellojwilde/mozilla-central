@@ -217,7 +217,7 @@ DefineConstants(JSContext* cx, JS::Handle<JSObject*> obj,
                 const ConstantSpec* cs)
 {
   for (; cs->name; ++cs) {
-    JSBool ok =
+    bool ok =
       JS_DefineProperty(cx, obj, cs->name, cs->value, NULL, NULL,
                         JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT);
     if (!ok) {
@@ -351,7 +351,7 @@ static bool
 DefineConstructor(JSContext* cx, JS::Handle<JSObject*> global, const char* name,
                   JS::Handle<JSObject*> constructor)
 {
-  JSBool alreadyDefined;
+  bool alreadyDefined;
   if (!JS_AlreadyHasOwnProperty(cx, global, name, &alreadyDefined)) {
     return false;
   }
@@ -672,7 +672,7 @@ TryPreserveWrapper(JSObject* obj)
 
 // Can only be called with the immediate prototype of the instance object. Can
 // only be called on the prototype of an object known to be a DOM instance.
-JSBool
+bool
 InstanceClassHasProtoAtDepth(JS::Handle<JSObject*> protoObject, uint32_t protoID,
                              uint32_t depth)
 {
@@ -815,15 +815,14 @@ GetNativePropertyHooks(JSContext *cx, JS::Handle<JSObject*> obj,
 bool
 XrayResolveOwnProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                        JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                       JSPropertyDescriptor* desc, unsigned flags)
+                       JS::MutableHandle<JSPropertyDescriptor> desc, unsigned flags)
 {
   DOMObjectType type;
   const NativePropertyHooks *nativePropertyHooks =
     GetNativePropertyHooks(cx, obj, type);
 
   return type != eInstance || !nativePropertyHooks->mResolveOwnProperty ||
-         nativePropertyHooks->mResolveOwnProperty(cx, wrapper, obj, id, desc,
-                                                  flags);
+         nativePropertyHooks->mResolveOwnProperty(cx, wrapper, obj, id, desc, flags);
 }
 
 static bool
@@ -1088,7 +1087,7 @@ XrayResolveNativeProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
 bool
 XrayDefineProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                    JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                   JSPropertyDescriptor* desc, bool* defined)
+                   JS::MutableHandle<JSPropertyDescriptor> desc, bool* defined)
 {
   if (!js::IsProxy(obj))
       return true;
@@ -1316,7 +1315,7 @@ GetPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
     return true;
   }
 
-  JSBool hasProp;
+  bool hasProp;
   if (!JS_HasPropertyById(cx, proto, id, &hasProp)) {
     return false;
   }
@@ -1337,7 +1336,6 @@ GetPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
 
 bool
 HasPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
-                       DOMProxyHandler* handler,
                        JS::Handle<jsid> id)
 {
   JS::Rooted<JSObject*> obj(cx, proxy);
@@ -1346,11 +1344,38 @@ HasPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
     obj = js::UncheckedUnwrap(obj);
     ac.construct(cx, obj);
   }
-  MOZ_ASSERT(js::IsProxy(obj) && js::GetProxyHandler(obj) == handler);
 
   bool found;
-  // We ignore an error from GetPropertyOnPrototype.
-  return !GetPropertyOnPrototype(cx, obj, id, &found, NULL) || found;
+  // We ignore an error from GetPropertyOnPrototype.  We pass nullptr
+  // for vp so that GetPropertyOnPrototype won't actually do a get.
+  return !GetPropertyOnPrototype(cx, obj, id, &found, nullptr) || found;
+}
+
+bool
+AppendNamedPropertyIds(JSContext* cx, JS::Handle<JSObject*> proxy,
+                       nsTArray<nsString>& names,
+                       bool shadowPrototypeProperties,
+                       JS::AutoIdVector& props)
+{
+  for (uint32_t i = 0; i < names.Length(); ++i) {
+    JS::Rooted<JS::Value> v(cx);
+    if (!xpc::NonVoidStringToJsval(cx, names[i], v.address())) {
+      return false;
+    }
+
+    JS::Rooted<jsid> id(cx);
+    if (!JS_ValueToId(cx, v, id.address())) {
+      return false;
+    }
+
+    if (shadowPrototypeProperties || !HasPropertyOnPrototype(cx, proxy, id)) {
+      if (!props.append(id)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 JSObject*
@@ -1730,10 +1755,10 @@ WorkerGlobalObject::WorkerGlobalObject(JSContext* aCx, JSObject* aObject)
   mGlobalJSObject = GetGlobalObject<false>(aCx, aObject, ac);
 }
 
-JSBool
+bool
 InterfaceHasInstance(JSContext* cx, JS::Handle<JSObject*> obj,
                      JS::Handle<JSObject*> instance,
-                     JSBool* bp)
+                     bool* bp)
 {
   const DOMIfaceAndProtoJSClass* clasp =
     DOMIfaceAndProtoJSClass::FromJSClass(js::GetObjectClass(obj));
@@ -1789,9 +1814,9 @@ InterfaceHasInstance(JSContext* cx, JS::Handle<JSObject*> obj,
   return true;
 }
 
-JSBool
+bool
 InterfaceHasInstance(JSContext* cx, JS::Handle<JSObject*> obj, JS::MutableHandle<JS::Value> vp,
-                     JSBool* bp)
+                     bool* bp)
 {
   if (!vp.isObject()) {
     *bp = false;
@@ -1802,10 +1827,10 @@ InterfaceHasInstance(JSContext* cx, JS::Handle<JSObject*> obj, JS::MutableHandle
   return InterfaceHasInstance(cx, obj, instanceObject, bp);
 }
 
-JSBool
+bool
 InterfaceHasInstance(JSContext* cx, int prototypeID, int depth,
                      JS::Handle<JSObject*> instance,
-                     JSBool* bp)
+                     bool* bp)
 {
   const DOMClass* domClass = GetDOMClass(js::UncheckedUnwrap(instance));
 

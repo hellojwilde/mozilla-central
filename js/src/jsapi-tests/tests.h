@@ -18,7 +18,6 @@
 #include "jsapi.h"
 #include "jscntxt.h"
 #include "jsgc.h"
-#include "jsprvtd.h"
 
 #include "js/Vector.h"
 
@@ -187,7 +186,7 @@ class JSAPITest
     bool checkSame(jsval actualArg, jsval expectedArg,
                    const char *actualExpr, const char *expectedExpr,
                    const char *filename, int lineno) {
-        JSBool same;
+        bool same;
         JS::RootedValue actual(cx, actualArg), expected(cx, expectedArg);
         return (JS_SameValue(cx, actual, expected, &same) && same) ||
                fail(JSAPITestString("CHECK_SAME failed: expected JS_SameValue(cx, ") +
@@ -237,7 +236,7 @@ class JSAPITest
     }
 
   protected:
-    static JSBool
+    static bool
     print(JSContext *cx, unsigned argc, jsval *vp)
     {
         jsval *argv = JS_ARGV(cx, vp);
