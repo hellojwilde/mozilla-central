@@ -22,8 +22,6 @@ var Appbar = {
 
   handleEvent: function Appbar_handleEvent(aEvent) {
     switch (aEvent.type) {
-<<<<<<< HEAD
-=======
       case 'URLChanged':
       case 'TabSelect':
         this.update();
@@ -38,7 +36,6 @@ var Appbar = {
         this.update();
         break;
 
->>>>>>> cbdebe184abff8b1d8f27507f28fe6c96ca40ca1
       case 'MozAppbarDismissing':
         if (this.activeTileset && ('isBound' in this.activeTileset)) {
           this.activeTileset.clearSelection();
