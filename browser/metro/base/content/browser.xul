@@ -818,6 +818,36 @@
         <richlistbox id="menupopup-commands" onclick="if (event.target != this) AutofillMenuUI.selectByIndex(this.selectedIndex);" flex="1"/>
       </vbox>
     </box>
+
+    <vbox id="highlights-container" class="menu-container" hidden="true">
+      <vbox id="highlights-popup" class="menupopup">
+        <hbox class="menupopup-header">
+          <button id="highlights-back-button">Back</button>
+          <description class="highlights-title">Highlights</description>
+          <button id="highlights-edit-button">Edit</button>
+        </hbox>
+
+        <vbox id="highlights-empty" class="highlights-panel">
+          <label value="You don't have any highlights."/>
+          <label id="highlights-empty-create" class="text-link"
+                 value="Save this page"/>
+        </vbox>
+
+        <vbox id="highlights-page" class="highlights-panel">
+          <box><richgriditem id="highlights-page-preview"/></box>
+          <hbox id="highlights-page-tools" class="highlights-tools">
+            <button id="highlights-page-delete" label="Delete"/>
+          </hbox>
+        </vbox>
+
+        <vbox id="highlights-list" class="highlights-panel">
+          <richlistbox id="highlights-list-items" flex="1"/>
+          <hbox id="highlights-list-tools" class="highlights-tools">
+            <button id="highlights-list-delete" label="Delete"/>
+          </hbox>
+        </vbox>
+      </vbox>
+    </vbox>
   </stack>
 
 </window>
