@@ -19,5 +19,5 @@ var HighlightsUI = {
 
   show: function HUI_show() {
 
-  }
+  },
 };
