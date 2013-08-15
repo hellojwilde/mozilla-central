@@ -3,11 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var HighlightsUI = {
+"use strict";
+
+let HighlightsUI = {
   __menuPopup: null,
 
   get _panel() { return document.getElementById("highlights-container"); },
   get _popup() { return document.getElementById("highlights-popup"); },
+  get _button() { return document.getElementById(""); },
 
   get _menuPopup() {
     if (!this.__menuPopup) {
@@ -18,6 +21,11 @@ var HighlightsUI = {
   },
 
   show: function HUI_show() {
-
+    this._menuPopup.show();
   },
+
+  onStarButton: function HUI_onStarButton() {
+    this.show();
+  }
 };
+

@@ -569,11 +569,10 @@ Util.TransitionState = function (aFromState, aToStateName) {
  */
 
 Util.Stateful = function (aConfig) {
-  let { verbs, defaultState, states } = aConfig;
+  let { actions, defaultState, states } = aConfig;
 
-  for (let verb in verbs) {
-    let {to, from} = verbs[verb];
-    this.registerVerb(verb, to, from);
+  for (let action in actions) {
+    this.registerAction(action, actions[action]);
   }
 
   for (let state in states) {
@@ -597,13 +596,26 @@ Util.Stateful.prototype = {
   get defaultState() { return this._defaultState; },
   get state() { return this._state; },
 
-  registerVerb: function registerVerb(aVerbName, aTo, aFrom) {
-    this[aVerbName] = function () {
-      this.transition(aTo, aFrom);
-    }.bind(this);
+  registerAction: function registerAction(aActionName, aAction) {
+    if (this.hasOwnProperty(aActionName)) {
+      throw "Action '" + aActionName + "' already exists.";
+    }
+
+    if (typeof(aAction) == "function") {
+      this[aActionName] = aAction.bind(this);
+    } else if (typeof(aAction) == "object") {
+      this[aActionName] = function () {
+        let { to, from } = aAction;
+        this.transition(to, from);
+      }.bind(this);
+    }
   },
 
   registerState: function registerState(aStateName, aTask) {
+    if (this.hasOwnProperty(aVerbName)) {
+      throw "State '" + aStateName + "' already exists.";
+    }
+
     this._states[aStateName] = aTask;
   },
 

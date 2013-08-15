@@ -260,10 +260,7 @@
                                      oncommand="Appbar.onDownloadButton()"/>
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="Appbar.onStarButton()"/>
-              <toolbarbutton id="pin-button" class="appbar-primary"
-                             type="checkbox"
-                             oncommand="Appbar.onPinButton()"/>
+                             oncommand="HighlightsUI.onStarButton()"/>
               <toolbarbutton id="menu-button" class="appbar-primary"
                              oncommand="Appbar.onMenuButton(event)"/>
             </hbox>
