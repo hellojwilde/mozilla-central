@@ -471,7 +471,6 @@ let Util = {
   },
 };
 
-
 /*
  * Timeout
  *
@@ -540,3 +539,96 @@ Util.Timeout.prototype = {
   }
 };
 
+/*
+ * StaticState
+ *
+ * Represents a currently unchanging state mode for a Stateful instance.
+ */
+Util.StaticState = function (aStateName) {
+  this.name = aStateName;
+};
+
+/*
+ * TransitionState
+ *
+ * Represents a mode where a Stateful instance is transitioning from one
+ * state to another.
+ */
+Util.TransitionState = function (aFromState, aToStateName) {
+  this.fromName = aFrom.name;
+  this.toName = aToStateName;
+};
+
+/*
+ * Stateful
+ *
+ * Class representing a component (like a menupopup) with multiple states and
+ * async transitions between them.
+ */
+
+Util.Stateful = function (aConfig) {
+  let { verbs, defaultState, states } = aConfig;
+
+  for (let verb in verbs) {
+    let {to, from} = verbs[verb];
+    this.registerVerb(verb, to, from);
+  }
+
+  for (let state in states) {
+    let tasks = states[state];
+    this.registerState(state, tasks);
+  }
+
+  if (!defaultState) {
+    throw "Stateful: defaultState not provided or invalid";
+  }
+
+  this._defaultState = defaultState;
+  this.transition(defaultState);
+};
+
+Util.Stateful.prototype = {
+  _states: {},
+  _defaultState: null,
+  _state: null,
+
+  get defaultState() { return this._defaultState; },
+  get state() { return this._state; },
+
+  registerVerb: function registerVerb(aVerbName, aTo, aFrom) {
+    this[aVerbName] = function () {
+      this.transition(aTo, aFrom);
+    }.bind(this);
+  },
+
+  registerState: function registerState(aStateName, aTask) {
+    this._states[aStateName] = aTask;
+  },
+
+  transition: function transition(aToName, aOnlyFromName) {
+    let def = Promise.defer();
+
+    if (this._state instanceof Util.TransitionState) {
+      return def.reject("Transition is already in flight.");
+    }
+
+    // If a required `from` state name was provided,
+    // ensure that we're starting from the corresponding state.
+    if (this._state instanceof Util.StaticState
+        && aOnlyFromName
+        && this._state.name != aOnlyFromName) {
+      let reason = "State must be '" + aOnlyFromName + "', " +
+                   "but is currently '" + this._state.name + "'.";
+      return def.reject(reason);
+    }
+
+    let task = this._states[aToName];
+    if (!task) {
+      return def.reject("No state registered for '" + aToName + "'.");
+    }
+
+    this._state = new Util.TransitionState(this._state, aToName);
+    return Task.spawn(task)
+      .then(() => this._state = new Util.StaticState(aToName));
+  }
+};
