@@ -471,6 +471,7 @@ let Util = {
   },
 };
 
+
 /*
  * Timeout
  *
@@ -538,6 +539,7 @@ Util.Timeout.prototype = {
     return this._type !== null;
   }
 };
+
 
 /*
  * StaticState
