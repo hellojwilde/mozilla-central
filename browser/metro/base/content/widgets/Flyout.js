@@ -23,16 +23,19 @@ Flyout.prototype = {
 
   show: function (aPositionOptions) {
     if (this.visible) {
-      this._animateHide().then(() => this._animateShow(aPositionOptions));
-    } else {
-      this._animateShow(aPositionOptions);
+      return this._animateHide()
+                 .then(() => this._animateShow(aPositionOptions));
     }
+
+    return this._animateShow(aPositionOptions);
   },
 
   hide: function () {
-    if (this.visible) {
-      this._animateHide();
+    if (!this.visible) {
+      return Promise.defer().reject("already visible");
     }
+
+    return this._animateHide();
   },
 
   _position: function _position(aPositionOptions) {

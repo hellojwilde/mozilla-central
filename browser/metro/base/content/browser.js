@@ -798,21 +798,21 @@ var Browser = {
     return MetroUtils.isTilePinned(this._currentPageTileID);
   },
 
-  starSite: function browser_starSite(callback) {
+  starSite: function browser_starSite() {
     let uri = this.selectedBrowser.currentURI;
     let title = this.selectedBrowser.contentTitle;
 
-    Bookmarks.addForURI(uri, title, callback);
+    return Bookmarks.addForURI(uri, title);
   },
 
-  unstarSite: function browser_unstarSite(callback) {
+  unstarSite: function browser_unstarSite() {
     let uri = this.selectedBrowser.currentURI;
-    Bookmarks.removeForURI(uri, callback);
+    return Bookmarks.removeForURI(uri);
   },
 
-  isSiteStarredAsync: function browser_isSiteStarredAsync(callback) {
+  isSiteStarred: function browser_isSiteStarred() {
     let uri = this.selectedBrowser.currentURI;
-    Bookmarks.isURIBookmarked(uri, callback);
+    return Bookmarks.isURIBookmarked(uri);
   },
 
   /** Zoom one step in (negative) or out (positive). */
