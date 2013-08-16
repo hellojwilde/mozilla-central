@@ -178,7 +178,7 @@ var ContextMenuHandler = {
     let imageUrl = "";
 
     let state = {
-      types: ["highlight"],
+      types: [],
       label: "",
       linkURL: "",
       linkTitle: "",
@@ -295,6 +295,7 @@ var ContextMenuHandler = {
       let selection = targetWindow.getSelection();
       if (selection && selection.toString().length > 0) {
         state.string = targetWindow.getSelection().toString();
+        state.types.push("highlight");
         state.types.push("copy");
         state.types.push("selected-text");
       } else {

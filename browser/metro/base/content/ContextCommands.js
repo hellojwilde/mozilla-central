@@ -35,7 +35,11 @@ var ContextCommands = {
   // Content specific
 
   highlight: function cc_highlight() {
-    Util.dumpLn(ContextMenuUI.popupState);
+    let target = ContextMenuUI.popupState.target;
+    if (target.localName != "browser")
+      return;
+
+    Util.dumpLn(ContextMenuUI.popupState.string);
   },
 
   // Text specific

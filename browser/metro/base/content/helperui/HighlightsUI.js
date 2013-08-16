@@ -8,12 +8,51 @@
 XPCOMUtils.defineLazyModuleGetter(this, "View",
                                   "resource:///modules/View.jsm");
 
+function SerializedNode(aTagName, aTextContent) {
+  this.tagName = aTagName;
+  this.textContent = aTextContent;
+}
+
+SerializedNode.prototype.getNode = function SN_getNode(aDocument) {
+  let doc = aDocument || document;
+  for (let node of doc.getElementsByTagName(this.tagName)) {
+    if (node.textContent == this.textContent) {
+      return node;
+    }
+  }
+  return null;
+};
+
+SerializedNode.serialize = function SN_factory(aNode) {
+  return new SerializedNode(aNode.tagName, aNode.textContent);
+};
+
+function Highlight(aAnchorNode, aAnchorOffset, aFocusNode, aFocusOffset) {
+  this.anchorNode = aAnchorNode;
+  this.anchorOffset = aAnchorOffset;
+  this.focusNode = aFocusNode;
+  this.focusOffset = aFocusOffset;
+}
+
+let Highlights = {
+  getAllForPage: function () {
+
+  },
+
+  addForPage: function (aHighlight) {
+
+  },
+
+  deleteForPage: function () {
+
+  }
+};
+
 let HighlightsUI = {
   __flyout: null,
   __page: "empty", // empty, bookmark, highlights
 
   _positionOptions: null,
-  _highlights: [],
 
   get _page() { return this.__page; },
   set _page(aPage) {
@@ -89,15 +128,7 @@ let HighlightsUI = {
 
     // XXX fragile
     Util.getFaviconForURI(browser.currentURI)
-        .then((iconURI) => {
-          try {
-
-
-          View.prototype._gotIcon(preview, iconURI);
-                    } catch(e) {
-            alert(e);
-          }
-        });
+        .then((iconURI) => View.prototype._gotIcon(preview, iconURI));
   },
 
   showHighlightsPage: function HUI_showHighlightsPage(aBookmarkId) {
@@ -161,7 +192,7 @@ let HighlightsUI = {
     });
   },
 
-  onSavePageButton: function HUI_onSaveButton() {
+  onBookmarkButton: function HUI_onSaveButton() {
     return Task.spawn(function HUI_onSaveButtonTask () {
       yield Browser.starSite();
       yield HighlightsUI.update();
