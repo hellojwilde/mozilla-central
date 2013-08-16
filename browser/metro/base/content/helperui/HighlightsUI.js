@@ -47,33 +47,43 @@ let HighlightsUI = {
   },
 
   /**
-   * State updaters.
+   * State updater.
    */
 
   update: function HUI_update() {
     return Task.spawn(function HUI_update_task() {
-      // Determine what type of page we're on.
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
 
-      // empty: no bookmark for current URI
-      // bookmark: bookmark, but no highlight annotations
-      // highlights: bookmark, and highlight annotations
-
-      // Update the contents of that page.
-      if (this._page == "bookmark") {
-        yield HighlightsUI.updateBookmarkPage();
+      if (bookmarkId == null) {
+        // Empty page: no bookmark for current URI.
+        this._page = "empty";
+        return;
       }
 
-      if (this._page == "highlights") {
-        yield HighlightsUI.updateHighlightsPage();
+      try {
+        let json = PlacesUtils.annotations.
+          getItemAnnotation(bookmarkId, "highlights");
+        let highlights = JSON.parse(json);
+      } catch (e) { /* there were no highlights */ }
+
+      if (!highlights) {
+        // Bookmark page: bookmark, but no highlights
+        this._page = "bookmark";
+        yield HighlightsUI.updateBookmarkPage(bookmarkId);
+      } else {
+        // Highlights page: bookmark and highlights
+        this._page = "highlights";
+        yield HighlightsUI.updateHighlightsPage(bookmarkId);
       }
     });
   },
 
-  updateBookmarkPage: function HUI_updateBookmarkPage() {
+  updateBookmarkPage: function HUI_updateBookmarkPage(aBookmarkId) {
 
   },
 
-  updateHighlightsPage: function HUI_updateHighlightsPage() {
+  updateHighlightsPage: function HUI_updateHighlightsPage(aBookmarkId) {
 
   },
 

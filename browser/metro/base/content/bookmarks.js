@@ -64,16 +64,13 @@ var Bookmarks = {
    * Gets the first bookmark ID for a URI.
    * @param   {nsIURI}  aURI  The page URI to check.
    * @returns {Promise} Resolved with the bookmark ID or
-   *                    rejected if there is no bookmark for the URI.
+   *                    null if there is no bookmark for the URI.
    */
   getForURI: function bg_getForURI(aURI) {
     let def = Promise.defer();
     PlacesUtils.asyncGetBookmarkIds(aURI, function(aItemIds) {
-      if (aItemIds && aItemIds.length > 0) {
-        def.resolve(aItemIds[0]);
-      } else {
-        def.reject();
-      }
+      let haveItems = aItemIds && aItemIds.length > 0;
+      def.resolve((haveItems) ? aItemIds[0] : null);
     });
     return def.promise;
   },
