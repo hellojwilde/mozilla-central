@@ -32,6 +32,12 @@ var ContextCommands = {
    * Context menu handlers
    */
 
+  // Content specific
+
+  highlight: function cc_highlight() {
+    Util.dumpLn(ContextMenuUI.popupState);
+  },
+
   // Text specific
 
   cut: function cc_cut() {

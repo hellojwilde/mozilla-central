@@ -178,7 +178,7 @@ var ContextMenuHandler = {
     let imageUrl = "";
 
     let state = {
-      types: [],
+      types: ["highlight"],
       label: "",
       linkURL: "",
       linkTitle: "",

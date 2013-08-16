@@ -707,6 +707,12 @@
                menu itself. -->
           <!-- ux spec: https://bug782810.bugzilla.mozilla.org/attachment.cgi?id=714804 -->
 
+          <!-- Content related -->
+          <!-- for page content, this will add the selection to the list of highlights -->
+          <richlistitem id="context-highlight" type="highlight" onclick="ContextCommands.highlight();">
+            <label value="Highlight"/>
+          </richlistitem>
+
           <!-- Text related -->
           <!-- for text inputs, this will cut selected text -->
           <richlistitem id="context-cut" type="cut" onclick="ContextCommands.cut();">
