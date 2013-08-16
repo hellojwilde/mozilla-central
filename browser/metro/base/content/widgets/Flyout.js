@@ -2,6 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Positioning buffer enforced between the edge of a context menu
+// and the edge of the screen.
+const kPositionPadding = 10;
+
 /**
  * Wraps DOM to create an interactive popup menu.
  *

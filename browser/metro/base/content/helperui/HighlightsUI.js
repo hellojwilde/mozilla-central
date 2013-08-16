@@ -5,11 +5,17 @@
 
 "use strict";
 
+XPCOMUtils.defineLazyModuleGetter(this, "View",
+                                  "resource:///modules/View.jsm");
+
 let HighlightsUI = {
   __flyout: null,
   __page: "empty", // empty, bookmark, highlights
 
-  get _page() { return __page; },
+  _positionOptions: null,
+  _highlights: [],
+
+  get _page() { return this.__page; },
   set _page(aPage) {
     if (aPage == "empty" || aPage == "bookmark" || aPage == "highlights") {
       this.__page = aPage;
@@ -47,19 +53,55 @@ let HighlightsUI = {
    * @returns {Promise} Resolved when popup fully shown.
    */
   show: function HUI_show() {
-    return Task.spawn(function HUI_show_task() {
+    return Task.spawn(function HUI_showTask() {
       yield HighlightsUI.update();
 
-      let x = HighlightsUI._button.getBoundingClientRect().left;
+      let rect = HighlightsUI._button.getBoundingClientRect();
+      let x = (rect.left + rect.right) / 2;
       let y = Elements.toolbar.getBoundingClientRect().top;
-
-      yield HighlightsUI._flyout.show({
+      let position = HighlightsUI._positionOptions = {
         xPos: x,
         yPos: y,
-        leftAligned: true,
+        centerHorizontally: true,
         bottomAligned: true
-      });
+      };
+
+      yield HighlightsUI._flyout.show(position);
     });
+  },
+
+  /**
+   * Page display methods.
+   */
+
+  showEmptyPage: function HUI_showEmptyPage() {
+    this._page = "empty";
+  },
+
+  showBookmarkPage: function HUI_showBookmarkPage(aBookmarkId) {
+    this._page = "bookmark";
+
+    let browser = Browser.selectedBrowser;
+    let preview = document.getElementById("highlights-page-preview");
+
+    preview.label = PlacesUtils.bookmarks.getItemTitle(aBookmarkId);
+    preview.url = browser.currentURI;
+
+    // XXX fragile
+    Util.getFaviconForURI(browser.currentURI)
+        .then((iconURI) => {
+          try {
+
+
+          View.prototype._gotIcon(preview, iconURI);
+                    } catch(e) {
+            alert(e);
+          }
+        });
+  },
+
+  showHighlightsPage: function HUI_showHighlightsPage(aBookmarkId) {
+    this._page = "highlights";
   },
 
   /**
@@ -73,26 +115,39 @@ let HighlightsUI = {
 
       if (bookmarkId == null) {
         // Empty page: no bookmark for current URI.
-        this._page = "empty";
+        HighlightsUI.showEmptyPage();
         return;
       }
 
       try {
         let json = PlacesUtils.annotations.
           getItemAnnotation(bookmarkId, "highlights");
-        let highlights = JSON.parse(json);
-      } catch (e) { /* there were no highlights */ }
+        HighlightsUI._highlights = JSON.parse(json);
+      } catch (e) {
+        // There were no highlights found
+        HighlightsUI._highlights = [];
+      }
 
-      if (!highlights) {
+      if (HighlightsUI._highlights.length == 0) {
         // Bookmark page: bookmark, but no highlights
-        this._page = "bookmark";
-        yield HighlightsUI._updateBookmarkPage(bookmarkId);
+        HighlightsUI.showBookmarkPage(bookmarkId);
       } else {
         // Highlights page: bookmark and highlights
-        this._page = "highlights";
-        yield HighlightsUI._updateHighlightsPage(bookmarkId);
+        HighlightsUI.showHighlightsPage(bookmarkId);
       }
     });
+  },
+
+  /**
+   * Updates the flyout's position to reflect the new size of the contents.
+   */
+  reposition: function HUI_reposition() {
+    let positionOptions = this._positionOptions;
+
+    // XXX we have to run this twice. first time sets size properly.
+    // second time sets the position given the new size
+    this._flyout._position(positionOptions);
+    this._flyout._position(positionOptions);
   },
 
   /**
@@ -100,7 +155,19 @@ let HighlightsUI = {
    */
 
   onStarButton: function HUI_onStarButton() {
-    this.show();
+    return Task.spawn(function HUI_onStarButtonTask () {
+      yield Appbar.update();
+      yield HighlightsUI.show();
+    });
+  },
+
+  onSavePageButton: function HUI_onSaveButton() {
+    return Task.spawn(function HUI_onSaveButtonTask () {
+      yield Browser.starSite();
+      yield HighlightsUI.update();
+      yield HighlightsUI.reposition();
+      yield Appbar.update();
+    });
   },
 
   onBackButton: function HUI_onBackButton() {
@@ -112,35 +179,28 @@ let HighlightsUI = {
   },
 
   onDeleteButton: function HUI_onDeleteButton() {
-    switch (this._page) {
-      case "bookmark":
-        // drop the bookmark.
-        break;
-      case "highlights":
-        // delete the highlights. if all are deleted, drop the bookmark.
-        break;
-    }
+    return Task.spawn(function HUI_onDeleteButtonTask() {
+      switch (HighlightsUI._page) {
+        case "bookmark":
+          yield Browser.unstarSite();
+          break;
+        case "highlights":
+          // delete the highlights both in the _highlights bin and on the list.
+          // if all are deleted, drop the bookmark.
+          break;
+      }
 
-    this.update();
+      yield HighlightsUI.update();
+      yield HighlightsUI.reposition();
+      yield Appbar.update();
+    });
   },
 
   onPopupHidden: function HUI_onPopupHidden() {
     switch (this._page) {
       case "bookmark":
-        // save changes to the rich bookmark snippet.
+        // save changes to the rich bookmark snippet, which we don't have yet.
         break;
     }
-  },
-
-  /**
-   * Internal.
-   */
-
-  _updateBookmarkPage: function HUI__updateBookmarkPage(aBookmarkId) {
-
-  },
-
-  _updateHighlightsPage: function HUI__updateHighlightsPage(aBookmarkId) {
-
   }
 };

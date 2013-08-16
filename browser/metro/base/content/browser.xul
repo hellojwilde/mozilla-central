@@ -261,6 +261,9 @@
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
                              oncommand="HighlightsUI.onStarButton()"/>
+              <toolbarbutton id="pin-button" class="appbar-primary"
+                             type="checkbox"
+                             oncommand="Appbar.onPinButton()"/>
               <toolbarbutton id="menu-button" class="appbar-primary"
                              oncommand="Appbar.onMenuButton(event)"/>
             </hbox>
@@ -817,33 +820,37 @@
     </box>
 
     <vbox id="highlights-container" class="menu-container" hidden="true">
-      <vbox id="highlights-popup" class="menupopup">
-        <hbox class="menupopup-header">
-          <button id="highlights-back-button" value="Back"
+      <vbox id="highlights-popup" class="menu-popup menu-border">
+        <hbox class="menu-header">
+          <button id="highlights-back-button" class="symbol-button"
+                  label="&#xE0BA;"
                   oncommand="HighlightsUI.onBackButton();"/>
-          <description class="highlights-title">Highlights</description>
-          <button id="highlights-edit-button" value="Edit"
+
+          <description class="highlights-title" flex="1">
+            Highlights
+          </description>
+
+          <button id="highlights-edit-button" class="symbol-button"
+                  label="&#xE104;"
                   oncommand="HighlightsUI.onEditButton();"/>
         </hbox>
 
-        <box class="menupopup-contents">
-          <vbox id="highlights-empty" class="highlights-panel">
-            <label value="You don't have any highlights."/>
-            <label id="highlights-empty-create" class="text-link"
-                   value="Save this page"
-                   oncommand="HighlightsUI.onSaveButton();"/>
-          </vbox>
+        <vbox id="highlights-empty" class="highlights-page">
+          <label value="You don't have any highlights."/>
+          <label id="highlights-empty-create" class="text-link"
+                 value="Save this page"
+                 onclick="HighlightsUI.onSavePageButton();"/>
+        </vbox>
 
-          <vbox id="highlights-bookmark" class="highlights-panel">
-            <box><richgriditem id="highlights-page-preview"/></box>
-          </vbox>
+        <vbox id="highlights-bookmark" class="highlights-page">
+          <richgriditem id="highlights-page-preview"/>
+        </vbox>
 
-          <vbox id="highlights-list" class="highlights-panel">
-            <richlistbox id="highlights-list-items" flex="1"/>
-          </vbox>
-        </box>
+        <vbox id="highlights-highlights" class="highlights-page">
+          <richlistbox id="highlights-list-items" flex="1"/>
+        </vbox>
 
-        <hbox class="menupopup-footer" id="highlights-footer">
+        <hbox class="menu-footer">
           <button id="highlights-list-delete" label="Delete"
                   oncommand="HighlightsUI.onDeleteButton();"/>
         </hbox>

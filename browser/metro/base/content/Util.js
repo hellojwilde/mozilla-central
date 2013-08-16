@@ -89,6 +89,20 @@ let Util = {
   },
 
   /*
+   * Places utilities
+   */
+
+  getFaviconForURI: function getFaviconForURI(aURI) {
+    let def = Promise.defer();
+    PlacesUtils.favicons.getFaviconURLForPage(aURI, function (aIconURI) {
+      let annoFaviconURI = PlacesUtils.favicons.getFaviconLinkForIcon(aIconURI);
+      let faviconURI = annoFaviconURI.spec.replace("moz-anno:favicon:","");
+      def.resolve(Services.io.newURI(faviconURI, null, null));
+    });
+    return def.promise;
+  },
+
+  /*
    * Console printing utilities
    */
 

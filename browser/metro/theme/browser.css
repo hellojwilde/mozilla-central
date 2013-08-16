@@ -676,7 +676,7 @@ documenttab[selected] .documenttab-selection {
 }
 
 /* navbar edit button: one button out of three - when editing: go, when !editing,
-   loading: stop, when !editing, !loading: reload */ 
+   loading: stop, when !editing, !loading: reload */
 
 #go-button, #reload-button, #stop-button  {
   visibility: collapse;
@@ -1253,4 +1253,42 @@ setting[type="radio"] > vbox {
 
 #clear-notification-done {
   font-weight: bold;
+}
+
+/* Highlights ============================================================== */
+
+.highlights-page {
+  padding: 10px;
+}
+
+#highlights-popup:not([page="empty"]) #highlights-empty,
+#highlights-popup:not([page="bookmark"]) #highlights-bookmark,
+#highlights-popup:not([page="highlights"]) #highlights-highlights {
+  visibility: collapse;
+}
+
+/* Empty page */
+
+#highlights-popup[page="empty"] #highlights-back-button,
+#highlights-popup[page="empty"] #highlights-edit-button,
+#highlights-popup[page="empty"] .menu-footer {
+  display: none;
+}
+
+/* Bookmark page */
+
+#highlights-popup[page="bookmark"] .menu-header {
+  display: none;
+}
+
+#highlights-bookmark {
+  padding-top: 15px;
+}
+
+/* Highlights page */
+
+#highlights-popup[page="highlights"]:not([editing]) #highlights-back-button,
+#highlights-popup[page="highlights"][editing] #highlights-edit-button,
+#highlights-popup[page="highlights"]:not([editing]) .menu-footer {
+  display: none;
 }

@@ -75,7 +75,7 @@ var Appbar = {
    */
   update: function update() {
     this._updatePinButton();
-    this._updateStarButton();
+    return this._updateStarButton();
   },
 
   onDownloadButton: function() {
@@ -274,7 +274,7 @@ var Appbar = {
   },
 
   _updateStarButton: function() {
-    Browser.isSiteStarred()
+    return Browser.isSiteStarred()
            .then((isStarred) => this.starButton.checked = isStarred);
   },
 };
