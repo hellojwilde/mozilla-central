@@ -7,46 +7,25 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "View",
                                   "resource:///modules/View.jsm");
-
-function SerializedNode(aTagName, aTextContent) {
-  this.tagName = aTagName;
-  this.textContent = aTextContent;
-}
-
-SerializedNode.prototype.getNode = function SN_getNode(aDocument) {
-  let doc = aDocument || document;
-  for (let node of doc.getElementsByTagName(this.tagName)) {
-    if (node.textContent == this.textContent) {
-      return node;
-    }
-  }
-  return null;
-};
-
-SerializedNode.serialize = function SN_factory(aNode) {
-  return new SerializedNode(aNode.tagName, aNode.textContent);
-};
-
-function Highlight(aAnchorNode, aAnchorOffset, aFocusNode, aFocusOffset) {
-  this.anchorNode = aAnchorNode;
-  this.anchorOffset = aAnchorOffset;
-  this.focusNode = aFocusNode;
-  this.focusOffset = aFocusOffset;
-}
-
+/*
 let Highlights = {
-  getAllForPage: function () {
+  /**
+   * Removes the highlight from the specified document.
+   *
+   * @param {Document}  aDocument  The document to remove the highlight from.
+   * @param {String}    aId        The id of the applied highlight to remove.
+   */
+/*  unhighlight: function H_unapply(aDocument, aId) {
+    let doc = aDocument || document;
+    let highlight = doc.getElementById(aId);
 
-  },
-
-  addForPage: function (aHighlight) {
-
-  },
-
-  deleteForPage: function () {
-
+    let parent = highlight.parentNode;
+    for (let child of highlight.childNodes) {
+      parent.insertBefore(child, highlight);
+    }
+    parent.removeChild(highlight);
   }
-};
+};*/
 
 let HighlightsUI = {
   __flyout: null,

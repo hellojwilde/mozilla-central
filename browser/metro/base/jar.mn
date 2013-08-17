@@ -57,6 +57,7 @@ chrome.jar:
   content/widgets/Flyout.js                    (content/widgets/Flyout.js)
 
   content/library/SelectionPrototype.js        (content/library/SelectionPrototype.js)
+  content/library/Serializable.js              (content/library/Serializable.js)
 
   content/ContentAreaObserver.js               (content/ContentAreaObserver.js)
   content/BrowserTouchHandler.js               (content/BrowserTouchHandler.js)

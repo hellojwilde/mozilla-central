@@ -107,6 +107,8 @@ let ScriptContexts = {};
   ["MenuControlUI", "chrome://browser/content/helperui/MenuUI.js"],
   ["Flyout", "chrome://browser/content/widgets/Flyout.js"],
   ["HighlightsUI", "chrome://browser/content/helperui/HighlightsUI.js"],
+  ["SerializableNode", "chrome://browser/content/library/Serializable.js"],
+  ["SerializableRange", "chrome://browser/content/library/Serializable.js"],
   ["IndexedDB", "chrome://browser/content/helperui/IndexedDB.js"],
   ["OfflineApps", "chrome://browser/content/helperui/OfflineApps.js"],
   ["SelectHelperUI", "chrome://browser/content/helperui/SelectHelperUI.js"],

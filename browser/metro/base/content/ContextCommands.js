@@ -36,10 +36,10 @@ var ContextCommands = {
 
   highlight: function cc_highlight() {
     let target = ContextMenuUI.popupState.target;
-    if (target.localName != "browser")
-      return;
-
-    Util.dumpLn(ContextMenuUI.popupState.string);
+    if (target.localName == "browser") {
+      let json = { ranges: [ContextMenuUI.popupState.range] };
+      target.messageManager.sendAsyncMessage("Browser:Highlight", json);
+    }
   },
 
   // Text specific

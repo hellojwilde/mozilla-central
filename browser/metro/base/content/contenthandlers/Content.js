@@ -130,6 +130,8 @@ let Content = {
     addMessageListener("Browser:SetCharset", this);
     addMessageListener("Browser:CanUnload", this);
     addMessageListener("Browser:PanBegin", this);
+    addMessageListener("Browser:Highlight", this);
+    addMessageListener("Browser:Unhighlight", this);
 
     addEventListener("touchstart", this, false);
     addEventListener("click", this, true);
@@ -201,7 +203,7 @@ let Content = {
 
       case "pagehide":
         if (aEvent.target == content.document)
-          this._resetFontSize();          
+          this._resetFontSize();
         break;
 
       case "touchstart":
@@ -250,6 +252,14 @@ let Content = {
 
       case "Browser:PanBegin":
         this._cancelTapHighlight();
+        break;
+
+      case "Browser:Highlight":
+        this._highlightRanges(json.ranges);
+        break;
+
+      case "Browser:Unhighlight":
+        this._unhighlightIds(json);
         break;
     }
   },
@@ -314,7 +324,7 @@ let Content = {
     if (!errorDoc)
       return;
 
-    // If the event came from an ssl error page, it is probably either 
+    // If the event came from an ssl error page, it is probably either
     // "Add Exception…" or "Get me out of here!" button.
     if (/^about:certerror\?e=nssBadCert/.test(errorDoc.documentURI)) {
       let perm = errorDoc.getElementById("permanentExceptionButton");
@@ -332,7 +342,7 @@ let Content = {
       // First check whether it's malware or phishing, so that we can
       // use the right strings/links.
       let isMalware = /e=malwareBlocked/.test(errorDoc.documentURI);
-    
+
       if (ot == errorDoc.getElementById("getMeOutButton")) {
         sendAsyncMessage("Browser:BlockedSite",
                          { url: errorDoc.location.href, action: "leave" });
@@ -429,7 +439,7 @@ let Content = {
         // We might be able to deal with fractional pixels, but mouse
         // events won't. Deflate the bounds in by 1 pixel to deal with
         // any fractional scroll offset issues.
-        let inBounds = 
+        let inBounds =
           (aX > rect.left + 1 && aX < (rect.left + rect.width - 1)) &&
           (aY > rect.top + 1 && aY < (rect.top + rect.height - 1));
         if (inBounds) {
@@ -466,6 +476,33 @@ let Content = {
     let viewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
     if (viewer)
       viewer.minFontSize = aSize;
+  },
+
+  _highlightRanges: function _highlightRanges(aRanges) {
+    for (let range of aRanges) {
+      this._highlightRange(range);
+    }
+  },
+
+  _highlightRange: function _highlightRange(aRange) {
+    let id = "highlight" + Date.now() + "-" + Math.random();
+    let doc = content.document;
+
+    let highlight = doc.createElement("moz-highlight");
+    highlight.id = id;
+
+     Util.dumpLn("range: " + JSON.stringify(aRange) + " id: " + id);
+
+    let range = new SerializableRange(aRange);
+    range.getRange(doc).surroundContents(highlight);
+
+
+
+    return id;
+  },
+
+  _unhighlightIds: function _unhighlightIds(aJSON) {
+    Util.dumpLn("unhighlight: " + JSON.stringify(aJSON));
   }
 };
 
