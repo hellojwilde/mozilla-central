@@ -22,6 +22,8 @@ function Flyout(aPanel, aPopup) {
 }
 
 Flyout.prototype = {
+  _currentPositionOptions: {},
+
   get visible() { return !this._panel.hidden; },
   get commands() { return this._popup.childNodes[0]; },
 
@@ -40,6 +42,13 @@ Flyout.prototype = {
     }
 
     return this._animateHide();
+  },
+
+  realign: function () {
+    // XXX we have to run this twice. first time sets size properly.
+    // second time sets the position given the new size
+    this._position(this._currentPositionOptions);
+    this._position(this._currentPositionOptions);
   },
 
   _position: function _position(aPositionOptions) {
@@ -124,7 +133,8 @@ Flyout.prototype = {
 
     // This triggers a reflow, which sets transitionability.
     // All animation/transition setup must happen before here.
-    this._position(aPositionOptions || {});
+    this._currentPositionOptions = positionOptions || {};
+    this._position(this._currentPositionOptions);
 
     let self = this;
     this._panel.addEventListener("transitionend", function popupshown () {
