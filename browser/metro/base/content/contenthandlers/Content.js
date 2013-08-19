@@ -491,13 +491,14 @@ let Content = {
     let highlight = doc.createElement("moz-highlight");
     highlight.id = id;
 
-     Util.dumpLn("range: " + JSON.stringify(aRange) + " id: " + id);
+    let range = new SerializableRange(aRange).getRange(doc);
+    if (range) {
+      range.surroundContents(highlight);
+    } else {
+      Util.dumpLn("couldn't get range: " + aRange);
+    }
 
-    let range = new SerializableRange(aRange);
-    range.getRange(doc).surroundContents(highlight);
-
-
-
+    sendAsyncMessage("Browser:Highlight:Id", { range: aRange, id: id });
     return id;
   },
 

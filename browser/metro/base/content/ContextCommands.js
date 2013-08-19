@@ -32,17 +32,11 @@ var ContextCommands = {
    * Context menu handlers
    */
 
-  // Content specific
+  // Text specific
 
   highlight: function cc_highlight() {
-    let target = ContextMenuUI.popupState.target;
-    if (target.localName == "browser") {
-      let json = { ranges: [ContextMenuUI.popupState.range] };
-      target.messageManager.sendAsyncMessage("Browser:Highlight", json);
-    }
+    Browser.highlight(ContextMenuUI.popupState.range);
   },
-
-  // Text specific
 
   cut: function cc_cut() {
     let target = ContextMenuUI.popupState.target;

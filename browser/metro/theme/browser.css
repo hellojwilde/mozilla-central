@@ -1261,34 +1261,91 @@ setting[type="radio"] > vbox {
   padding: 10px;
 }
 
+.symbol-before {
+  padding: 5px;
+}
+
+.symbol-before::before {
+  font-family: "Segoe UI Symbol" !important;
+  padding-right: 3px;
+  font-size: 0.8em;
+}
+
+.symbol-button {
+  font-family: "Segoe UI Symbol" !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 20pt;
+}
+
 #highlights-popup:not([page="empty"]) #highlights-empty,
 #highlights-popup:not([page="bookmark"]) #highlights-bookmark,
 #highlights-popup:not([page="highlights"]) #highlights-highlights {
   visibility: collapse;
 }
 
+#highlights-back-button,
+#highlights-edit-button {
+  visibility: collapse;
+}
+
+.highlights-page-footer {
+  -moz-box-pack: end;
+}
+
 /* Empty page */
 
-#highlights-popup[page="empty"] #highlights-back-button,
-#highlights-popup[page="empty"] #highlights-edit-button,
-#highlights-popup[page="empty"] .menu-footer {
-  display: none;
+#highlights-bookmark-button::before {
+  content: "\E109"; /* plus */
+  color: #000;
 }
 
 /* Bookmark page */
-
-#highlights-popup[page="bookmark"] .menu-header {
-  display: none;
-}
 
 #highlights-bookmark {
   padding-top: 15px;
 }
 
+#highlights-saved::before {
+  content: "\E10B"; /* checkmark */
+}
+
+#highlights-popup[page="bookmark"] .menu-header,
+#highlights-bookmark:not([saved]) #highlights-saved,
+#highlights-bookmark[saved] #highlights-remove-button {
+  display: none;
+}
+
 /* Highlights page */
 
-#highlights-popup[page="highlights"]:not([editing]) #highlights-back-button,
-#highlights-popup[page="highlights"][editing] #highlights-edit-button,
-#highlights-popup[page="highlights"]:not([editing]) .menu-footer {
-  display: none;
+#highlights-popup[page="highlights"][editing] #highlights-back-button,
+#highlights-popup[page="highlights"]:not([editing]) #highlights-edit-button {
+  visibility: visible;
+}
+
+#highlights-highlights {
+  padding: 0;
+}
+
+#highlights-list-items {
+  border: 0 none;
+  -moz-appearance: none;
+  max-width: 300px;
+  display: -moz-box;
+}
+
+#highlights-list-items scrollbox {
+  width: 100%;
+  overflow-x: hidden !important;
+}
+
+#highlights-list-items richlistitem {
+  width: 100%;
+  overflow: hidden !important;
+}
+
+#highlights-popup:not([editing]) #highlights-highlights .highlights-page-footer {
+  visibility: collapse;
 }

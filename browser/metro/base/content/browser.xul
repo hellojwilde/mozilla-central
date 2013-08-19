@@ -829,37 +829,41 @@
       <vbox id="highlights-popup" class="menu-popup menu-border">
         <hbox class="menu-header">
           <button id="highlights-back-button" class="symbol-button"
-                  label="&#xE0BA;"
                   oncommand="HighlightsUI.onBackButton();"/>
-
-          <description class="highlights-title" flex="1">
-            Highlights
-          </description>
-
+          <description class="highlights-title" flex="1" value="Highlights"/>
           <button id="highlights-edit-button" class="symbol-button"
-                  label="&#xE104;"
                   oncommand="HighlightsUI.onEditButton();"/>
         </hbox>
 
         <vbox id="highlights-empty" class="highlights-page">
           <label value="You don't have any highlights."/>
-          <label id="highlights-bookmark-button" class="text-link"
-                 value="Bookmark this page"
-                 onclick="HighlightsUI.onBookmarkButton();"/>
+          <html:div id="highlights-bookmark-button"
+                    class="text-link symbol-before"
+                    onclick="HighlightsUI.onBookmarkButton();">
+            Bookmark this page
+          </html:div>
         </vbox>
 
         <vbox id="highlights-bookmark" class="highlights-page">
           <richgriditem id="highlights-page-preview"/>
+
+          <hbox class="highlights-page-footer">
+            <html:div id="highlights-saved" class="symbol-before">
+              Bookmark saved
+            </html:div>
+            <button id="highlights-remove-button" label="Remove"
+                    oncommand="HighlightsUI.onRemoveButton();"/>
+          </hbox>
         </vbox>
 
         <vbox id="highlights-highlights" class="highlights-page">
           <richlistbox id="highlights-list-items" flex="1"/>
-        </vbox>
 
-        <hbox class="menu-footer">
-          <button id="highlights-list-delete" label="Delete"
-                  oncommand="HighlightsUI.onDeleteButton();"/>
-        </hbox>
+          <hbox class="highlights-page-footer">
+            <button id="highlights-delete-button" label="Delete"
+                    oncommand="HighlightsUI.onDeleteButton();"/>
+          </hbox>
+        </vbox>
       </vbox>
     </vbox>
   </stack>

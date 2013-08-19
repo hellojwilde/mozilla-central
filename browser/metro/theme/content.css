@@ -9,7 +9,7 @@
 @namespace xul url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 moz-highlight {
-  background: yellow;
+  background: #FFC489;
 }
 
 *:-moz-any-link:focus {

@@ -19,6 +19,7 @@
 .text-link {
   color: @metro_orange@;
   text-decoration: none;
+  cursor: pointer;
 }
 
 textbox,
@@ -232,20 +233,6 @@ menulist {
   font-weight: 100;
   font-size: 20px;
   overflow: hidden;
-}
-
-.menu-footer {
-  padding: 10px;
-  border-top: 1px solid silver;
-}
-
-.symbol-button {
-  font-family: "Segoe UI Symbol" !important;
-  background: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  font-size: 20pt;
 }
 
 /* Additional styles applied to popups for form <select> elements. */

@@ -816,6 +816,39 @@ var Browser = {
     return Bookmarks.isURIBookmarked(uri);
   },
 
+  getHighlights: function browser_getHighlights (aBookmarkId) {
+    let highlights = [];
+    if (aBookmarkId) {
+      try {
+        let json = PlacesUtils.annotations.
+          getItemAnnotation(aBookmarkId, "highlights");
+        highlights = JSON.parse(json);
+      } catch (e) { /* there was no highlights annotation */ }
+    }
+    return highlights;
+  },
+
+  highlight: function browser_highlight(aRange) {
+    return Task.spawn(function() {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = (yield Bookmarks.getForURI(uri))
+                       || (yield Browser.starSite());
+
+      let highlights = Browser.getHighlights(bookmarkId);
+      highlights.push(aRange);
+
+      let json = JSON.stringify(highlights);
+      PlacesUtils.annotations.
+        setItemAnnotation(bookmarkId, "highlights", json, 0, 4);
+
+      Browser.selectedTab.highlightRanges([aRange]);
+    });
+  },
+
+  unhighlight: function browser_unhighlight(aRange) {
+
+  },
+
   /** Zoom one step in (negative) or out (positive). */
   zoom: function zoom(aDirection) {
     let tab = this.selectedTab;
@@ -1051,6 +1084,14 @@ var Browser = {
             SelectionHelperUI.openEditSession(aMessage);
           }
         }
+        break;
+
+      case "Browser:Highlight:Id":
+        let tab = this.getTabForBrowser(browser);
+        // Some browser such as iframes loaded dynamically into the chrome UI
+        // does not have any assigned tab
+        if (tab)
+          tab.updateHighlightId(json);
         break;
     }
   },
@@ -1470,6 +1511,7 @@ function Tab(aURI, aParams, aOwner) {
   this._metadata = null;
   this._eventDeferred = null;
   this._updateThumbnailTimeout = null;
+  this._highlightIds = {};
 
   this.owner = aOwner || null;
 
@@ -1520,6 +1562,10 @@ Tab.prototype = {
     }
     this._metadata = aMetadata;
     this.updateViewportSize();
+  },
+
+  updateHighlightId: function updateHighlightId(aHighlight) {
+    this._highlightIds[aHighlight.range] = aHighlight.id;
   },
 
   /**
@@ -1596,6 +1642,7 @@ Tab.prototype = {
   endLoading: function endLoading() {
     if (!this._loading) throw "Not Loading!";
     this._loading = false;
+    this.highlightExistingRanges();
     this.updateFavicon();
   },
 
@@ -1864,6 +1911,24 @@ Tab.prototype = {
 
   get allowZoom() {
     return this.metadata.allowZoom && !Util.isURLEmpty(this.browser.currentURI.spec);
+  },
+
+  highlightExistingRanges: function browser__highlightExistingRanges() {
+    let self = this;
+    return Task.spawn(function () {
+      let uri = self._browser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
+
+      if (bookmarkId) {
+        let highlights = Browser.getHighlights(bookmarkId);
+        self.highlightRanges(highlights);
+      }
+    });
+  },
+
+  highlightRanges: function Tab_highlightRanges(aRanges) {
+    let json = { ranges: aRanges };
+    this._browser.messageManager.sendAsyncMessage("Browser:Highlight", json);
   },
 
   updateThumbnail: function updateThumbnail() {

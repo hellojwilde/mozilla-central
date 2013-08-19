@@ -31,6 +31,7 @@ function SerializableNode(aNode) {
 SerializableNode.prototype.getNode = function RN_getNode(aDocument) {
   let doc = aDocument || document;
   let win = doc.defaultView;
+
   let walker = doc.createTreeWalker(
     doc.body,
     this.nodeType == win.Node.TEXT_NODE ? win.NodeFilter.SHOW_TEXT

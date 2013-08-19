@@ -7,25 +7,84 @@
 
 XPCOMUtils.defineLazyModuleGetter(this, "View",
                                   "resource:///modules/View.jsm");
-/*
-let Highlights = {
-  /**
-   * Removes the highlight from the specified document.
-   *
-   * @param {Document}  aDocument  The document to remove the highlight from.
-   * @param {String}    aId        The id of the applied highlight to remove.
-   */
-/*  unhighlight: function H_unapply(aDocument, aId) {
-    let doc = aDocument || document;
-    let highlight = doc.getElementById(aId);
 
-    let parent = highlight.parentNode;
-    for (let child of highlight.childNodes) {
-      parent.insertBefore(child, highlight);
+function Highlight(aRange, aApplyId) {
+  this.range = aRange;
+  this.applyId = aApplyId;
+}
+
+function HighlightsListItem(aHighlight) {
+  this.highlight = aHighlight;
+}
+
+HighlightsListItem.prototype = {
+  _element: null,
+  _elementText: null,
+  _elementCheckbox: null,
+
+  get element() {
+    if (!this._element) {
+      this._element = document.createElement("richlistitem");
+
+      this._elementCheckbox = document.createElement("checkbox");
+      this._element.appendChild(this._elementCheckbox);
+
+      this._elementText = document.createElement("description");
+      this._elementText.textContent = this.highlight.range.string;
+      this._element.appendChild(this._elementText);
     }
-    parent.removeChild(highlight);
+    return this._element;
+  },
+
+  get checked() {
+    return this._elementCheckbox.checked;
   }
-};*/
+};
+
+function HighlightsList(aFlyout, aPageElement) {
+  this._flyout = aFlyout;
+
+  this._page = aPageElement;
+  this._list = this._page.getElementById("highlights-list-items");
+  this._render();
+}
+
+HighlightsList.prototype = {
+  _highlights: [],
+  _items: [],
+
+  get highlights() { return this._highlights; },
+  set highlights (aHighlights) {
+    this._highlights = aHighlights;
+    this._render();
+    return this._ranges;
+  },
+
+  get checkedHighlights() {
+    let checked = [];
+    for (let item of this._items) {
+      if (item.checked) {
+        checked.push(item.highlight);
+      }
+    }
+    return checked;
+  },
+
+  _render: function () {
+    while (this._list.childNodes.length > 0) {
+      this._list.removeChild(list.firstChild);
+    }
+
+    let items = [];
+    for (let highlight of this._highlights) {
+      let item = new HighlightsListItem(highlight);
+      items.push(item);
+      this._list.appendChild(item.element);
+    }
+
+    this._items = items;
+  }
+};
 
 let HighlightsUI = {
   __flyout: null,
@@ -96,22 +155,32 @@ let HighlightsUI = {
     this._page = "empty";
   },
 
-  showBookmarkPage: function HUI_showBookmarkPage(aBookmarkId) {
+  showBookmarkPage: function HUI_showBookmarkPage(aBookmarkId, aOptions) {
+    let options = Util.extend({ saved: false }, aOptions || {});
+    let browser = Browser.selectedBrowser;
+
     this._page = "bookmark";
 
-    let browser = Browser.selectedBrowser;
-    let preview = document.getElementById("highlights-page-preview");
+    let page = document.getElementById("highlights-bookmark");
+    if (options.saved) {
+      page.setAttribute("saved", "true");
+    } else {
+      page.removeAttribute("saved");
+    }
 
+    let preview = document.getElementById("highlights-page-preview");
     preview.label = PlacesUtils.bookmarks.getItemTitle(aBookmarkId);
     preview.url = browser.currentURI;
 
-    // XXX fragile
+    // XXX fragile if View changes
     Util.getFaviconForURI(browser.currentURI)
         .then((iconURI) => View.prototype._gotIcon(preview, iconURI));
   },
 
   showHighlightsPage: function HUI_showHighlightsPage(aBookmarkId) {
     this._page = "highlights";
+
+
   },
 
   /**
@@ -129,16 +198,8 @@ let HighlightsUI = {
         return;
       }
 
-      try {
-        let json = PlacesUtils.annotations.
-          getItemAnnotation(bookmarkId, "highlights");
-        HighlightsUI._highlights = JSON.parse(json);
-      } catch (e) {
-        // There were no highlights found
-        HighlightsUI._highlights = [];
-      }
-
-      if (HighlightsUI._highlights.length == 0) {
+      let highlights = Browser.getHighlights(bookmarkId);
+      if (highlights.length == 0) {
         // Bookmark page: bookmark, but no highlights
         HighlightsUI.showBookmarkPage(bookmarkId);
       } else {
@@ -173,8 +234,17 @@ let HighlightsUI = {
 
   onBookmarkButton: function HUI_onSaveButton() {
     return Task.spawn(function HUI_onSaveButtonTask () {
-      yield Browser.starSite();
-      yield HighlightsUI.update();
+      let bookmarkId = yield Browser.starSite();
+      yield HighlightsUI.showBookmarkPage(bookmarkId, { saved: true });
+      yield HighlightsUI.reposition();
+      yield Appbar.update();
+    });
+  },
+
+  onRemoveButton: function HUI_onRemoveButton() {
+    return Task.spawn(function HUI_onRemoveButton () {
+      yield Browser.unstarSite();
+      yield HighlightsUI.showEmptyPage();
       yield HighlightsUI.reposition();
       yield Appbar.update();
     });
@@ -189,21 +259,8 @@ let HighlightsUI = {
   },
 
   onDeleteButton: function HUI_onDeleteButton() {
-    return Task.spawn(function HUI_onDeleteButtonTask() {
-      switch (HighlightsUI._page) {
-        case "bookmark":
-          yield Browser.unstarSite();
-          break;
-        case "highlights":
-          // delete the highlights both in the _highlights bin and on the list.
-          // if all are deleted, drop the bookmark.
-          break;
-      }
-
-      yield HighlightsUI.update();
-      yield HighlightsUI.reposition();
-      yield Appbar.update();
-    });
+    // delete the highlights both in the _highlights bin and on the list.
+    // if all are deleted, drop the bookmark.
   },
 
   onPopupHidden: function HUI_onPopupHidden() {
