@@ -36,6 +36,8 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
       let uri = Browser.selectedBrowser.currentURI;
       let bookmarkId = yield Bookmarks.getForURI(uri);
 
+      self.stopEditing();
+
       if (bookmarkId == null) {
         self.displayPage("empty");
         return;
@@ -50,14 +52,22 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
     });
   },
 
-  onBackButton: function HUI_onBackButton() {
+  startEditing: function () {
+    this._popup.setAttribute("editing", "true");
+    this.realign();
+  },
+
+  stopEditing: function () {
     this._popup.removeAttribute("editing");
     this.realign();
   },
 
   onEditButton: function HUI_onEditButton() {
-    this._popup.setAttribute("editing", "true");
-    this.realign();
+    this.startEditing();
+  },
+
+  onBackButton: function HUI_onBackButton() {
+    this.stopEditing();
   }
 });
 
@@ -141,6 +151,7 @@ function HighlightsList(aFlyout, aPageElement) {
 
 HighlightsList.prototype = {
   _items: [],
+  _id: null,
 
   display: function (aOptions) {
     let { id } = aOptions || {};
@@ -161,8 +172,24 @@ HighlightsList.prototype = {
     this._items = items;
 
     this.updateDeleteButton();
+    this._id = id;
   },
+/*
+  resize: function () {
+    let height = {};
+    this._list.scrollBoxObject.getScrolledSize({}, height);
 
+    if (height.value > this._list.clientHeight) {
+      let min = (a, b) => a < b ? a : b;
+      let rect = this._flyout._popup.getBoundingClientRect();
+      let max = rect.bottom - (rect.height - this._list.clientHeight) - 50;
+
+      this._list.height = min(height.value, max);
+      Util.dumpLn("h " + height.value + " ch " + this._list.clientHeight + " m " + max);
+      this._flyout.realign();
+    }
+  },
+*/
   updateDeleteButton: function () {
     let checked = this._items.filter((aItem) => aItem.checked);
     let len = checked.length;
@@ -176,12 +203,15 @@ HighlightsList.prototype = {
   },
 
   onDeleteButton: function () {
-    let checked = this._items.filter((aItem) => aItem.checked);
-
-    // TODO
-    // commit changes
-    // end editing
-    // update flyout
+    let self = this;
+    return Task.spawn(function onDeleteButtonTask() {
+      let checked = self._items.filter((aItem) => aItem.checked);
+      for (let item of checked) {
+        yield Browser.unhighlight(item.highlight);
+      }
+      self._flyout.selectPage();
+      self._flyout.realign();
+    });
   }
 };
 
@@ -232,10 +262,8 @@ let HighlightsUI = {
   __flyout: null,
   get _flyout() {
     if (!this.__flyout) {
-      try {
       this.__flyout = new HighlightsFlyout(this._panel, this._popup);
       this.__flyout.controller = this;
-      } catch (e) { Util.dumpLn(e); }
     }
     return this.__flyout;
   },
@@ -258,6 +286,7 @@ let HighlightsUI = {
 
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
+      self._flyout.resizePage();
       } catch(e) { Util.dumpLn(e);}
     });
   },

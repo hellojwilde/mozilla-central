@@ -846,7 +846,32 @@ var Browser = {
   },
 
   unhighlight: function browser_unhighlight(aRange) {
+    return Task.spawn(function () {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
+      let highlights = Browser.getHighlights(bookmarkId);
 
+      let index = -1;
+      for (let i = 0, len = highlights.length; i < len; i++) {
+        if (new SerializableRange(aRange).equals(new SerializableRange(highlights[i]))) {
+          index = i;
+        }
+      }
+
+      if (index !== -1) {
+        highlights.splice(index, 1);
+      }
+
+      if (highlights.length > 0) {
+        let json = JSON.stringify(highlights);
+        PlacesUtils.annotations.
+          setItemAnnotation(bookmarkId, "highlights", json, 0, 4);
+      } else {
+        yield Browser.unstarSite();
+      }
+
+      Browser.selectedTab.unhighlightRanges([aRange]);
+    });
   },
 
   /** Zoom one step in (negative) or out (positive). */
@@ -1084,14 +1109,6 @@ var Browser = {
             SelectionHelperUI.openEditSession(aMessage);
           }
         }
-        break;
-
-      case "Browser:Highlight:Id":
-        let tab = this.getTabForBrowser(browser);
-        // Some browser such as iframes loaded dynamically into the chrome UI
-        // does not have any assigned tab
-        if (tab)
-          tab.updateHighlightId(json);
         break;
     }
   },
@@ -1564,10 +1581,6 @@ Tab.prototype = {
     this.updateViewportSize();
   },
 
-  updateHighlightId: function updateHighlightId(aHighlight) {
-    this._highlightIds[aHighlight.range] = aHighlight.id;
-  },
-
   /**
    * Update browser size when the metadata or the window size changes.
    */
@@ -1929,6 +1942,11 @@ Tab.prototype = {
   highlightRanges: function Tab_highlightRanges(aRanges) {
     let json = { ranges: aRanges };
     this._browser.messageManager.sendAsyncMessage("Browser:Highlight", json);
+  },
+
+  unhighlightRanges: function Tab_highlightRanges(aRanges) {
+    let json = { ranges: aRanges };
+    this._browser.messageManager.sendAsyncMessage("Browser:Unighlight", json);
   },
 
   updateThumbnail: function updateThumbnail() {

@@ -52,6 +52,12 @@ SerializableNode.prototype.getNode = function RN_getNode(aDocument) {
   return walker.nextNode();
 };
 
+SerializableNode.prototype.equals = function (aOtherNode) {
+  return aOtherNode.nodeType == this.nodeType
+         && aOtherNode.tagName == this.tagName
+         && aOtherNode.textContent == this.textContent;
+}
+
 /**
  * Represents a text selection range in a document that's serializable to JSON.
  *
@@ -79,3 +85,11 @@ SerializableRange.prototype.getRange = function SR_getRange (aDocument) {
   range.setEnd(endNode, this.endOffset);
   return range;
 };
+
+SerializableRange.prototype.equals = function (aOtherRange) {
+  return this.startContainer.equals(aOtherRange.startContainer)
+         && this.startOffset == aOtherRange.startOffset
+         && this.endContainer.equals(aOtherRange.startContainer)
+         && this.endOffset == aOtherRange.endOffset
+         && this.string == aOtherRange.string;
+}

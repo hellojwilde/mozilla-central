@@ -1347,6 +1347,7 @@ setting[type="radio"] > vbox {
   -moz-appearance: none;
   max-width: 300px;
   display: -moz-box;
+  min-height: 300px;
 }
 
 #highlights-list richlistbox > scrollbox {
@@ -1355,8 +1356,21 @@ setting[type="radio"] > vbox {
 }
 
 #highlights-list richlistitem {
-  width: 100%;
-  overflow: hidden !important;
+  max-width: 100%;
+  -moz-box-align: start;
+}
+
+#highlights-list description {
+  max-width: 280px;
+  overflow: hidden;
+}
+
+#highlights-list checkbox {
+  padding: 5px 6px 5px 11px;
+}
+
+#highlights-popup[editing] #highlights-list description {
+  max-width: 250px;
 }
 
 #highlights-popup:not([editing]) #highlights-list .highlights-page-footer,

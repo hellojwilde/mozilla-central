@@ -259,7 +259,7 @@ let Content = {
         break;
 
       case "Browser:Unhighlight":
-        this._unhighlightIds(json);
+        this._unhighlightRanges(json.ranges);
         break;
     }
   },
@@ -498,12 +498,17 @@ let Content = {
       Util.dumpLn("couldn't get range: " + aRange);
     }
 
-    sendAsyncMessage("Browser:Highlight:Id", { range: aRange, id: id });
     return id;
   },
 
-  _unhighlightIds: function _unhighlightIds(aJSON) {
-    Util.dumpLn("unhighlight: " + JSON.stringify(aJSON));
+  _unhighlightRanges: function (aRanges) {
+    for (let range of aRanges) {
+      this._unhighlightRange(range);
+    }
+  },
+
+  _unhighlightRange: function (aRange) {
+    //TODO
   }
 };
 
