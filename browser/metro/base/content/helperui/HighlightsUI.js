@@ -10,9 +10,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "View",
 
 /**
  * Subclass of PagedFlyout that has an editing mode, preset pages,
- * and state autoupdating.
+ * and state updating.
  */
 function HighlightsFlyout(aPanel, aPopup) {
+  Util.dumpLn("highlights init " + aPanel);
   PagedFlyout.call(this, aPanel, aPopup);
 
   this._emptyPage = document.getElementById("highlights-empty");
@@ -36,7 +37,7 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
     return aIsEditing;
   },
 
-  update: function HF_update() {
+  selectPage: function HF_selectPage() {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
       let uri = Browser.selectedBrowser.currentURI;
@@ -219,8 +220,9 @@ let HighlightsUI = {
    * @returns {Promise} Resolved when popup fully shown.
    */
   show: function HUI_show() {
+    let self = this;
     return Task.spawn(function HUI_showTask() {
-      let rect = HighlightsUI._button.getBoundingClientRect();
+      let rect = self._button.getBoundingClientRect();
       let position = {
         xPos: (rect.left + rect.right) / 2,
         yPos: Elements.toolbar.getBoundingClientRect().top,
@@ -228,8 +230,8 @@ let HighlightsUI = {
         bottomAligned: true
       };
 
-      yield HighlightsUI._flyout.update();
-      yield HighlightsUI._flyout.show(position);
+      yield self._flyout.selectPage();
+      yield self._flyout.show(position);
     });
   },
 

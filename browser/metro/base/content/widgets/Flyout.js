@@ -217,6 +217,7 @@ Flyout.prototype = {
 };
 
 function PagedFlyout(aPanel, aPopup) {
+  Util.dumpLn(" init " + aPanel);
   Flyout.call(this, aPanel, aPopup);
 }
 
