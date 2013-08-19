@@ -828,36 +828,32 @@
     <vbox id="highlights-container" class="menu-container" hidden="true">
       <vbox id="highlights-popup" class="menu-popup menu-border">
         <hbox class="menu-header">
-          <button id="highlights-back-button" class="symbol-button"
-                  oncommand="HighlightsUI.onBackButton();"/>
+          <button id="highlights-back-button" class="symbol-button"/>
           <description class="highlights-title" flex="1" value="Highlights"/>
-          <button id="highlights-edit-button" class="symbol-button"
-                  oncommand="HighlightsUI.onEditButton();"/>
+          <button id="highlights-edit-button" class="symbol-button"/>
         </hbox>
 
         <vbox id="highlights-empty" class="highlights-page">
           <label value="You don't have any highlights."/>
           <html:div id="highlights-bookmark-button"
-                    class="text-link symbol-before"
-                    onclick="HighlightsUI.onBookmarkButton();">
+                    class="text-link symbol-before">
             Bookmark this page
           </html:div>
         </vbox>
 
         <vbox id="highlights-bookmark" class="highlights-page">
-          <richgriditem id="highlights-page-preview"/>
+          <richgriditem/>
 
           <hbox class="highlights-page-footer">
             <html:div id="highlights-saved" class="symbol-before">
               Bookmark saved
             </html:div>
-            <button id="highlights-remove-button" label="Remove"
-                    oncommand="HighlightsUI.onRemoveButton();"/>
+            <button id="highlights-remove-button" label="Remove"/>
           </hbox>
         </vbox>
 
-        <vbox id="highlights-highlights" class="highlights-page">
-          <richlistbox id="highlights-list-items" flex="1"/>
+        <vbox id="highlights-list" class="highlights-page">
+          <richlistbox flex="1"/>
           <hbox class="highlights-page-footer">
             <button id="highlights-delete-button" label="Delete"/>
           </hbox>

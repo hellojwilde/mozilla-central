@@ -15,9 +15,18 @@ XPCOMUtils.defineLazyModuleGetter(this, "View",
 function HighlightsFlyout(aPanel, aPopup) {
   PagedFlyout.call(this, aPanel, aPopup);
 
-  this.registerPage("empty", new HighlightsEmpty(this));
-  this.registerPage("bookmark", new HighlightsBookmark(this));
-  this.registerPage("list", new HighlightsList(this));
+  this._emptyPage = document.getElementById("highlights-empty");
+  this._bookmarkPage = document.getElementById("highlights-bookmark");
+  this._listPage = document.getElementById("highlights-list");
+  this._editButton = document.getElementById("highlights-edit-button");
+  this._backButton = document.getElementById("highlights-back-button");
+
+  this.registerPage("empty", new HighlightsEmpty(this, this._emptyPage));
+  this.registerPage("bookmark", new HighlightsBookmark(this, this._bookmarkPage));
+  this.registerPage("list", new HighlightsList(this, this._listPage));
+
+  this._editButton.addEventListener("click", this.onEditButton.bind(this), false);
+  this._backButton.addEventListener("click", this.onBackButton.bind(this), false);
 }
 
 HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
@@ -28,7 +37,23 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   },
 
   update: function HF_update() {
+    let self = this;
+    return Task.spawn(function HUI_updateTask() {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
 
+      if (bookmarkId == null) {
+        self.displayPage("empty");
+        return;
+      }
+
+      let highlights = Browser.getHighlights(bookmarkId);
+      if (highlights.length == 0) {
+        self.displayPage("bookmark", { id: bookmarkId });
+      } else {
+        self.displayPage("list", { id: bookmarkId });
+      }
+    });
   },
 
   onBackButton: function HUI_onBackButton() {
@@ -183,7 +208,7 @@ let HighlightsUI = {
   __flyout: null,
   get _flyout() {
     if (!this.__flyout) {
-      this.__flyout = new Flyout(this._panel, this._popup);
+      this.__flyout = new HighlightsFlyout(this._panel, this._popup);
       this.__flyout.controller = this;
     }
     return this.__flyout;
@@ -195,45 +220,16 @@ let HighlightsUI = {
    */
   show: function HUI_show() {
     return Task.spawn(function HUI_showTask() {
-      yield HighlightsUI.update();
-
       let rect = HighlightsUI._button.getBoundingClientRect();
-      let x = (rect.left + rect.right) / 2;
-      let y = Elements.toolbar.getBoundingClientRect().top;
-      let position = HighlightsUI._positionOptions = {
-        xPos: x,
-        yPos: y,
+      let position = {
+        xPos: (rect.left + rect.right) / 2,
+        yPos: Elements.toolbar.getBoundingClientRect().top,
         centerHorizontally: true,
         bottomAligned: true
       };
 
+      yield HighlightsUI._flyout.update();
       yield HighlightsUI._flyout.show(position);
-    });
-  },
-
-  /**
-   * Updates the flyout's contents to reflect status of the current page.
-   * @returns {Promise} Resolved when update is complete.
-   */
-  update: function HUI_update() {
-    return Task.spawn(function HUI_update_task() {
-      let uri = Browser.selectedBrowser.currentURI;
-      let bookmarkId = yield Bookmarks.getForURI(uri);
-
-      if (bookmarkId == null) {
-        // Empty page: no bookmark for current URI.
-        HighlightsUI.showEmptyPage();
-        return;
-      }
-
-      let highlights = Browser.getHighlights(bookmarkId);
-      if (highlights.length == 0) {
-        // Bookmark page: bookmark, but no highlights
-        HighlightsUI.showBookmarkPage(bookmarkId);
-      } else {
-        // Highlights page: bookmark and highlights
-        HighlightsUI.showHighlightsPage(bookmarkId);
-      }
     });
   },
 
