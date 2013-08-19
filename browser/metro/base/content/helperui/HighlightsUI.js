@@ -8,10 +8,144 @@
 XPCOMUtils.defineLazyModuleGetter(this, "View",
                                   "resource:///modules/View.jsm");
 
-function Highlight(aRange, aApplyId) {
-  this.range = aRange;
-  this.applyId = aApplyId;
+/**
+ * Subclass of PagedFlyout that has an editing mode, preset pages,
+ * and state autoupdating.
+ */
+function HighlightsFlyout(aPanel, aPopup) {
+  PagedFlyout.call(this, aPanel, aPopup);
+
+  this.registerPage("empty", new HighlightsEmpty(this));
+  this.registerPage("bookmark", new HighlightsBookmark(this));
+  this.registerPage("list", new HighlightsList(this));
 }
+
+HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
+  get isEditing() { return this._popup.getAttribute("editing") == "true"; },
+  set isEditing(aIsEditing) {
+    Util.setBoolAttribute(this._popup, "editing", aIsEditing);
+    return aIsEditing;
+  },
+
+  update: function HF_update() {
+
+  },
+
+  onBackButton: function HUI_onBackButton() {
+    this.isEditing = false;
+  },
+
+  onEditButton: function HUI_onEditButton() {
+    this.isEditing = true;
+  },
+});
+
+HighlightsFlyout.prototype.constructor = HighlightsFlyout;
+
+/**
+ * Controller for "empty" page shown when there is no bookmark or highlights.
+ */
+function HighlightsEmpty(aFlyout, aPageElement) {
+  this._flyout = aFlyout;
+  this._page = aPageElement;
+
+  this._markButton = this._page.getElementById("highlights-bookmark-button");
+  this._markButton.addEventListener("command", this.onMarkButton.bind(this), false);
+}
+
+HighlightsEmpty.prototype = {
+  onMarkButton: function () {
+    let self = this;
+    return Task.spawn(function HE_onMarkButtonTask () {
+      let bookmarkId = yield Browser.starSite();
+      yield self._flyout.display("bookmark", { id: bookmarkId, saved: true });
+      yield self._flyout.align();
+      yield Appbar.update();
+    });
+  }
+};
+
+/**
+ * Controller for "bookmark" page shown when there is a bookmark,
+ * but no highlights.
+ */
+function HighlightsBookmark(aFlyout, aPageElement) {
+  this._flyout = aFlyout;
+  this._page = aPageElement;
+
+  this._removeButton = this._page.getElementById("highlights-remove-button");
+  this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
+}
+
+HighlightsBookmark.prototype = {
+  get _preview() { return this._page.querySelector("richgriditem"); },
+
+  display: function (aOptions) {
+    let { id, saved } = aOptions || {};
+    let uri = Browser.selectedBrowser.currentURI;
+    let preview = this._preview;
+
+    Util.setBoolAttribute(this._page, "saved", saved);
+
+    preview.label = PlacesUtils.bookmarks.getItemTitle(id);
+    preview.url = uri;
+
+    // XXX fragile if View changes
+    Util.getFaviconForURI(uri)
+        .then((iconURI) => View.prototype._gotIcon(preview, iconURI));
+  },
+
+  onRemoveButton: function () {
+    let self = this;
+    return Task.spawn(function HE_onRemoveButton () {
+      yield Browser.unstarSite();
+      yield self._flyout.display("empty");
+      yield self._flyout.align();
+      yield Appbar.update();
+    });
+  }
+};
+
+/**
+ * Controller for "list" page shown when there is a bookmark and highlights.
+ */
+function HighlightsList(aFlyout, aPageElement) {
+  this._flyout = aFlyout;
+  this._page = aPageElement;
+
+  this._deleteButton = this._page.getElementById("highlights-delete-button");
+  this._deleteButton.addEventListener("click", this.onDeleteButton.bind(this), false);
+}
+
+HighlightsList.prototype = {
+  _items: [],
+
+  display: function (aOptions) {
+    let { id } = aOptions || {};
+    let highlights = Browser.getHighlights(id);
+
+    while (this._list.childNodes.length > 0) {
+      this._list.removeChild(list.firstChild);
+    }
+
+    let items = [];
+    for (let highlight of this._highlights) {
+      let item = new HighlightsListItem(highlight);
+      items.push(item);
+      this._list.appendChild(item.element);
+    }
+    this._items = items;
+  },
+
+  onDeleteButton: function () {
+    let checked = this._items.filter((aItem) => aItem.checked);
+
+    // TODO
+    // commit changes
+    // end editing
+    // update flyout
+  }
+};
 
 function HighlightsListItem(aHighlight) {
   this.highlight = aHighlight;
@@ -41,86 +175,16 @@ HighlightsListItem.prototype = {
   }
 };
 
-function HighlightsList(aFlyout, aPageElement) {
-  this._flyout = aFlyout;
-
-  this._page = aPageElement;
-  this._list = this._page.getElementById("highlights-list-items");
-  this._render();
-}
-
-HighlightsList.prototype = {
-  _highlights: [],
-  _items: [],
-
-  get highlights() { return this._highlights; },
-  set highlights (aHighlights) {
-    this._highlights = aHighlights;
-    this._render();
-    return this._ranges;
-  },
-
-  get checkedHighlights() {
-    let checked = [];
-    for (let item of this._items) {
-      if (item.checked) {
-        checked.push(item.highlight);
-      }
-    }
-    return checked;
-  },
-
-  _render: function () {
-    while (this._list.childNodes.length > 0) {
-      this._list.removeChild(list.firstChild);
-    }
-
-    let items = [];
-    for (let highlight of this._highlights) {
-      let item = new HighlightsListItem(highlight);
-      items.push(item);
-      this._list.appendChild(item.element);
-    }
-
-    this._items = items;
-  }
-};
-
 let HighlightsUI = {
-  __flyout: null,
-  __page: "empty", // empty, bookmark, highlights
-
-  _positionOptions: null,
-
-  get _page() { return this.__page; },
-  set _page(aPage) {
-    if (aPage == "empty" || aPage == "bookmark" || aPage == "highlights") {
-      this.__page = aPage;
-      this._popup.setAttribute("page", aPage);
-    }
-    return this.__page;
-  },
-
-  get _isEditing() { return this._popup.getAttribute("editing") == "true"; },
-  set _isEditing(aIsEditing) {
-    if (aIsEditing) {
-      this._popup.setAttribute("editing", "true");
-    } else {
-      this._popup.removeAttribute("editing");
-    }
-    return aIsEditing;
-  },
-
   get _panel() { return document.getElementById("highlights-container"); },
   get _popup() { return document.getElementById("highlights-popup"); },
   get _button() { return document.getElementById("star-button"); },
 
+  __flyout: null,
   get _flyout() {
     if (!this.__flyout) {
       this.__flyout = new Flyout(this._panel, this._popup);
       this.__flyout.controller = this;
-      this.__flyout.addEventListener("popuphidden",
-                                     this.onPopupHidden.bind(this), false);
     }
     return this.__flyout;
   },
@@ -145,42 +209,6 @@ let HighlightsUI = {
 
       yield HighlightsUI._flyout.show(position);
     });
-  },
-
-  /**
-   * Page display methods.
-   */
-
-  showEmptyPage: function HUI_showEmptyPage() {
-    this._page = "empty";
-  },
-
-  showBookmarkPage: function HUI_showBookmarkPage(aBookmarkId, aOptions) {
-    let options = Util.extend({ saved: false }, aOptions || {});
-    let browser = Browser.selectedBrowser;
-
-    this._page = "bookmark";
-
-    let page = document.getElementById("highlights-bookmark");
-    if (options.saved) {
-      page.setAttribute("saved", "true");
-    } else {
-      page.removeAttribute("saved");
-    }
-
-    let preview = document.getElementById("highlights-page-preview");
-    preview.label = PlacesUtils.bookmarks.getItemTitle(aBookmarkId);
-    preview.url = browser.currentURI;
-
-    // XXX fragile if View changes
-    Util.getFaviconForURI(browser.currentURI)
-        .then((iconURI) => View.prototype._gotIcon(preview, iconURI));
-  },
-
-  showHighlightsPage: function HUI_showHighlightsPage(aBookmarkId) {
-    this._page = "highlights";
-
-
   },
 
   /**
@@ -210,18 +238,6 @@ let HighlightsUI = {
   },
 
   /**
-   * Updates the flyout's position to reflect the new size of the contents.
-   */
-  reposition: function HUI_reposition() {
-    let positionOptions = this._positionOptions;
-
-    // XXX we have to run this twice. first time sets size properly.
-    // second time sets the position given the new size
-    this._flyout._position(positionOptions);
-    this._flyout._position(positionOptions);
-  },
-
-  /**
    * Event handlers.
    */
 
@@ -230,44 +246,5 @@ let HighlightsUI = {
       yield Appbar.update();
       yield HighlightsUI.show();
     });
-  },
-
-  onBookmarkButton: function HUI_onSaveButton() {
-    return Task.spawn(function HUI_onSaveButtonTask () {
-      let bookmarkId = yield Browser.starSite();
-      yield HighlightsUI.showBookmarkPage(bookmarkId, { saved: true });
-      yield HighlightsUI.reposition();
-      yield Appbar.update();
-    });
-  },
-
-  onRemoveButton: function HUI_onRemoveButton() {
-    return Task.spawn(function HUI_onRemoveButton () {
-      yield Browser.unstarSite();
-      yield HighlightsUI.showEmptyPage();
-      yield HighlightsUI.reposition();
-      yield Appbar.update();
-    });
-  },
-
-  onBackButton: function HUI_onBackButton() {
-    this._isEditing = false;
-  },
-
-  onEditButton: function HUI_onEditButton() {
-    this._isEditing = false;
-  },
-
-  onDeleteButton: function HUI_onDeleteButton() {
-    // delete the highlights both in the _highlights bin and on the list.
-    // if all are deleted, drop the bookmark.
-  },
-
-  onPopupHidden: function HUI_onPopupHidden() {
-    switch (this._page) {
-      case "bookmark":
-        // save changes to the rich bookmark snippet, which we don't have yet.
-        break;
-    }
   }
 };

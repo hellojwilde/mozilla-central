@@ -215,3 +215,34 @@ Flyout.prototype = {
     }
   }
 };
+
+function PagedFlyout(aPanel, aPopup) {
+  Flyout.call(this, aPanel, aPopup);
+}
+
+PagedFlyout.prototype = Util.extend(Object.create(Flyout.prototype), {
+  _pages: {},
+  _page: null,
+
+  get page() { return this._page; },
+
+  registerPage: function (aName, aController) {
+    this._pages[aName] = aInstance;
+  },
+
+  displayPage: function (aName, aOptions) {
+    if (this._pages.indexOf(aName) == -1) {
+      throw "PagedFlyout.displayPage: page " + aName + " does not exist."
+    }
+
+    this._page = aName;
+    this.setAttribute("page", this._page);
+
+    let controller = this._pages[aName];
+    if (controller.display) {
+      controller.display(aOptions)
+    }
+  }
+});
+
+PagedFlyout.prototype.constructor = PagedFlyout;

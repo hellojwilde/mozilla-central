@@ -858,10 +858,8 @@
 
         <vbox id="highlights-highlights" class="highlights-page">
           <richlistbox id="highlights-list-items" flex="1"/>
-
           <hbox class="highlights-page-footer">
-            <button id="highlights-delete-button" label="Delete"
-                    oncommand="HighlightsUI.onDeleteButton();"/>
+            <button id="highlights-delete-button" label="Delete"/>
           </hbox>
         </vbox>
       </vbox>
