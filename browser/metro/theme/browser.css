@@ -1277,12 +1277,25 @@ setting[type="radio"] > vbox {
   padding: 0 !important;
   margin: 0 !important;
   border: 0 !important;
-  font-size: 20pt;
+  font-size: 18pt;
+}
+
+#highlights-back-button::before {
+  content: "\E0BA";
+}
+
+#highlights-back-button:active::before {
+  color: #000;
+  content: "\E0B3";
+}
+
+#highlights-edit-button::after {
+  content: "\E104";
 }
 
 #highlights-popup:not([page="empty"]) #highlights-empty,
 #highlights-popup:not([page="bookmark"]) #highlights-bookmark,
-#highlights-popup:not([page="highlights"]) #highlights-highlights {
+#highlights-popup:not([page="list"]) #highlights-list {
   visibility: collapse;
 }
 
@@ -1320,32 +1333,33 @@ setting[type="radio"] > vbox {
 
 /* Highlights page */
 
-#highlights-popup[page="highlights"][editing] #highlights-back-button,
-#highlights-popup[page="highlights"]:not([editing]) #highlights-edit-button {
+#highlights-popup[page="list"][editing] #highlights-back-button,
+#highlights-popup[page="list"]:not([editing]) #highlights-edit-button {
   visibility: visible;
 }
 
-#highlights-highlights {
+#highlights-list {
   padding: 0;
 }
 
-#highlights-list-items {
+#highlights-list richlistbox {
   border: 0 none;
   -moz-appearance: none;
   max-width: 300px;
   display: -moz-box;
 }
 
-#highlights-list-items scrollbox {
+#highlights-list richlistbox > scrollbox {
   width: 100%;
   overflow-x: hidden !important;
 }
 
-#highlights-list-items richlistitem {
+#highlights-list richlistitem {
   width: 100%;
   overflow: hidden !important;
 }
 
-#highlights-popup:not([editing]) #highlights-highlights .highlights-page-footer {
+#highlights-popup:not([editing]) #highlights-list .highlights-page-footer,
+#highlights-popup:not([editing]) #highlights-list checkbox {
   visibility: collapse;
 }

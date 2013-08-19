@@ -30,11 +30,6 @@ function HighlightsFlyout(aPanel, aPopup) {
 }
 
 HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
-  get isEditing() { return Util.getBoolAttribute(this._popup, "editing"); },
-  set isEditing(aIsEditing) {
-    return Util.setBoolAttribute(this._popup, "editing", aIsEditing);
-  },
-
   selectPage: function HF_selectPage() {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
@@ -56,12 +51,14 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   },
 
   onBackButton: function HUI_onBackButton() {
-    this.isEditing = false;
+    this._popup.removeAttribute("editing");
+    this.realign();
   },
 
   onEditButton: function HUI_onEditButton() {
-    this.isEditing = true;
-  },
+    this._popup.setAttribute("editing", "true");
+    this.realign();
+  }
 });
 
 HighlightsFlyout.prototype.constructor = HighlightsFlyout;
@@ -74,7 +71,7 @@ function HighlightsEmpty(aFlyout, aPageElement) {
   this._page = aPageElement;
 
   this._markButton = document.getElementById("highlights-bookmark-button");
-  this._markButton.addEventListener("command", this.onMarkButton.bind(this), false);
+  this._markButton.addEventListener("click", this.onMarkButton.bind(this), false);
 }
 
 HighlightsEmpty.prototype = {
@@ -82,8 +79,8 @@ HighlightsEmpty.prototype = {
     let self = this;
     return Task.spawn(function HE_onMarkButtonTask () {
       let bookmarkId = yield Browser.starSite();
-      yield self._flyout.display("bookmark", { id: bookmarkId, saved: true });
-      yield self._flyout.align();
+      self._flyout.displayPage("bookmark", { id: bookmarkId, saved: true });
+      self._flyout.realign();
       yield Appbar.update();
     });
   }
@@ -123,8 +120,8 @@ HighlightsBookmark.prototype = {
     let self = this;
     return Task.spawn(function HE_onRemoveButton () {
       yield Browser.unstarSite();
-      yield self._flyout.display("empty");
-      yield self._flyout.align();
+      self._flyout.displayPage("empty");
+      self._flyout.realign();
       yield Appbar.update();
     });
   }
@@ -150,16 +147,32 @@ HighlightsList.prototype = {
     let highlights = Browser.getHighlights(id);
 
     while (this._list.childNodes.length > 0) {
-      this._list.removeChild(list.firstChild);
+      this._list.removeChild(this._list.firstChild);
     }
 
     let items = [];
     for (let highlight of highlights) {
       let item = new HighlightsListItem(highlight);
       items.push(item);
+
       this._list.appendChild(item.element);
+      item.elementCheckbox.addEventListener("command", this.onCheckbox.bind(this))
     }
     this._items = items;
+
+    this.updateDeleteButton();
+  },
+
+  updateDeleteButton: function () {
+    let checked = this._items.filter((aItem) => aItem.checked);
+    let len = checked.length;
+
+    this._deleteButton.disabled = (len == 0);
+    this._deleteButton.label = (len > 1) ? "Delete (" + len + ")" : "Delete";
+  },
+
+  onCheckbox: function () {
+    this.updateDeleteButton();
   },
 
   onDeleteButton: function () {
@@ -183,20 +196,31 @@ HighlightsListItem.prototype = {
 
   get element() {
     if (!this._element) {
-      this._element = document.createElement("richlistitem");
-
-      this._elementCheckbox = document.createElement("checkbox");
-      this._element.appendChild(this._elementCheckbox);
-
-      this._elementText = document.createElement("description");
-      this._elementText.textContent = this.highlight.string;
-      this._element.appendChild(this._elementText);
+      this._render();
     }
     return this._element;
   },
 
+  get elementCheckbox() {
+    if (!this._elementCheckbox) {
+      this._render();
+    }
+    return this._elementCheckbox;
+  },
+
   get checked() {
     return this._elementCheckbox.checked;
+  },
+
+  _render: function () {
+    this._element = document.createElement("richlistitem");
+
+    this._elementCheckbox = document.createElement("checkbox");
+    this._element.appendChild(this._elementCheckbox);
+
+    this._elementText = document.createElement("description");
+    this._elementText.textContent = this.highlight.string;
+    this._element.appendChild(this._elementText);
   }
 };
 
