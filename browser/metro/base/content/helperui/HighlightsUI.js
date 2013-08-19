@@ -15,29 +15,25 @@ XPCOMUtils.defineLazyModuleGetter(this, "View",
 function HighlightsFlyout(aPanel, aPopup) {
   PagedFlyout.call(this, aPanel, aPopup);
 
-  this._emptyPage = document.getElementById("highlights-empty");
-  this._bookmarkPage = document.getElementById("highlights-bookmark");
-  this._listPage = document.getElementById("highlights-list");
-  this._editButton = document.getElementById("highlights-edit-button");
-  this._backButton = document.getElementById("highlights-back-button");
+  this.registerPage("empty", new HighlightsEmpty(this, aPopup));
+  this.registerPage("bookmark", new HighlightsBookmark(this, aPopup));
+  this.registerPage("list", new HighlightsList(this, aPopup));
 
-  this.registerPage("empty", new HighlightsEmpty(this, this._emptyPage));
-  this.registerPage("bookmark", new HighlightsBookmark(this, this._bookmarkPage));
-  this.registerPage("list", new HighlightsList(this, this._listPage));
+  this._editButton = this._popup.querySelector(".highlights-edit-button");
+  this._editButton.addEventListener("command", this.onEditButton.bind(this), false);
 
-  this._editButton.addEventListener("click", this.onEditButton.bind(this), false);
-  this._backButton.addEventListener("click", this.onBackButton.bind(this), false);
+  this._backButton = this._popup.querySelector(".highlights-back-button");
+  this._backButton.addEventListener("command", this.onBackButton.bind(this), false);
 }
 
 HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   selectPage: function HF_selectPage() {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
-      let uri = Browser.selectedBrowser.currentURI;
-      let bookmarkId = yield Bookmarks.getForURI(uri);
-
       self.stopEditing();
 
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
       if (bookmarkId == null) {
         self.displayPage("empty");
         return;
@@ -58,6 +54,11 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   },
 
   stopEditing: function () {
+    let controller = this._pages[this._page];
+    if (controller && controller.stopEditing) {
+      controller.stopEditing();
+    }
+
     this._popup.removeAttribute("editing");
     this.realign();
   },
@@ -76,11 +77,11 @@ HighlightsFlyout.prototype.constructor = HighlightsFlyout;
 /**
  * Controller for "empty" page shown when there is no bookmark or highlights.
  */
-function HighlightsEmpty(aFlyout, aPageElement) {
+function HighlightsEmpty(aFlyout, aFlyoutElement) {
   this._flyout = aFlyout;
-  this._page = aPageElement;
+  this._page = aFlyoutElement.querySelector(".highlights-page-empty");
 
-  this._markButton = document.getElementById("highlights-bookmark-button");
+  this._markButton = this._page.querySelector(".highlights-bookmark-button");
   this._markButton.addEventListener("click", this.onMarkButton.bind(this), false);
 }
 
@@ -100,11 +101,11 @@ HighlightsEmpty.prototype = {
  * Controller for "bookmark" page shown when there is a bookmark,
  * but no highlights.
  */
-function HighlightsBookmark(aFlyout, aPageElement) {
+function HighlightsBookmark(aFlyout, aFlyoutElement) {
   this._flyout = aFlyout;
-  this._page = aPageElement;
+  this._page = aFlyoutElement.querySelector(".highlights-page-bookmark");
 
-  this._removeButton = document.getElementById("highlights-remove-button");
+  this._removeButton = this._page.querySelector(".highlights-remove-button");
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
 }
 
@@ -123,16 +124,16 @@ HighlightsBookmark.prototype = {
 
     // XXX fragile if View changes
     Util.getFaviconForURI(uri)
-        .then((iconURI) => View.prototype._gotIcon(preview, iconURI));
+        .then((iconURI) => View.prototype._gotIcon(preview, iconURI))
+        .then(null, Components.utils.reportError);
   },
 
   onRemoveButton: function () {
     let self = this;
     return Task.spawn(function HE_onRemoveButton () {
       yield Browser.unstarSite();
-      self._flyout.displayPage("empty");
-      self._flyout.realign();
       yield Appbar.update();
+      self._flyout.hide();
     });
   }
 };
@@ -140,18 +141,19 @@ HighlightsBookmark.prototype = {
 /**
  * Controller for "list" page shown when there is a bookmark and highlights.
  */
-function HighlightsList(aFlyout, aPageElement) {
+function HighlightsList(aFlyout, aFlyoutElement) {
   this._flyout = aFlyout;
-  this._page = aPageElement;
+  this._page = aFlyoutElement.querySelector(".highlights-page-list");
 
-  this._list = this._page.querySelector("richlistbox");
-  this._deleteButton = document.getElementById("highlights-delete-button");
-  this._deleteButton.addEventListener("click", this.onDeleteButton.bind(this), false);
+  this._deleteButton = this._page.querySelector(".highlights-delete-button");
+  this._deleteButton.addEventListener("command", this.onDeleteButton.bind(this), false);
 }
 
 HighlightsList.prototype = {
   _items: [],
   _id: null,
+
+  get _list() { return this._page.querySelector("richlistbox"); },
 
   display: function (aOptions) {
     let { id } = aOptions || {};
@@ -163,7 +165,7 @@ HighlightsList.prototype = {
 
     let items = [];
     for (let highlight of highlights) {
-      let item = new HighlightsListItem(highlight);
+      let item = new HighlightsListItem(highlight, this);
       items.push(item);
 
       this._list.appendChild(item.element);
@@ -174,22 +176,17 @@ HighlightsList.prototype = {
     this.updateDeleteButton();
     this._id = id;
   },
-/*
-  resize: function () {
-    let height = {};
-    this._list.scrollBoxObject.getScrolledSize({}, height);
 
-    if (height.value > this._list.clientHeight) {
-      let min = (a, b) => a < b ? a : b;
-      let rect = this._flyout._popup.getBoundingClientRect();
-      let max = rect.bottom - (rect.height - this._list.clientHeight) - 50;
-
-      this._list.height = min(height.value, max);
-      Util.dumpLn("h " + height.value + " ch " + this._list.clientHeight + " m " + max);
-      this._flyout.realign();
+  stopEditing: function () {
+    for (let item of this._items) {
+      item.checked = false;
     }
   },
-*/
+
+  updateChecked: function () {
+    this.updateDeleteButton();
+  },
+
   updateDeleteButton: function () {
     let checked = this._items.filter((aItem) => aItem.checked);
     let len = checked.length;
@@ -209,14 +206,21 @@ HighlightsList.prototype = {
       for (let item of checked) {
         yield Browser.unhighlight(item.highlight);
       }
-      self._flyout.selectPage();
-      self._flyout.realign();
+
+      if (yield Browser.isSiteStarred()) {
+        self._flyout.selectPage();
+        self._flyout.realign();
+      } else {
+        yield Appbar.update();
+        self._flyout.hide();
+      }
     });
   }
 };
 
-function HighlightsListItem(aHighlight) {
+function HighlightsListItem(aHighlight, aList) {
   this.highlight = aHighlight;
+  this._list = aList;
 }
 
 HighlightsListItem.prototype = {
@@ -238,8 +242,29 @@ HighlightsListItem.prototype = {
     return this._elementCheckbox;
   },
 
-  get checked() {
-    return this._elementCheckbox.checked;
+  get checked() { return this.elementCheckbox.checked; },
+  set checked(aIsChecked) {
+    this.elementCheckbox.checked = aIsChecked;
+    this.updateChecked();
+    return this.checked;
+  },
+
+  updateChecked: function () {
+    Util.setBoolAttribute(this.element, "checked", this.checked);
+
+    if (this._list && this._list.updateChecked) {
+      this._list.updateChecked();
+    }
+  },
+
+  onElement: function (aEvent) {
+    if (aEvent.originalTarget != this.elementCheckbox) {
+      this.checked = !this.checked;
+    }
+  },
+
+  onCheckbox: function (aEvent) {
+    this.updateChecked();
   },
 
   _render: function () {
@@ -251,6 +276,9 @@ HighlightsListItem.prototype = {
     this._elementText = document.createElement("description");
     this._elementText.textContent = this.highlight.string;
     this._element.appendChild(this._elementText);
+
+    this._element.addEventListener("click", this.onElement.bind(this), false);
+    this._elementCheckbox.addEventListener("command", this.onCheckbox.bind(this), false);
   }
 };
 
@@ -276,18 +304,19 @@ let HighlightsUI = {
     let self = this;
     return Task.spawn(function HUI_showTask() {
       try {
-      let rect = self._button.getBoundingClientRect();
-      let position = {
-        xPos: (rect.left + rect.right) / 2,
-        yPos: Elements.toolbar.getBoundingClientRect().top,
-        centerHorizontally: true,
-        bottomAligned: true
-      };
+        let rect = self._button.getBoundingClientRect();
+        let position = {
+          xPos: (rect.left + rect.right) / 2,
+          yPos: Elements.toolbar.getBoundingClientRect().top,
+          centerHorizontally: true,
+          bottomAligned: true
+        };
 
-      yield self._flyout.selectPage();
-      yield self._flyout.show(position);
-      self._flyout.resizePage();
-      } catch(e) { Util.dumpLn(e);}
+        yield self._flyout.selectPage();
+        yield self._flyout.show(position);
+      } catch(e) {
+        Util.dumpLn(e + " " + e.lineNumber);
+      }
     });
   },
 

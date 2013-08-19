@@ -826,36 +826,34 @@
     </box>
 
     <vbox id="highlights-container" class="menu-container" hidden="true">
-      <vbox id="highlights-popup" class="menu-popup menu-border">
+      <vbox id="highlights-popup" class="highlights-popup menu-popup menu-border">
         <hbox class="menu-header">
-          <button id="highlights-back-button" class="symbol-button"/>
+          <button class="highlights-back-button symbol-button"/>
           <description class="highlights-title" flex="1" value="Highlights"/>
-          <button id="highlights-edit-button" class="symbol-button"/>
+          <button class="highlights-edit-button symbol-button"/>
         </hbox>
 
-        <vbox id="highlights-empty" class="highlights-page">
+        <vbox class="highlights-page-empty highlights-page">
           <label value="You don't have any highlights."/>
-          <html:div id="highlights-bookmark-button"
-                    class="text-link symbol-before">
+          <html:div class="highlights-bookmark-button text-link symbol-before">
             Bookmark this page
           </html:div>
         </vbox>
 
-        <vbox id="highlights-bookmark" class="highlights-page">
+        <vbox class="highlights-page-bookmark highlights-page">
           <richgriditem/>
-
           <hbox class="highlights-page-footer">
-            <html:div id="highlights-saved" class="symbol-before">
+            <html:div class="highlights-saved symbol-before">
               Bookmark saved
             </html:div>
-            <button id="highlights-remove-button" label="Remove"/>
+            <button class="highlights-remove-button" label="Remove"/>
           </hbox>
         </vbox>
 
-        <vbox id="highlights-list" class="highlights-page">
+        <vbox class="highlights-page-list highlights-page">
           <richlistbox flex="1"/>
           <hbox class="highlights-page-footer">
-            <button id="highlights-delete-button" label="Delete"/>
+            <button class="highlights-delete-button" label="Delete"/>
           </hbox>
         </vbox>
       </vbox>

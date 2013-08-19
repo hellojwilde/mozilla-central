@@ -243,13 +243,6 @@ PagedFlyout.prototype = Util.extend(Object.create(Flyout.prototype), {
     if (controller.display) {
       controller.display(aOptions)
     }
-  },
-
-  resizePage: function () {
-    let controller = this._pages[this._page];
-    if (controller.resize) {
-      controller.resize()
-    }
   }
 });
 

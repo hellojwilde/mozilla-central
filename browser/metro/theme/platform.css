@@ -22,6 +22,25 @@
   cursor: pointer;
 }
 
+.symbol-before {
+  padding: 5px;
+}
+
+.symbol-before::before {
+  font-family: "Segoe UI Symbol" !important;
+  padding-right: 3px;
+  font-size: 0.8em;
+}
+
+.symbol-button {
+  font-family: "Segoe UI Symbol" !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 18pt;
+}
+
 textbox,
 menulist {
   -moz-appearance: none;

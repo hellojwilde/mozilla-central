@@ -1257,50 +1257,35 @@ setting[type="radio"] > vbox {
 
 /* Highlights ============================================================== */
 
-.highlights-page {
-  padding: 10px;
-}
+/* Header ------------------------------------------------------------------ */
 
-.symbol-before {
-  padding: 5px;
-}
-
-.symbol-before::before {
-  font-family: "Segoe UI Symbol" !important;
-  padding-right: 3px;
-  font-size: 0.8em;
-}
-
-.symbol-button {
-  font-family: "Segoe UI Symbol" !important;
-  background: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  font-size: 18pt;
-}
-
-#highlights-back-button::before {
+.highlights-back-button::before {
   content: "\E0BA";
 }
 
-#highlights-back-button:active::before {
+.highlights-back-button:active::before {
   color: #000;
   content: "\E0B3";
 }
 
-#highlights-edit-button::after {
+.highlights-edit-button::after {
   content: "\E104";
 }
 
-#highlights-popup:not([page="empty"]) #highlights-empty,
-#highlights-popup:not([page="bookmark"]) #highlights-bookmark,
-#highlights-popup:not([page="list"]) #highlights-list {
+.highlights-back-button,
+.highlights-edit-button {
   visibility: collapse;
 }
 
-#highlights-back-button,
-#highlights-edit-button {
+/* Pages ------------------------------------------------------------------- */
+
+.highlights-page {
+  padding: 10px;
+}
+
+.highlights-popup:not([page="empty"]) .highlights-page-empty,
+.highlights-popup:not([page="bookmark"]) .highlights-page-bookmark,
+.highlights-popup:not([page="list"]) .highlights-page-list {
   visibility: collapse;
 }
 
@@ -1308,41 +1293,41 @@ setting[type="radio"] > vbox {
   -moz-box-pack: end;
 }
 
-/* Empty page */
+/* Page: Empty */
 
-#highlights-bookmark-button::before {
+.highlights-bookmark-button::before {
   content: "\E109"; /* plus */
   color: #000;
 }
 
-/* Bookmark page */
+/* Page: Bookmark (no highlights) */
 
-#highlights-bookmark {
+.highlights-page-bookmark {
   padding-top: 15px;
 }
 
-#highlights-saved::before {
+.highlights-saved::before {
   content: "\E10B"; /* checkmark */
 }
 
-#highlights-popup[page="bookmark"] .menu-header,
-#highlights-bookmark:not([saved]) #highlights-saved,
-#highlights-bookmark[saved] #highlights-remove-button {
+.highlights-popup[page="bookmark"] .menu-header,
+.highlights-page-bookmark:not([saved]) .highlights-saved,
+.highlights-page-bookmark[saved] .highlights-remove-button {
   display: none;
 }
 
-/* Highlights page */
+/* Page: List (highlights) */
 
-#highlights-popup[page="list"][editing] #highlights-back-button,
-#highlights-popup[page="list"]:not([editing]) #highlights-edit-button {
+.highlights-popup[page="list"][editing] .highlights-back-button,
+.highlights-popup[page="list"]:not([editing]) .highlights-edit-button {
   visibility: visible;
 }
 
-#highlights-list {
+.highlights-page-list {
   padding: 0;
 }
 
-#highlights-list richlistbox {
+.highlights-page-list richlistbox {
   border: 0 none;
   -moz-appearance: none;
   max-width: 300px;
@@ -1350,30 +1335,39 @@ setting[type="radio"] > vbox {
   min-height: 300px;
 }
 
-#highlights-list richlistbox > scrollbox {
+.highlights-page-list richlistbox > scrollbox {
   width: 100%;
   overflow-x: hidden !important;
 }
 
-#highlights-list richlistitem {
+.highlights-page-list richlistitem {
   max-width: 100%;
   -moz-box-align: start;
 }
 
-#highlights-list description {
+.highlights-page-list richlistitem[checked] {
+  background: @metro_orange@ !important;
+  color: #fff !important;
+}
+
+.highlights-page-list description {
   max-width: 280px;
   overflow: hidden;
 }
 
-#highlights-list checkbox {
+.highlights-page-list checkbox {
   padding: 5px 6px 5px 11px;
 }
 
-#highlights-popup[editing] #highlights-list description {
+.highlights-popup[editing] .highlights-page-list description {
   max-width: 250px;
 }
 
-#highlights-popup:not([editing]) #highlights-list .highlights-page-footer,
-#highlights-popup:not([editing]) #highlights-list checkbox {
+.highlights-page-list .highlights-page-footer {
+  padding: 10px;
+}
+
+.highlights-popup:not([editing]) .highlights-page-list .highlights-page-footer,
+.highlights-popup:not([editing]) .highlights-page-list checkbox {
   visibility: collapse;
 }
