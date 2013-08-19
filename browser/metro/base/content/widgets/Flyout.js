@@ -133,7 +133,7 @@ Flyout.prototype = {
 
     // This triggers a reflow, which sets transitionability.
     // All animation/transition setup must happen before here.
-    this._currentPositionOptions = positionOptions || {};
+    this._currentPositionOptions = aPositionOptions || {};
     this._position(this._currentPositionOptions);
 
     let self = this;
@@ -159,6 +159,7 @@ Flyout.prototype = {
 
     let self = this;
     this._panel.addEventListener("transitionend", function popuphidden() {
+      self._currentPositionOptions = {};
       self._panel.removeEventListener("transitionend", popuphidden);
       self._panel.removeAttribute("hiding");
       self._panel.hidden = true;
@@ -217,7 +218,6 @@ Flyout.prototype = {
 };
 
 function PagedFlyout(aPanel, aPopup) {
-  Util.dumpLn(" init " + aPanel);
   Flyout.call(this, aPanel, aPopup);
 }
 
@@ -228,16 +228,16 @@ PagedFlyout.prototype = Util.extend(Object.create(Flyout.prototype), {
   get page() { return this._page; },
 
   registerPage: function (aName, aController) {
-    this._pages[aName] = aInstance;
+    this._pages[aName] = aController;
   },
 
   displayPage: function (aName, aOptions) {
-    if (this._pages.indexOf(aName) == -1) {
+    if (!this._pages[aName]) {
       throw "PagedFlyout.displayPage: page " + aName + " does not exist."
     }
 
     this._page = aName;
-    this.setAttribute("page", this._page);
+    this._popup.setAttribute("page", this._page);
 
     let controller = this._pages[aName];
     if (controller.display) {

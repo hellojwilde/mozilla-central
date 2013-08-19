@@ -13,7 +13,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "View",
  * and state updating.
  */
 function HighlightsFlyout(aPanel, aPopup) {
-  Util.dumpLn("highlights init " + aPanel);
   PagedFlyout.call(this, aPanel, aPopup);
 
   this._emptyPage = document.getElementById("highlights-empty");
@@ -31,10 +30,9 @@ function HighlightsFlyout(aPanel, aPopup) {
 }
 
 HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
-  get isEditing() { return this._popup.getAttribute("editing") == "true"; },
+  get isEditing() { return Util.getBoolAttribute(this._popup, "editing"); },
   set isEditing(aIsEditing) {
-    Util.setBoolAttribute(this._popup, "editing", aIsEditing);
-    return aIsEditing;
+    return Util.setBoolAttribute(this._popup, "editing", aIsEditing);
   },
 
   selectPage: function HF_selectPage() {
@@ -75,7 +73,7 @@ function HighlightsEmpty(aFlyout, aPageElement) {
   this._flyout = aFlyout;
   this._page = aPageElement;
 
-  this._markButton = this._page.getElementById("highlights-bookmark-button");
+  this._markButton = document.getElementById("highlights-bookmark-button");
   this._markButton.addEventListener("command", this.onMarkButton.bind(this), false);
 }
 
@@ -99,7 +97,7 @@ function HighlightsBookmark(aFlyout, aPageElement) {
   this._flyout = aFlyout;
   this._page = aPageElement;
 
-  this._removeButton = this._page.getElementById("highlights-remove-button");
+  this._removeButton = document.getElementById("highlights-remove-button");
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
 }
 
@@ -139,7 +137,8 @@ function HighlightsList(aFlyout, aPageElement) {
   this._flyout = aFlyout;
   this._page = aPageElement;
 
-  this._deleteButton = this._page.getElementById("highlights-delete-button");
+  this._list = this._page.querySelector("richlistbox");
+  this._deleteButton = document.getElementById("highlights-delete-button");
   this._deleteButton.addEventListener("click", this.onDeleteButton.bind(this), false);
 }
 
@@ -155,7 +154,7 @@ HighlightsList.prototype = {
     }
 
     let items = [];
-    for (let highlight of this._highlights) {
+    for (let highlight of highlights) {
       let item = new HighlightsListItem(highlight);
       items.push(item);
       this._list.appendChild(item.element);
@@ -190,7 +189,7 @@ HighlightsListItem.prototype = {
       this._element.appendChild(this._elementCheckbox);
 
       this._elementText = document.createElement("description");
-      this._elementText.textContent = this.highlight.range.string;
+      this._elementText.textContent = this.highlight.string;
       this._element.appendChild(this._elementText);
     }
     return this._element;
@@ -209,8 +208,10 @@ let HighlightsUI = {
   __flyout: null,
   get _flyout() {
     if (!this.__flyout) {
+      try {
       this.__flyout = new HighlightsFlyout(this._panel, this._popup);
       this.__flyout.controller = this;
+      } catch (e) { Util.dumpLn(e); }
     }
     return this.__flyout;
   },
@@ -222,6 +223,7 @@ let HighlightsUI = {
   show: function HUI_show() {
     let self = this;
     return Task.spawn(function HUI_showTask() {
+      try {
       let rect = self._button.getBoundingClientRect();
       let position = {
         xPos: (rect.left + rect.right) / 2,
@@ -232,6 +234,7 @@ let HighlightsUI = {
 
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
+      } catch(e) { Util.dumpLn(e);}
     });
   },
 

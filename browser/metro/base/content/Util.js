@@ -140,6 +140,24 @@ let Util = {
    * Element utilities
    */
 
+  getBoolAttribute: function getBoolAttribute(aElement, aName) {
+    return aElement ? aElement.hasAttribute(aName) : false;
+  },
+
+  setBoolAttribute: function setBoolAttribute(aElement, aName, aValue) {
+    if (!aElement) {
+      return false;
+    }
+
+    if (aValue) {
+      aElement.setAttribute(aName, "true");
+    } else {
+      aElement.removeAttribute(aName);
+    }
+
+    return aValue;
+  },
+
   highlightElement: function highlightElement(aElement) {
     if (aElement == null) {
       this.dumpLn("aElement is null");
