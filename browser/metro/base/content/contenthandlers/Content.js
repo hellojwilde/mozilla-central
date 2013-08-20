@@ -528,14 +528,17 @@ let Content = {
     let highlight = this._getHighlightForRange(aRange);
 
     let rect = highlight.getBoundingClientRect();
-    let scrollTop = rect.top - (content.innerHeight / 2) - (rect.height / 2);
+    let textTop = rect.top + content.scrollY;
+    let scrollTop = textTop - (content.innerHeight / 2) - (rect.height / 2);
     content.scrollTo(content.scrollX, scrollTop);
 
-    highlight.addEventListener("animationend", function bounceEnd() {
-      highlight.removeEventListener("animationend", bounceEnd, false);
-      highlight.removeAttribute("bounce");
-    }, false);
-    highlight.setAttribute("bounce", "true");
+    if (!highlight.hasAttribute("bounce")) {
+      highlight.addEventListener("animationend", function bounceEnd() {
+        highlight.removeEventListener("animationend", bounceEnd, false);
+        highlight.removeAttribute("bounce");
+      }, false);
+      highlight.setAttribute("bounce", "true");
+    }
   }
 };
 
