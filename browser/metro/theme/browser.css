@@ -1323,6 +1323,11 @@ setting[type="radio"] > vbox {
   visibility: visible;
 }
 
+.highlights-popup[page="list"][editing] .highlights-title {
+  margin-left: 0;
+  padding-left: 5px;
+}
+
 .highlights-page-list {
   padding: 0;
 }
@@ -1345,7 +1350,7 @@ setting[type="radio"] > vbox {
   -moz-box-align: start;
 }
 
-.highlights-page-list richlistitem[checked] {
+.highlights-popup[editing] .highlights-page-list richlistitem[checked] {
   background: @metro_orange@ !important;
   color: #fff !important;
 }
@@ -1353,10 +1358,12 @@ setting[type="radio"] > vbox {
 .highlights-page-list description {
   max-width: 280px;
   overflow: hidden;
+  padding: 0 5px;
+  font-weight: 400 !important;
 }
 
 .highlights-page-list checkbox {
-  padding: 5px 6px 5px 11px;
+  padding: 5px 0 5px 10px;
 }
 
 .highlights-popup[editing] .highlights-page-list description {

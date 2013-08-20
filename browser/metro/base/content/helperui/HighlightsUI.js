@@ -54,11 +54,6 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   },
 
   stopEditing: function () {
-    let controller = this._pages[this._page];
-    if (controller && controller.stopEditing) {
-      controller.stopEditing();
-    }
-
     this._popup.removeAttribute("editing");
     this.realign();
   },
@@ -177,12 +172,6 @@ HighlightsList.prototype = {
     this._id = id;
   },
 
-  stopEditing: function () {
-    for (let item of this._items) {
-      item.checked = false;
-    }
-  },
-
   updateChecked: function () {
     this.updateDeleteButton();
   },
@@ -274,7 +263,8 @@ HighlightsListItem.prototype = {
     this._element.appendChild(this._elementCheckbox);
 
     this._elementText = document.createElement("description");
-    this._elementText.textContent = this.highlight.string;
+    this._elementText.textContent =
+      '"' + this.highlight.string.replace(/["“”]/g, "'") + '"';
     this._element.appendChild(this._elementText);
 
     this._element.addEventListener("click", this.onElement.bind(this), false);
@@ -303,20 +293,16 @@ let HighlightsUI = {
   show: function HUI_show() {
     let self = this;
     return Task.spawn(function HUI_showTask() {
-      try {
-        let rect = self._button.getBoundingClientRect();
-        let position = {
-          xPos: (rect.left + rect.right) / 2,
-          yPos: Elements.toolbar.getBoundingClientRect().top,
-          centerHorizontally: true,
-          bottomAligned: true
-        };
+      let rect = self._button.getBoundingClientRect();
+      let position = {
+        xPos: (rect.left + rect.right) / 2,
+        yPos: Elements.toolbar.getBoundingClientRect().top,
+        centerHorizontally: true,
+        bottomAligned: true
+      };
 
-        yield self._flyout.selectPage();
-        yield self._flyout.show(position);
-      } catch(e) {
-        Util.dumpLn(e + " " + e.lineNumber);
-      }
+      yield self._flyout.selectPage();
+      yield self._flyout.show(position);
     });
   },
 

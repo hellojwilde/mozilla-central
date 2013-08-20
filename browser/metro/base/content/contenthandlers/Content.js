@@ -255,11 +255,16 @@ let Content = {
         break;
 
       case "Browser:Highlight":
-        this._highlightRanges(json.ranges);
+        for (let range of json.ranges) {
+          this._highlightRange(range);
+        }
         break;
 
       case "Browser:Unhighlight":
-        this._unhighlightRanges(json.ranges);
+        Util.dumpLn("unhighlight!");
+        for (let range of json.ranges) {
+          this._unhighlightRange(range);
+        }
         break;
     }
   },
@@ -478,37 +483,44 @@ let Content = {
       viewer.minFontSize = aSize;
   },
 
-  _highlightRanges: function _highlightRanges(aRanges) {
-    for (let range of aRanges) {
-      this._highlightRange(range);
-    }
-  },
+  _applied: [],
 
   _highlightRange: function _highlightRange(aRange) {
-    let id = "highlight" + Date.now() + "-" + Math.random();
     let doc = content.document;
-
     let highlight = doc.createElement("moz-highlight");
-    highlight.id = id;
 
     let range = new SerializableRange(aRange).getRange(doc);
+    let key = JSON.stringify(aRange);
+
     if (range) {
       range.surroundContents(highlight);
     } else {
-      Util.dumpLn("couldn't get range: " + aRange);
+      Util.dumpLn("couldn't get range: " + key);
     }
 
-    return id;
-  },
-
-  _unhighlightRanges: function (aRanges) {
-    for (let range of aRanges) {
-      this._unhighlightRange(range);
-    }
+    this._applied[key] = highlight;
   },
 
   _unhighlightRange: function (aRange) {
-    //TODO
+    try {
+
+
+    let key = JSON.stringify(aRange);
+    let highlight = this._applied[key];
+
+    if (!highlight) {
+      Util.dumpLn("couldn't get highlight for range: " + key);
+      return;
+    }
+
+    let parent = highlight.parentNode;
+    for (let child of highlight.childNodes) {
+      parent.insertBefore(child, highlight);
+    }
+    parent.removeChild(highlight);
+        } catch(e) {
+      Util.dumpLn(e);
+    }
   }
 };
 

@@ -853,7 +853,8 @@ var Browser = {
 
       let index = -1;
       for (let i = 0, len = highlights.length; i < len; i++) {
-        if (new SerializableRange(aRange).equals(new SerializableRange(highlights[i]))) {
+        if (new SerializableRange(aRange)
+            .equals(new SerializableRange(highlights[i]))) {
           index = i;
         }
       }
@@ -1944,9 +1945,9 @@ Tab.prototype = {
     this._browser.messageManager.sendAsyncMessage("Browser:Highlight", json);
   },
 
-  unhighlightRanges: function Tab_highlightRanges(aRanges) {
+  unhighlightRanges: function Tab_unhighlightRanges(aRanges) {
     let json = { ranges: aRanges };
-    this._browser.messageManager.sendAsyncMessage("Browser:Unighlight", json);
+    this._browser.messageManager.sendAsyncMessage("Browser:Unhighlight", json);
   },
 
   updateThumbnail: function updateThumbnail() {
