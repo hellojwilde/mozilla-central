@@ -27,6 +27,12 @@ function HighlightsFlyout(aPanel, aPopup) {
 }
 
 HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
+  _isEditing: false,
+  get isEditing() {
+    delete this.isEditing;
+    return this._isEditing;
+  },
+
   selectPage: function HF_selectPage() {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
@@ -49,11 +55,21 @@ HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   },
 
   startEditing: function () {
+    if (this._isEditing) {
+      return;
+    }
+
+    this._isEditing = true;
     this._popup.setAttribute("editing", "true");
     this.realign();
   },
 
   stopEditing: function () {
+    if (!this._isEditing) {
+      return;
+    }
+
+    this._isEditing = false;
     this._popup.removeAttribute("editing");
     this.realign();
   },
@@ -247,8 +263,14 @@ HighlightsListItem.prototype = {
   },
 
   onElement: function (aEvent) {
-    if (aEvent.originalTarget != this.elementCheckbox) {
-      this.checked = !this.checked;
+    // XXX there really should be a better way to fetch this without
+    // violating multiple separate pseudo-private scopes.
+    if (this._list._flyout._isEditing) {
+      if (aEvent.originalTarget != this.elementCheckbox) {
+        this.checked = !this.checked;
+      }
+    } else {
+      Browser.scrollToHighlight(this.highlight);
     }
   },
 

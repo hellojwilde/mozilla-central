@@ -7,13 +7,53 @@
 dump("### Serializable.js loaded\n");
 
 /**
+ * A value object that can be easily serialized into a String for
+ * passing around and storing.
+ *
+ * @constructor
+ */
+function Serializable() {}
+
+/**
+ * Returns a string representing the object.
+ *
+ * @returns {String} String representing the object.
+ */
+Serializable.prototype.serialize = function S_serialize() {
+  return JSON.stringify(this);
+}
+
+/**
+ * Compares two Serializable instances to determine if they are
+ * equal in terms of value.
+ *
+ * @returns {Boolean} True if equal, false if not.
+ */
+Serializable.prototype.equals = function S_equals(aOther) {
+  let isEqual = true;
+  for (let key in this) {
+    if (this.hasOwnProperty(key)) {
+      if (this[key] instanceof Serializable) {
+        isEqual = isEqual && this[key].equals(aOther[key]);
+      } else {
+        isEqual = isEqual && this[key] == aOther[key];
+      }
+    }
+  }
+  return isEqual;
+}
+
+/**
  * Represents a node that we're trying to remember in a document.
  * There's no real global ID system for nodes in a document right now
  * and page structures change regularly.
  *
- * This class tries to record what a node looked like. It can fetch a node in
- * the current version of the document that looks like that.
+ * `SerializableNode` objects are essentially value objects representing nodes.
+ * We consider nodes equivalent if the properties we track are all equal.
  *
+ * They're pretty easy to serialize into JSON
+ *
+ * @constructor
  * @param {Node | Object} aNode  Node or object to wrap.
  */
 function SerializableNode(aNode) {
@@ -22,13 +62,15 @@ function SerializableNode(aNode) {
   this.textContent = aNode.textContent;
 }
 
+SerializableNode.prototype = new Serializable;
+
 /**
  * Finds the node in the current document that looks like the one we saw.
  * This method is slow. Use it sparingly.
  *
  * @param {Document} aDocument  The document to find the node in.
  */
-SerializableNode.prototype.getNode = function RN_getNode(aDocument) {
+SerializableNode.prototype.getNode = function SN_getNode(aDocument) {
   let doc = aDocument || document;
   let win = doc.defaultView;
 
@@ -52,16 +94,11 @@ SerializableNode.prototype.getNode = function RN_getNode(aDocument) {
   return walker.nextNode();
 };
 
-SerializableNode.prototype.equals = function (aOtherNode) {
-  return aOtherNode.nodeType == this.nodeType
-         && aOtherNode.tagName == this.tagName
-         && aOtherNode.textContent == this.textContent;
-}
-
 /**
- * Represents a text selection range in a document that's serializable to JSON.
+ * Represents a DOM Range in a document that we're trying to track.
  *
- * @param {Range | Object} Range  Range or object to wrap.
+ * @constructor
+ * @param {Range | Object} aRange  Range or object to wrap.
  */
 function SerializableRange(aRange) {
   this.startContainer = new SerializableNode(aRange.startContainer);
@@ -71,6 +108,18 @@ function SerializableRange(aRange) {
   this.string = aRange.string || aRange.toString();
 }
 
+SerializableRange.prototype = new Serializable;
+
+/**
+ * Finds the range in the current document that looks like the one that we saw.
+ * Slow (because of `SerializableNode` node lookups. Use sparingly.
+ * Currently seems to fail on ranges where the start and end nodes
+ * are not under an immediate parent.
+ *
+ * @param {Document} aDocument  HTML document object serving as reference.
+ * @returns {Range}             Associated DOM Range, if one exists.
+ *                              Null otherwise.
+ */
 SerializableRange.prototype.getRange = function SR_getRange (aDocument) {
   let doc = aDocument || document;
   let startNode = this.startContainer.getNode(doc);
@@ -85,11 +134,3 @@ SerializableRange.prototype.getRange = function SR_getRange (aDocument) {
   range.setEnd(endNode, this.endOffset);
   return range;
 };
-
-SerializableRange.prototype.equals = function (aOtherRange) {
-  return this.startContainer.equals(aOtherRange.startContainer)
-         && this.startOffset == aOtherRange.startOffset
-         && this.endContainer.equals(aOtherRange.startContainer)
-         && this.endOffset == aOtherRange.endOffset
-         && this.string == aOtherRange.string;
-}

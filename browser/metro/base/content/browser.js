@@ -875,6 +875,10 @@ var Browser = {
     });
   },
 
+  scrollToHighlight: function browser_scrollToHighlight(aRange) {
+    return Browser.selectedTab.scrollToHighlight(aRange);
+  },
+
   /** Zoom one step in (negative) or out (positive). */
   zoom: function zoom(aDirection) {
     let tab = this.selectedTab;
@@ -1948,6 +1952,11 @@ Tab.prototype = {
   unhighlightRanges: function Tab_unhighlightRanges(aRanges) {
     let json = { ranges: aRanges };
     this._browser.messageManager.sendAsyncMessage("Browser:Unhighlight", json);
+  },
+
+  scrollToHighlight: function Tab_scrollToHighlight(aRange) {
+    let json = { range: aRange };
+    this._browser.messageManager.sendAsyncMessage("Browser:ScrollToHighlight", json);
   },
 
   updateThumbnail: function updateThumbnail() {
