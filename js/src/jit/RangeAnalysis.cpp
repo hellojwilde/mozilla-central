@@ -161,7 +161,7 @@ RangeAnalysis::addBetaNobes()
         } else if (right->isConstant() && right->toConstant()->value().isInt32()) {
             bound = right->toConstant()->value().toInt32();
             val = left;
-        } else {
+        } else if (left->type() == MIRType_Int32 && right->type() == MIRType_Int32) {
             MDefinition *smaller = NULL;
             MDefinition *greater = NULL;
             if (jsop == JSOP_LT) {
@@ -173,22 +173,22 @@ RangeAnalysis::addBetaNobes()
             }
             if (smaller && greater) {
                 MBeta *beta;
-                beta = MBeta::New(smaller, new Range(JSVAL_INT_MIN, JSVAL_INT_MAX-1,
-                                                     smaller->type() != MIRType_Int32,
-                                                     Range::MaxDoubleExponent));
+                beta = MBeta::New(smaller, new Range(JSVAL_INT_MIN, JSVAL_INT_MAX-1));
                 block->insertBefore(*block->begin(), beta);
                 replaceDominatedUsesWith(smaller, beta, block);
                 IonSpew(IonSpew_Range, "Adding beta node for smaller %d", smaller->id());
-                beta = MBeta::New(greater, new Range(JSVAL_INT_MIN+1, JSVAL_INT_MAX,
-                                                     greater->type() != MIRType_Int32,
-                                                     Range::MaxDoubleExponent));
+                beta = MBeta::New(greater, new Range(JSVAL_INT_MIN+1, JSVAL_INT_MAX));
                 block->insertBefore(*block->begin(), beta);
                 replaceDominatedUsesWith(greater, beta, block);
                 IonSpew(IonSpew_Range, "Adding beta node for greater %d", greater->id());
             }
             continue;
+        } else {
+            continue;
         }
 
+        // At this point, one of the operands if the compare is a constant, and
+        // val is the other operand.
         JS_ASSERT(val);
 
 
@@ -316,14 +316,8 @@ Range::intersect(const Range *lhs, const Range *rhs, bool *emptyRange)
     if (!rhs)
         return new Range(*lhs);
 
-    Range *r = new Range(
-        Max(lhs->lower_, rhs->lower_),
-        Min(lhs->upper_, rhs->upper_),
-        lhs->decimal_ && rhs->decimal_,
-        Min(lhs->max_exponent_, rhs->max_exponent_));
-
-    r->lower_infinite_ = lhs->lower_infinite_ && rhs->lower_infinite_;
-    r->upper_infinite_ = lhs->upper_infinite_ && rhs->upper_infinite_;
+    int32_t newLower = Max(lhs->lower_, rhs->lower_);
+    int32_t newUpper = Min(lhs->upper_, rhs->upper_);
 
     // :TODO: This information could be used better. If upper < lower, then we
     // have conflicting constraints. Consider:
@@ -339,10 +333,18 @@ Range::intersect(const Range *lhs, const Range *rhs, bool *emptyRange)
     //
     // Instead, we should use it to eliminate the dead block.
     // (Bug 765127)
-    if (r->upper_ < r->lower_) {
+    if (newUpper < newLower) {
         *emptyRange = true;
-        r->makeRangeInfinite();
+        return NULL;
     }
+
+    Range *r = new Range(
+        newLower, newUpper,
+        lhs->decimal_ && rhs->decimal_,
+        Min(lhs->max_exponent_, rhs->max_exponent_));
+
+    r->lower_infinite_ = lhs->lower_infinite_ && rhs->lower_infinite_;
+    r->upper_infinite_ = lhs->upper_infinite_ && rhs->upper_infinite_;
 
     return r;
 }
@@ -853,6 +855,12 @@ MConstant::computeRange()
         //   Safe double comparisons, because there is no precision loss.
         int64_t l = integral - ((rest < 0) ? 1 : 0);
         int64_t h = integral + ((rest > 0) ? 1 : 0);
+        // If we adjusted into a new exponent range, adjust exp accordingly.
+        if ((rest < 0 && (l == INT64_MIN || IsPowerOfTwo(Abs(l)))) ||
+            (rest > 0 && (h == INT64_MIN || IsPowerOfTwo(Abs(h)))))
+        {
+            ++exp;
+        }
         setRange(new Range(l, h, (rest != 0), exp));
     } else {
         // This double has a precision loss. This also mean that it cannot
@@ -984,8 +992,8 @@ MAbs::computeRange()
     Range other(getOperand(0));
     setRange(Range::abs(&other));
 
-    if (implicitTruncate_ && !range()->isInt32())
-        setRange(new Range(INT32_MIN, INT32_MAX));
+    if (implicitTruncate_)
+        range()->wrapAroundToInt32();
 }
 
 void
@@ -1009,8 +1017,8 @@ MAdd::computeRange()
     Range *next = Range::add(&left, &right);
     setRange(next);
 
-    if (isTruncated() && !range()->isInt32())
-        setRange(new Range(INT32_MIN, INT32_MAX));
+    if (isTruncated())
+        range()->wrapAroundToInt32();
 }
 
 void
@@ -1023,8 +1031,8 @@ MSub::computeRange()
     Range *next = Range::sub(&left, &right);
     setRange(next);
 
-    if (isTruncated() && !range()->isInt32())
-        setRange(new Range(INT32_MIN, INT32_MAX));
+    if (isTruncated())
+        range()->wrapAroundToInt32();
 }
 
 void
@@ -1039,8 +1047,8 @@ MMul::computeRange()
     setRange(Range::mul(&left, &right));
 
     // Truncated multiplications could overflow in both directions
-    if (isTruncated() && !range()->isInt32())
-        setRange(new Range(INT32_MIN, INT32_MAX));
+    if (isTruncated())
+        range()->wrapAroundToInt32();
 }
 
 void
@@ -1054,6 +1062,10 @@ MMod::computeRange()
     // If either operand is a NaN, the result is NaN. This also conservatively
     // handles Infinity cases.
     if (lhs.isInfinite() || rhs.isInfinite())
+        return;
+
+    // If RHS can be zero, the result can be NaN.
+    if (rhs.lower() <= 0 && rhs.upper() >= 0)
         return;
 
     // Math.abs(lhs % rhs) == Math.abs(lhs) % Math.abs(rhs).
@@ -1663,15 +1675,15 @@ MAdd::truncate()
     // Remember analysis, needed for fallible checks.
     setTruncated(true);
 
-    // Modify the instruction if needed.
-    if (type() != MIRType_Double)
-        return false;
+    if (type() == MIRType_Double || type() == MIRType_Int32) {
+        specialization_ = MIRType_Int32;
+        setResultType(MIRType_Int32);
+        if (range())
+            range()->wrapAroundToInt32();
+        return true;
+    }
 
-    specialization_ = MIRType_Int32;
-    setResultType(MIRType_Int32);
-    if (range())
-        range()->wrapAroundToInt32();
-    return true;
+    return false;
 }
 
 bool
@@ -1680,15 +1692,15 @@ MSub::truncate()
     // Remember analysis, needed for fallible checks.
     setTruncated(true);
 
-    // Modify the instruction if needed.
-    if (type() != MIRType_Double)
-        return false;
+    if (type() == MIRType_Double || type() == MIRType_Int32) {
+        specialization_ = MIRType_Int32;
+        setResultType(MIRType_Int32);
+        if (range())
+            range()->wrapAroundToInt32();
+        return true;
+    }
 
-    specialization_ = MIRType_Int32;
-    setResultType(MIRType_Int32);
-    if (range())
-        range()->wrapAroundToInt32();
-    return true;
+    return false;
 }
 
 bool
@@ -1697,22 +1709,16 @@ MMul::truncate()
     // Remember analysis, needed to remove negative zero checks.
     setTruncated(true);
 
-    // Modify the instruction.
-    bool truncated = type() == MIRType_Int32;
-    if (type() == MIRType_Double) {
+    if (type() == MIRType_Double || type() == MIRType_Int32) {
         specialization_ = MIRType_Int32;
         setResultType(MIRType_Int32);
-        truncated = true;
-        JS_ASSERT(range());
-    }
-
-    if (truncated && range()) {
-        range()->wrapAroundToInt32();
-        setTruncated(true);
         setCanBeNegativeZero(false);
+        if (range())
+            range()->wrapAroundToInt32();
+        return true;
     }
 
-    return truncated;
+    return false;
 }
 
 bool

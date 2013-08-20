@@ -61,6 +61,8 @@ pref("browser.cache.disk_cache_ssl",        true);
 pref("browser.cache.check_doc_frequency",   3);
 
 pref("browser.cache.offline.enable",           true);
+// enable offline apps by default, disable prompt
+pref("offline-apps.allow_by_default",          true);
 
 // offline cache capacity in kilobytes
 pref("browser.cache.offline.capacity",         512000);
@@ -777,9 +779,6 @@ pref("dom.min_timeout_value", 4);
 // And for background windows
 pref("dom.min_background_timeout_value", 1000);
 
-// Stop defining the Components object in content.
-pref("dom.omit_components_in_content", true);
-
 // Don't use new input types
 pref("dom.experimental_forms", false);
 
@@ -850,8 +849,6 @@ pref("javascript.options.mem.gc_dynamic_heap_growth", true);
 pref("javascript.options.mem.gc_dynamic_mark_slice", true);
 pref("javascript.options.mem.gc_allocation_threshold_mb", 30);
 pref("javascript.options.mem.gc_decommit_threshold_mb", 32);
-
-pref("javascript.options.mem.analysis_purge_mb", 100);
 
 pref("javascript.options.showInConsole", false);
 

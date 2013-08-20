@@ -721,9 +721,11 @@ bool
 Sprinter::realloc_(size_t newSize)
 {
     JS_ASSERT(newSize > (size_t) offset);
-    char *newBuf = (char *) context->realloc_(base, newSize);
-    if (!newBuf)
+    char *newBuf = (char *) js_realloc(base, newSize);
+    if (!newBuf) {
+        reportOutOfMemory();
         return false;
+    }
     base = newBuf;
     size = newSize;
     base[size - 1] = 0;
@@ -751,9 +753,11 @@ bool
 Sprinter::init()
 {
     JS_ASSERT(!initialized);
-    base = (char *) context->malloc_(DefaultSize);
-    if (!base)
+    base = (char *) js_malloc(DefaultSize);
+    if (!base) {
+        reportOutOfMemory();
         return false;
+    }
 #ifdef DEBUG
     initialized = true;
 #endif
@@ -797,12 +801,6 @@ Sprinter::operator[](size_t off)
     return *(base + off);
 }
 
-bool
-Sprinter::empty() const
-{
-    return *base == 0;
-}
-
 char *
 Sprinter::reserve(size_t len)
 {
@@ -815,15 +813,6 @@ Sprinter::reserve(size_t len)
 
     char *sb = base + offset;
     offset += len;
-    return sb;
-}
-
-char *
-Sprinter::reserveAndClear(size_t len)
-{
-    char *sb = reserve(len);
-    if (sb)
-        memset(sb, 0, len);
     return sb;
 }
 
@@ -904,43 +893,25 @@ Sprinter::printf(const char *fmt, ...)
     return -1;
 }
 
-void
-Sprinter::setOffset(const char *end)
-{
-    JS_ASSERT(end >= base && end < base + size);
-    offset = end - base;
-}
-
-void
-Sprinter::setOffset(ptrdiff_t off)
-{
-    JS_ASSERT(off >= 0 && (size_t) off < size);
-    offset = off;
-}
-
 ptrdiff_t
 Sprinter::getOffset() const
 {
     return offset;
 }
 
-ptrdiff_t
-Sprinter::getOffsetOf(const char *string) const
-{
-    JS_ASSERT(string >= base && string < base + size);
-    return string - base;
-}
-
 void
-Sprinter::reportOutOfMemory() {
+Sprinter::reportOutOfMemory()
+{
     if (reportedOOM)
         return;
-    js_ReportOutOfMemory(context);
+    if (context)
+        js_ReportOutOfMemory(context);
     reportedOOM = true;
 }
 
 bool
-Sprinter::hadOutOfMemory() const {
+Sprinter::hadOutOfMemory() const
+{
     return reportedOOM;
 }
 

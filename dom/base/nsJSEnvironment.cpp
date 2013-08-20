@@ -40,6 +40,7 @@
 #include "nsNetUtil.h"
 #include "nsXPCOMCIDInternal.h"
 #include "nsIXULRuntime.h"
+#include "nsTextFormatter.h"
 
 #include "xpcpublic.h"
 
@@ -148,7 +149,6 @@ static bool sCCLockedOut;
 static PRTime sCCLockedOutTime;
 
 static JS::GCSliceCallback sPrevGCSliceCallback;
-static js::AnalysisPurgeCallback sPrevAnalysisPurgeCallback;
 
 static bool sHasRunGC;
 
@@ -1593,14 +1593,16 @@ TraceMallocOpenLogFile(JSContext *cx, unsigned argc, JS::Value *vp)
 static bool
 TraceMallocChangeLogFD(JSContext *cx, unsigned argc, JS::Value *vp)
 {
+    JS::CallArgs args = CallArgsFromVp(argc, vp);
+
     if (!CheckUniversalXPConnectForTraceMalloc(cx))
         return false;
 
     int32_t fd, oldfd;
-    if (argc == 0) {
+    if (args.length() == 0) {
         oldfd = -1;
     } else {
-        if (!JS_ValueToECMAInt32(cx, JS_ARGV(cx, vp)[0], &fd))
+        if (!JS::ToInt32(cx, args[0], &fd))
             return false;
         oldfd = NS_TraceMallocChangeLogFD(fd);
         if (oldfd == -2) {
@@ -1608,23 +1610,27 @@ TraceMallocChangeLogFD(JSContext *cx, unsigned argc, JS::Value *vp)
             return false;
         }
     }
-    JS_SET_RVAL(cx, vp, INT_TO_JSVAL(oldfd));
+    args.rval().setInt32(oldfd);
     return true;
 }
 
 static bool
 TraceMallocCloseLogFD(JSContext *cx, unsigned argc, JS::Value *vp)
 {
+    JS::CallArgs args = CallArgsFromVp(argc, vp);
+
     if (!CheckUniversalXPConnectForTraceMalloc(cx))
         return false;
 
     int32_t fd;
-    JS_SET_RVAL(cx, vp, JSVAL_VOID);
-    if (argc == 0)
+    if (args.length() == 0) {
+        args.rval().setUndefined();
         return true;
-    if (!JS_ValueToECMAInt32(cx, JS_ARGV(cx, vp)[0], &fd))
+    }
+    if (!JS::ToInt32(cx, args[0], &fd))
         return false;
     NS_TraceMallocCloseLogFD((int) fd);
+    args.rval().setInt32(fd);
     return true;
 }
 
@@ -2568,32 +2574,6 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
     (*sPrevGCSliceCallback)(aRt, aProgress, aDesc);
 }
 
-static void
-DOMAnalysisPurgeCallback(JSRuntime *aRt, JS::Handle<JSFlatString*> aDesc)
-{
-  NS_ASSERTION(NS_IsMainThread(), "GCs must run on the main thread");
-
-  PRTime delta = GetCollectionTimeDelta();
-
-  if (sPostGCEventsToConsole) {
-    NS_NAMED_LITERAL_STRING(kFmt, "Analysis Purge (T+%.1f) ");
-    nsString prefix;
-    prefix.Adopt(nsTextFormatter::smprintf(kFmt.get(),
-                                           double(delta) / PR_USEC_PER_SEC));
-
-    nsDependentJSString stats(aDesc);
-    nsString msg = prefix + stats;
-
-    nsCOMPtr<nsIConsoleService> cs = do_GetService(NS_CONSOLESERVICE_CONTRACTID);
-    if (cs) {
-      cs->LogStringMessage(msg.get());
-    }
-  }
-
-  if (sPrevAnalysisPurgeCallback)
-    (*sPrevAnalysisPurgeCallback)(aRt, aDesc);
-}
-
 void
 nsJSContext::ReportPendingException()
 {
@@ -2830,7 +2810,6 @@ nsJSRuntime::Init()
   NS_ASSERTION(NS_IsMainThread(), "bad");
 
   sPrevGCSliceCallback = JS::SetGCSliceCallback(sRuntime, DOMGCSliceCallback);
-  sPrevAnalysisPurgeCallback = js::SetAnalysisPurgeCallback(sRuntime, DOMAnalysisPurgeCallback);
 
   // Set up the structured clone callbacks.
   static JSStructuredCloneCallbacks cloneCallbacks = {
@@ -2893,10 +2872,6 @@ nsJSRuntime::Init()
   Preferences::RegisterCallbackAndCall(SetMemoryGCPrefChangedCallback,
                                        "javascript.options.mem.gc_high_frequency_high_limit_mb",
                                        (void *)JSGC_HIGH_FREQUENCY_HIGH_LIMIT);
-
-  Preferences::RegisterCallbackAndCall(SetMemoryGCPrefChangedCallback,
-                                       "javascript.options.mem.analysis_purge_mb",
-                                       (void *)JSGC_ANALYSIS_PURGE_TRIGGER);
 
   Preferences::RegisterCallbackAndCall(SetMemoryGCPrefChangedCallback,
                                        "javascript.options.mem.gc_allocation_threshold_mb",

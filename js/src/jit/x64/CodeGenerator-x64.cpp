@@ -87,7 +87,7 @@ CodeGeneratorX64::visitBox(LBox *box)
     if (box->type() != MIRType_Double)
         masm.boxValue(ValueTypeFromMIRType(box->type()), ToRegister(in), ToRegister(result));
     else
-        masm.movqsd(ToFloatRegister(in), ToRegister(result));
+        masm.movq(ToFloatRegister(in), ToRegister(result));
     return true;
 }
 
@@ -279,9 +279,6 @@ CodeGeneratorX64::visitImplicitThis(LImplicitThis *lir)
     masm.moveValue(UndefinedValue(), ToOutValue(lir));
     return true;
 }
-
-typedef bool (*InterruptCheckFn)(JSContext *);
-static const VMFunction InterruptCheckInfo = FunctionInfo<InterruptCheckFn>(InterruptCheck);
 
 bool
 CodeGeneratorX64::visitInterruptCheck(LInterruptCheck *lir)

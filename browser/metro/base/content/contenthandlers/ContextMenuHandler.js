@@ -294,7 +294,7 @@ var ContextMenuHandler = {
       // If this is text and has a selection, we want to bring
       // up the copy option on the context menu.
       let selection = targetWindow.getSelection();
-      if (selection && selection.toString().length > 0) {
+      if (selection && this._tapInSelection(selection, aX, aY)) {
         state.string = targetWindow.getSelection().toString();
         state.range = new SerializableRange(selection.getRangeAt(0));
 
@@ -325,6 +325,20 @@ var ContextMenuHandler = {
     this._previousState = state;
 
     sendAsyncMessage("Content:ContextMenu", state);
+  },
+
+  _tapInSelection: function (aSelection, aX, aY) {
+    if (!aSelection || !aSelection.rangeCount) {
+      return false;
+    }
+    for (let idx = 0; idx < aSelection.rangeCount; idx++) {
+      let range = aSelection.getRangeAt(idx);
+      let rect = range.getBoundingClientRect();
+      if (Util.pointWithinDOMRect(aX, aY, rect)) {
+        return true;
+      }
+    }
+    return false;
   },
 
   _getLinkURL: function ch_getLinkURL(aLink) {

@@ -6319,25 +6319,26 @@ function undoCloseTab(aIndex) {
   if (gBrowser.tabs.length == 1 && isTabEmpty(gBrowser.selectedTab))
     blankTabToRemove = gBrowser.selectedTab;
 
-  var tab = null;
   var ss = Cc["@mozilla.org/browser/sessionstore;1"].
            getService(Ci.nsISessionStore);
   let numberOfTabsToUndoClose = 0;
-  if (Number.isInteger(aIndex)) {
-    if (ss.getClosedTabCount(window) > aIndex) {
-      numberOfTabsToUndoClose = 1;
-    } else {
-      return tab;
-    }
-  } else {
+  let index = Number(aIndex);
+
+
+  if (isNaN(index)) {
+    index = 0;
     numberOfTabsToUndoClose = ss.getNumberOfTabsClosedLast(window);
-    aIndex = 0;
+  } else {
+    if (0 > index || index >= ss.getClosedTabCount(window))
+      return null;
+    numberOfTabsToUndoClose = 1;
   }
 
+  let tab = null;
   while (numberOfTabsToUndoClose > 0 &&
          numberOfTabsToUndoClose--) {
     TabView.prepareUndoCloseTab(blankTabToRemove);
-    tab = ss.undoCloseTab(window, aIndex);
+    tab = ss.undoCloseTab(window, index);
     TabView.afterUndoCloseTab();
     if (blankTabToRemove) {
       gBrowser.removeTab(blankTabToRemove);
@@ -6636,7 +6637,7 @@ var gIdentityHandler = {
       return;
 
     let helplink = document.getElementById("mixed-content-blocked-helplink");
-    helplink.href = Services.urlFormatter.formatURLPref("browser.mixedcontent.warning.infoURL");
+    helplink.setAttribute("onclick", "openHelpLink('mixed-content');");
 
     let brandBundle = document.getElementById("bundle_brand");
     let brandShortName = brandBundle.getString("brandShortName");
