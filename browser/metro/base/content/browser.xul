@@ -262,7 +262,7 @@
                                      oncommand="Appbar.onDownloadButton()"/>
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="HighlightsUI.onStarButton()"/>
+                             oncommand="BookmarksUI.onStarButton()"/>
               <toolbarbutton id="pin-button" class="appbar-primary"
                              type="checkbox"
                              oncommand="Appbar.onPinButton()"/>
@@ -825,22 +825,9 @@
       </vbox>
     </box>
 
-    <vbox id="highlights-container" class="menu-container" hidden="true">
-      <vbox id="highlights-popup" class="highlights-popup menu-popup menu-border">
-        <hbox class="menu-header">
-          <button class="highlights-back-button symbol-button"/>
-          <description class="highlights-title" flex="1" value="Highlights"/>
-          <button class="highlights-edit-button symbol-button"/>
-        </hbox>
-
-        <vbox class="highlights-page-empty highlights-page">
-          <label value="You don't have any highlights."/>
-          <html:div class="highlights-bookmark-button text-link symbol-before">
-            Bookmark this page
-          </html:div>
-        </vbox>
-
-        <vbox class="highlights-page-bookmark highlights-page">
+    <vbox id="bookmark-container" class="menu-container" hidden="true">
+      <vbox id="bookmark-popup" class="bookmark-popup menu-popup menu-border">
+        <vbox class="bookmark-page-bookmark bookmark-page">
           <vbox class="tilepicker">
             <stack>
               <richgriditem/>
@@ -852,18 +839,23 @@
             <checkbox label="No thumbnail"/>
           </vbox>
 
-          <hbox class="highlights-page-footer">
-            <html:div class="highlights-saved symbol-before">
+          <hbox class="bookmark-list">
+            <button type="menu" label="List"/>
+          </hbox>
+
+          <hbox class="bookmark-page-footer">
+            <html:div class="bookmark-saved symbol-before">
               Bookmark saved
             </html:div>
-            <button class="highlights-remove-button" label="Remove"/>
+            <button class="bookmark-remove-button" label="Remove"/>
           </hbox>
         </vbox>
 
-        <vbox class="highlights-page-list highlights-page">
+        <vbox class="bookmark-page-lists bookmark-page">
           <richlistbox flex="1"/>
-          <hbox class="highlights-page-footer">
-            <button class="highlights-delete-button" label="Delete"/>
+          <hbox class="bookmark-page-footer bookmark-list-new">
+            <textbox/>
+            <button label="Create"/>
           </hbox>
         </vbox>
       </vbox>

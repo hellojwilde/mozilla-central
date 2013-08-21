@@ -11,78 +11,34 @@ const kThumbAnno = "snippets/tileThumbnail";
  * Subclass of PagedFlyout that has an editing mode, preset pages,
  * and state updating.
  */
-function HighlightsFlyout(aPanel, aPopup) {
+function BookmarksFlyout(aPanel, aPopup) {
   PagedFlyout.call(this, aPanel, aPopup);
 
-  this.registerPage("empty", new HighlightsEmpty(this, aPopup));
   this.registerPage("bookmark", new HighlightsBookmark(this, aPopup));
-  this.registerPage("list", new HighlightsList(this, aPopup));
-
-  this._editButton = this._popup.querySelector(".highlights-edit-button");
-  this._editButton.addEventListener("command", this.onEditButton.bind(this), false);
-
-  this._backButton = this._popup.querySelector(".highlights-back-button");
-  this._backButton.addEventListener("command", this.onBackButton.bind(this), false);
+  this.registerPage("lists", new HighlightsLists(this, aPopup));
 }
 
-HighlightsFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
-  _isEditing: false,
-  get isEditing() {
-    delete this.isEditing;
-    return this._isEditing;
-  },
-
+BookmarksFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   selectPage: function HF_selectPage() {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
-      self.stopEditing();
-
       let uri = Browser.selectedBrowser.currentURI;
       let bookmarkId = yield Bookmarks.getForURI(uri);
-      if (bookmarkId == null) {
-        self.displayPage("empty");
-        return;
-      }
-
-      let highlights = Browser.getHighlights(bookmarkId);
-      if (highlights.length == 0) {
-        self.displayPage("bookmark", { id: bookmarkId });
-      } else {
-        self.displayPage("list", { id: bookmarkId });
-      }
+      self.displayPage("bookmark", { id: bookmarkId });
     });
-  },
-
-  startEditing: function () {
-    if (this._isEditing) {
-      return;
-    }
-
-    this._isEditing = true;
-    this._popup.setAttribute("editing", "true");
-    this.realign();
-  },
-
-  stopEditing: function () {
-    if (!this._isEditing) {
-      return;
-    }
-
-    this._isEditing = false;
-    this._popup.removeAttribute("editing");
-    this.realign();
-  },
-
-  onEditButton: function HUI_onEditButton() {
-    this.startEditing();
-  },
-
-  onBackButton: function HUI_onBackButton() {
-    this.stopEditing();
   }
 });
 
-HighlightsFlyout.prototype.constructor = HighlightsFlyout;
+BookmarksFlyout.prototype.constructor = BookmarksFlyout;
+
+/**
+ * Controller for the page that lets users twiddle settings about the bookmark.
+ */
+
+/**
+ * Controller for the page that lets users manually select the list
+ * to add the item to.
+ */
 
 /**
  * Controller for "empty" page shown when there is no bookmark or highlights.
