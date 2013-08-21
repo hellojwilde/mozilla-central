@@ -144,13 +144,13 @@ let Util = {
     return aElement ? aElement.hasAttribute(aName) : false;
   },
 
-  setBoolAttribute: function setBoolAttribute(aElement, aName, aValue) {
+  setBoolAttribute: function setBoolAttribute(aElement, aName, aValue, aTrueValue) {
     if (!aElement) {
       return false;
     }
 
     if (aValue) {
-      aElement.setAttribute(aName, "true");
+      aElement.setAttribute(aName, aTrueValue || "true");
     } else {
       aElement.removeAttribute(aName);
     }

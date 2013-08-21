@@ -841,7 +841,17 @@
         </vbox>
 
         <vbox class="highlights-page-bookmark highlights-page">
-          <richgriditem/>
+          <vbox class="tilepicker">
+            <stack>
+              <richgriditem/>
+              <!-- XXX this sucks, but I haven't found a better way to
+                   overlay the buttons on top of the richgriditem -->
+              <button left="10" top="40%" class="tilepicker-left"/>
+              <button right="10" top="40%" class="tilepicker-right"/>
+            </stack>
+            <checkbox label="No thumbnail"/>
+          </vbox>
+
           <hbox class="highlights-page-footer">
             <html:div class="highlights-saved symbol-before">
               Bookmark saved

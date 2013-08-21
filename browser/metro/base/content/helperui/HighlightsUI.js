@@ -5,9 +5,6 @@
 
 "use strict";
 
-XPCOMUtils.defineLazyModuleGetter(this, "View",
-                                  "resource:///modules/View.jsm");
-
 /**
  * Subclass of PagedFlyout that has an editing mode, preset pages,
  * and state updating.
@@ -114,29 +111,25 @@ HighlightsEmpty.prototype = {
  */
 function HighlightsBookmark(aFlyout, aFlyoutElement) {
   this._flyout = aFlyout;
-  this._page = aFlyoutElement.querySelector(".highlights-page-bookmark");
 
+  this._page = aFlyoutElement.querySelector(".highlights-page-bookmark");
+  this._picker = new TilePicker(this._page.querySelector(".tilepicker"));
   this._removeButton = this._page.querySelector(".highlights-remove-button");
+
+  // XXX this isn't a super clean way to do this.
+  this._flyout._popup.addEventListener("popuphidden", this.onFlyoutHidden.bind(this), false);
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
 }
 
 HighlightsBookmark.prototype = {
-  get _preview() { return this._page.querySelector("richgriditem"); },
-
   display: function (aOptions) {
     let { id, saved } = aOptions || {};
-    let uri = Browser.selectedBrowser.currentURI;
-    let preview = this._preview;
 
     Util.setBoolAttribute(this._page, "saved", saved);
 
-    preview.label = PlacesUtils.bookmarks.getItemTitle(id);
-    preview.url = uri;
-
-    // XXX fragile if View changes
-    Util.getFaviconForURI(uri)
-        .then((iconURI) => View.prototype._gotIcon(preview, iconURI))
-        .then(null, Components.utils.reportError);
+    this._picker.title = PlacesUtils.bookmarks.getItemTitle(id);
+    this._picker.uri = Browser.selectedBrowser.currentURI;
+    this._picker.imageSnippets = Browser.selectedTab.snippets.ImageSnippet;
   },
 
   onRemoveButton: function () {
@@ -146,6 +139,12 @@ HighlightsBookmark.prototype = {
       yield Appbar.update();
       self._flyout.hide();
     });
+  },
+
+  onFlyoutHidden: function () {
+    if (this.active) {
+      alert("should save now!");
+    }
   }
 };
 
@@ -315,6 +314,7 @@ let HighlightsUI = {
   show: function HUI_show() {
     let self = this;
     return Task.spawn(function HUI_showTask() {
+      try {
       let rect = self._button.getBoundingClientRect();
       let position = {
         xPos: (rect.left + rect.right) / 2,
@@ -325,6 +325,9 @@ let HighlightsUI = {
 
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
+      } catch(e) {
+        alert(e);
+      }
     });
   },
 

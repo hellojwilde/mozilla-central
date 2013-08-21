@@ -71,6 +71,7 @@ var Browser = {
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/FindHandler.js", true);
       // XXX Viewport resizing disabled because of bug 766142
       //messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ViewportHandler.js", true);
+      messageManager.loadFrameScript("chrome://browser/content/contenthandlers/SnippetsHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ConsoleAPIObserver.js", true);
       //messageManager.loadFrameScript("chrome://browser/content/contenthandlers/PluginCTPHandler.js", true);
     } catch (e) {
@@ -166,6 +167,7 @@ var Browser = {
     messageManager.addMessageListener("DOMLinkAdded", this);
     messageManager.addMessageListener("MozScrolledAreaChanged", this);
     messageManager.addMessageListener("Browser:ViewportMetadata", this);
+    messageManager.addMessageListener("Browser:Snippets", this);
     messageManager.addMessageListener("Browser:FormSubmit", this);
     messageManager.addMessageListener("Browser:ZoomToPoint:Return", this);
     messageManager.addMessageListener("Browser:CanUnload:Return", this);
@@ -269,6 +271,7 @@ var Browser = {
 
     messageManager.removeMessageListener("MozScrolledAreaChanged", this);
     messageManager.removeMessageListener("Browser:ViewportMetadata", this);
+    messageManager.removeMessageListener("Browser:Snippets", this);
     messageManager.removeMessageListener("Browser:FormSubmit", this);
     messageManager.removeMessageListener("Browser:ZoomToPoint:Return", this);
     messageManager.removeMessageListener("scroll", this);
@@ -1044,6 +1047,13 @@ var Browser = {
           tab.scrolledAreaChanged();
         break;
       }
+      case "Browser:Snippets": {
+        let tab = this.getTabForBrowser(browser);
+        if (tab) {
+          tab.updateSnippets(json);
+        }
+        break;
+      }
       case "Browser:ViewportMetadata": {
         let tab = this.getTabForBrowser(browser);
         // Some browser such as iframes loaded dynamically into the chrome UI
@@ -1530,6 +1540,7 @@ function Tab(aURI, aParams, aOwner) {
   this._notification = null;
   this._loading = false;
   this._chromeTab = null;
+  this._snippets = null;
   this._metadata = null;
   this._eventDeferred = null;
   this._updateThumbnailTimeout = null;
@@ -1562,6 +1573,10 @@ Tab.prototype = {
     return this._chromeTab;
   },
 
+  get snippets() {
+    return this._snippets;
+  },
+
   get metadata() {
     return this._metadata || kDefaultMetadata;
   },
@@ -1584,6 +1599,11 @@ Tab.prototype = {
     }
     this._metadata = aMetadata;
     this.updateViewportSize();
+  },
+
+  updateSnippets: function updateSnippets(aSnippets) {
+    this._snippets = aSnippets;
+    Util.dumpLn(JSON.stringify(aSnippets));
   },
 
   /**

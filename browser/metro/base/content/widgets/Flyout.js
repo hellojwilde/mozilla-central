@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 // Positioning buffer enforced between the edge of a context menu
 // and the edge of the screen.
 const kPositionPadding = 10;
@@ -236,6 +238,10 @@ PagedFlyout.prototype = Util.extend(Object.create(Flyout.prototype), {
       throw "PagedFlyout.displayPage: page " + aName + " does not exist."
     }
 
+    if (this._pages[this._page]) {
+      delete this._pages.active;
+    }
+
     this._page = aName;
     this._popup.setAttribute("page", this._page);
 
@@ -243,6 +249,7 @@ PagedFlyout.prototype = Util.extend(Object.create(Flyout.prototype), {
     if (controller.display) {
       controller.display(aOptions)
     }
+    controller.active = true;
   }
 });
 
