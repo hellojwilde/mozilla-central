@@ -65,11 +65,13 @@ var Browser = {
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/Content.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/FormHelper.js", true);
       messageManager.loadFrameScript("chrome://browser/content/library/SelectionPrototype.js", true);
+      messageManager.loadFrameScript("chrome://browser/content/library/Serializable.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/SelectionHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ContextMenuHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/FindHandler.js", true);
       // XXX Viewport resizing disabled because of bug 766142
       //messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ViewportHandler.js", true);
+      messageManager.loadFrameScript("chrome://browser/content/contenthandlers/SnippetsHandler.js", true);
       messageManager.loadFrameScript("chrome://browser/content/contenthandlers/ConsoleAPIObserver.js", true);
       //messageManager.loadFrameScript("chrome://browser/content/contenthandlers/PluginCTPHandler.js", true);
     } catch (e) {
@@ -165,6 +167,7 @@ var Browser = {
     messageManager.addMessageListener("DOMLinkAdded", this);
     messageManager.addMessageListener("MozScrolledAreaChanged", this);
     messageManager.addMessageListener("Browser:ViewportMetadata", this);
+    messageManager.addMessageListener("Browser:Snippets", this);
     messageManager.addMessageListener("Browser:FormSubmit", this);
     messageManager.addMessageListener("Browser:ZoomToPoint:Return", this);
     messageManager.addMessageListener("Browser:CanUnload:Return", this);
@@ -268,6 +271,7 @@ var Browser = {
 
     messageManager.removeMessageListener("MozScrolledAreaChanged", this);
     messageManager.removeMessageListener("Browser:ViewportMetadata", this);
+    messageManager.removeMessageListener("Browser:Snippets", this);
     messageManager.removeMessageListener("Browser:FormSubmit", this);
     messageManager.removeMessageListener("Browser:ZoomToPoint:Return", this);
     messageManager.removeMessageListener("scroll", this);
@@ -798,21 +802,84 @@ var Browser = {
     return MetroUtils.isTilePinned(this._currentPageTileID);
   },
 
-  starSite: function browser_starSite(callback) {
+  starSite: function browser_starSite() {
     let uri = this.selectedBrowser.currentURI;
     let title = this.selectedBrowser.contentTitle;
 
-    Bookmarks.addForURI(uri, title, callback);
+    return Bookmarks.addForURI(uri, title);
   },
 
-  unstarSite: function browser_unstarSite(callback) {
+  unstarSite: function browser_unstarSite() {
     let uri = this.selectedBrowser.currentURI;
-    Bookmarks.removeForURI(uri, callback);
+    return Bookmarks.removeForURI(uri);
   },
 
-  isSiteStarredAsync: function browser_isSiteStarredAsync(callback) {
+  isSiteStarred: function browser_isSiteStarred() {
     let uri = this.selectedBrowser.currentURI;
-    Bookmarks.isURIBookmarked(uri, callback);
+    return Bookmarks.isURIBookmarked(uri);
+  },
+
+  getHighlights: function browser_getHighlights (aBookmarkId) {
+    let highlights = [];
+    if (aBookmarkId) {
+      try {
+        let json = PlacesUtils.annotations.
+          getItemAnnotation(aBookmarkId, "highlights");
+        highlights = JSON.parse(json);
+      } catch (e) { /* there was no highlights annotation */ }
+    }
+    return highlights;
+  },
+
+  highlight: function browser_highlight(aRange) {
+    return Task.spawn(function() {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = (yield Bookmarks.getForURI(uri))
+                       || (yield Browser.starSite());
+
+      let highlights = Browser.getHighlights(bookmarkId);
+      highlights.push(aRange);
+
+      let json = JSON.stringify(highlights);
+      PlacesUtils.annotations.
+        setItemAnnotation(bookmarkId, "highlights", json, 0, 4);
+
+      Browser.selectedTab.highlightRanges([aRange]);
+    });
+  },
+
+  unhighlight: function browser_unhighlight(aRange) {
+    return Task.spawn(function () {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
+      let highlights = Browser.getHighlights(bookmarkId);
+
+      let index = -1;
+      for (let i = 0, len = highlights.length; i < len; i++) {
+        if (new SerializableRange(aRange)
+            .equals(new SerializableRange(highlights[i]))) {
+          index = i;
+        }
+      }
+
+      if (index !== -1) {
+        highlights.splice(index, 1);
+      }
+
+      if (highlights.length > 0) {
+        let json = JSON.stringify(highlights);
+        PlacesUtils.annotations.
+          setItemAnnotation(bookmarkId, "highlights", json, 0, 4);
+      } else {
+        yield Browser.unstarSite();
+      }
+
+      Browser.selectedTab.unhighlightRanges([aRange]);
+    });
+  },
+
+  scrollToHighlight: function browser_scrollToHighlight(aRange) {
+    return Browser.selectedTab.scrollToHighlight(aRange);
   },
 
   /** Zoom one step in (negative) or out (positive). */
@@ -978,6 +1045,13 @@ var Browser = {
         let tab = this.getTabForBrowser(browser);
         if (tab)
           tab.scrolledAreaChanged();
+        break;
+      }
+      case "Browser:Snippets": {
+        let tab = this.getTabForBrowser(browser);
+        if (tab) {
+          tab.updateSnippets(json);
+        }
         break;
       }
       case "Browser:ViewportMetadata": {
@@ -1466,9 +1540,11 @@ function Tab(aURI, aParams, aOwner) {
   this._notification = null;
   this._loading = false;
   this._chromeTab = null;
+  this._snippets = null;
   this._metadata = null;
   this._eventDeferred = null;
   this._updateThumbnailTimeout = null;
+  this._highlightIds = {};
 
   this.owner = aOwner || null;
 
@@ -1497,6 +1573,10 @@ Tab.prototype = {
     return this._chromeTab;
   },
 
+  get snippets() {
+    return this._snippets;
+  },
+
   get metadata() {
     return this._metadata || kDefaultMetadata;
   },
@@ -1519,6 +1599,10 @@ Tab.prototype = {
     }
     this._metadata = aMetadata;
     this.updateViewportSize();
+  },
+
+  updateSnippets: function updateSnippets(aSnippets) {
+    this._snippets = aSnippets;
   },
 
   /**
@@ -1595,6 +1679,7 @@ Tab.prototype = {
   endLoading: function endLoading() {
     if (!this._loading) throw "Not Loading!";
     this._loading = false;
+    this.highlightExistingRanges();
     this.updateFavicon();
   },
 
@@ -1865,6 +1950,34 @@ Tab.prototype = {
 
   get allowZoom() {
     return this.metadata.allowZoom && !Util.isURLEmpty(this.browser.currentURI.spec);
+  },
+
+  highlightExistingRanges: function browser__highlightExistingRanges() {
+    let self = this;
+    return Task.spawn(function () {
+      let uri = self._browser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
+
+      if (bookmarkId) {
+        let highlights = Browser.getHighlights(bookmarkId);
+        self.highlightRanges(highlights);
+      }
+    });
+  },
+
+  highlightRanges: function Tab_highlightRanges(aRanges) {
+    let json = { ranges: aRanges };
+    this._browser.messageManager.sendAsyncMessage("Browser:Highlight", json);
+  },
+
+  unhighlightRanges: function Tab_unhighlightRanges(aRanges) {
+    let json = { ranges: aRanges };
+    this._browser.messageManager.sendAsyncMessage("Browser:Unhighlight", json);
+  },
+
+  scrollToHighlight: function Tab_scrollToHighlight(aRange) {
+    let json = { range: aRange };
+    this._browser.messageManager.sendAsyncMessage("Browser:ScrollToHighlight", json);
   },
 
   updateThumbnail: function updateThumbnail() {

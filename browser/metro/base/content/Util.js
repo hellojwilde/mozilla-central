@@ -89,6 +89,20 @@ let Util = {
   },
 
   /*
+   * Places utilities
+   */
+
+  getFaviconForURI: function getFaviconForURI(aURI) {
+    let def = Promise.defer();
+    PlacesUtils.favicons.getFaviconURLForPage(aURI, function (aIconURI) {
+      let annoFaviconURI = PlacesUtils.favicons.getFaviconLinkForIcon(aIconURI);
+      let faviconURI = annoFaviconURI.spec.replace("moz-anno:favicon:","");
+      def.resolve(Services.io.newURI(faviconURI, null, null));
+    });
+    return def.promise;
+  },
+
+  /*
    * Console printing utilities
    */
 
@@ -125,6 +139,24 @@ let Util = {
   /*
    * Element utilities
    */
+
+  getBoolAttribute: function getBoolAttribute(aElement, aName) {
+    return aElement ? aElement.hasAttribute(aName) : false;
+  },
+
+  setBoolAttribute: function setBoolAttribute(aElement, aName, aValue, aTrueValue) {
+    if (!aElement) {
+      return false;
+    }
+
+    if (aValue) {
+      aElement.setAttribute(aName, aTrueValue || "true");
+    } else {
+      aElement.removeAttribute(aName);
+    }
+
+    return aValue;
+  },
 
   highlightElement: function highlightElement(aElement) {
     if (aElement == null) {
@@ -539,4 +571,3 @@ Util.Timeout.prototype = {
     return this._type !== null;
   }
 };
-

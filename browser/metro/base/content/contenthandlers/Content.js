@@ -130,6 +130,9 @@ let Content = {
     addMessageListener("Browser:SetCharset", this);
     addMessageListener("Browser:CanUnload", this);
     addMessageListener("Browser:PanBegin", this);
+    addMessageListener("Browser:Highlight", this);
+    addMessageListener("Browser:Unhighlight", this);
+    addMessageListener("Browser:ScrollToHighlight", this);
 
     addEventListener("touchstart", this, false);
     addEventListener("click", this, true);
@@ -201,7 +204,7 @@ let Content = {
 
       case "pagehide":
         if (aEvent.target == content.document)
-          this._resetFontSize();          
+          this._resetFontSize();
         break;
 
       case "touchstart":
@@ -250,6 +253,22 @@ let Content = {
 
       case "Browser:PanBegin":
         this._cancelTapHighlight();
+        break;
+
+      case "Browser:Highlight":
+        for (let range of json.ranges) {
+          this._highlightRange(range);
+        }
+        break;
+
+      case "Browser:Unhighlight":
+        for (let range of json.ranges) {
+          this._unhighlightRange(range);
+        }
+        break;
+
+      case "Browser:ScrollToHighlight":
+        this._scrollToHighlight(json.range);
         break;
     }
   },
@@ -314,7 +333,7 @@ let Content = {
     if (!errorDoc)
       return;
 
-    // If the event came from an ssl error page, it is probably either 
+    // If the event came from an ssl error page, it is probably either
     // "Add Exception…" or "Get me out of here!" button.
     if (/^about:certerror\?e=nssBadCert/.test(errorDoc.documentURI)) {
       let perm = errorDoc.getElementById("permanentExceptionButton");
@@ -332,7 +351,7 @@ let Content = {
       // First check whether it's malware or phishing, so that we can
       // use the right strings/links.
       let isMalware = /e=malwareBlocked/.test(errorDoc.documentURI);
-    
+
       if (ot == errorDoc.getElementById("getMeOutButton")) {
         sendAsyncMessage("Browser:BlockedSite",
                          { url: errorDoc.location.href, action: "leave" });
@@ -429,7 +448,7 @@ let Content = {
         // We might be able to deal with fractional pixels, but mouse
         // events won't. Deflate the bounds in by 1 pixel to deal with
         // any fractional scroll offset issues.
-        let inBounds = 
+        let inBounds =
           (aX > rect.left + 1 && aX < (rect.left + rect.width - 1)) &&
           (aY > rect.top + 1 && aY < (rect.top + rect.height - 1));
         if (inBounds) {
@@ -466,6 +485,60 @@ let Content = {
     let viewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
     if (viewer)
       viewer.minFontSize = aSize;
+  },
+
+  _applied: {},
+
+  _getHighlightForRange: function _getHighlightForRange(aRange) {
+    let key = JSON.stringify(aRange);
+    let highlight = this._applied[key];
+    if (!highlight) {
+      throw "couldn't get highlight for range: " + key;
+    }
+
+    return highlight;
+  },
+
+  _setHighlightForRange: function _setHighlightForRange(aRange, aHighlight) {
+    let key = JSON.stringify(aRange);
+    this._applied[key] = aHighlight;
+  },
+
+  _highlightRange: function _highlightRange(aRange) {
+    let doc = content.document;
+    let highlight = doc.createElement("moz-highlight");
+
+    let range = new SerializableRange(aRange).getRange(doc);
+    if (range) {
+      range.surroundContents(highlight);
+      this._setHighlightForRange(aRange, highlight);
+    }
+  },
+
+  _unhighlightRange: function (aRange) {
+    let highlight = this._getHighlightForRange(aRange);
+    let parent = highlight.parentNode;
+    for (let child of highlight.childNodes) {
+      parent.insertBefore(child, highlight);
+    }
+    parent.removeChild(highlight);
+  },
+
+  _scrollToHighlight: function (aRange) {
+    let highlight = this._getHighlightForRange(aRange);
+
+    let rect = highlight.getBoundingClientRect();
+    let textTop = rect.top + content.scrollY;
+    let scrollTop = textTop - (content.innerHeight / 2) - (rect.height / 2);
+    content.scrollTo(content.scrollX, scrollTop);
+
+    if (!highlight.hasAttribute("bounce")) {
+      highlight.addEventListener("animationend", function bounceEnd() {
+        highlight.removeEventListener("animationend", bounceEnd, false);
+        highlight.removeAttribute("bounce");
+      }, false);
+      highlight.setAttribute("bounce", "true");
+    }
   }
 };
 

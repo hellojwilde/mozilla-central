@@ -186,6 +186,7 @@ var ContextMenuHandler = {
       mediaURL: "",
       contentType: "",
       contentDisposition: "",
+      range: null,
       string: "",
     };
 
@@ -295,6 +296,9 @@ var ContextMenuHandler = {
       let selection = targetWindow.getSelection();
       if (selection && this._tapInSelection(selection, aX, aY)) {
         state.string = targetWindow.getSelection().toString();
+        state.range = new SerializableRange(selection.getRangeAt(0));
+
+        state.types.push("highlight");
         state.types.push("copy");
         state.types.push("selected-text");
       } else {

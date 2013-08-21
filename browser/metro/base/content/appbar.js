@@ -75,7 +75,7 @@ var Appbar = {
    */
   update: function update() {
     this._updatePinButton();
-    this._updateStarButton();
+    return this._updateStarButton();
   },
 
   onDownloadButton: function() {
@@ -92,56 +92,48 @@ var Appbar = {
     }
   },
 
-  onStarButton: function(aValue) {
-    if (aValue === undefined) {
-      aValue = this.starButton.checked;
+  onStarButton: function(aIsStarring) {
+    if (aIsStarring === undefined) {
+      aIsStarring = this.starButton.checked;
     }
 
-    if (aValue) {
-      Browser.starSite(function () {
-        Appbar._updateStarButton();
-      });
-    } else {
-      Browser.unstarSite(function () {
-        Appbar._updateStarButton();
-      });
-    }
+    let promise = (aIsStarring) ? Browser.starSite() : Browser.unstarSite();
+    promise.then(Appbar._updateStarButton);
   },
 
   onMenuButton: function(aEvent) {
-      let typesArray = [];
+    let typesArray = [];
 
-      if (!BrowserUI.isStartTabVisible)
-        typesArray.push("find-in-page");
-      if (ConsolePanelView.enabled)
-        typesArray.push("open-error-console");
-      if (!MetroUtils.immersive)
-        typesArray.push("open-jsshell");
+    if (!BrowserUI.isStartTabVisible)
+      typesArray.push("find-in-page");
+    if (ConsolePanelView.enabled)
+      typesArray.push("open-error-console");
+    if (!MetroUtils.immersive)
+      typesArray.push("open-jsshell");
 
-      try {
-        // If we have a valid http or https URI then show the view on desktop
-        // menu item.
-        let uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
-                                     null, null);
-        if (uri.schemeIs('http') || uri.schemeIs('https')) {
-          typesArray.push("view-on-desktop");
-        }
-      } catch(ex) {
+    try {
+      // If we have a valid http or https URI then show the view on desktop
+      // menu item.
+      let uri = Services.io.newURI(Browser.selectedBrowser.currentURI.spec,
+                                   null, null);
+      if (uri.schemeIs('http') || uri.schemeIs('https')) {
+        typesArray.push("view-on-desktop");
       }
+    } catch(ex) {
+    }
 
-      var x = this.menuButton.getBoundingClientRect().left;
-      var y = Elements.toolbar.getBoundingClientRect().top;
-      ContextMenuUI.showContextMenu({
-        json: {
-          types: typesArray,
-          string: '',
-          xPos: x,
-          yPos: y,
-          leftAligned: true,
-          bottomAligned: true
-      }
-
-      });
+    var x = this.menuButton.getBoundingClientRect().left;
+    var y = Elements.toolbar.getBoundingClientRect().top;
+    ContextMenuUI.showContextMenu({
+      json: {
+        types: typesArray,
+        string: '',
+        xPos: x,
+        yPos: y,
+        leftAligned: true,
+        bottomAligned: true
+     }
+    });
   },
 
   onViewOnDesktop: function() {
@@ -282,8 +274,7 @@ var Appbar = {
   },
 
   _updateStarButton: function() {
-    Browser.isSiteStarredAsync(function (isStarred) {
-      this.starButton.checked = isStarred;
-    }.bind(this));
+    return Browser.isSiteStarred()
+           .then((isStarred) => this.starButton.checked = isStarred);
   },
 };

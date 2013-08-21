@@ -19,6 +19,26 @@
 .text-link {
   color: @metro_orange@;
   text-decoration: none;
+  cursor: pointer;
+}
+
+.symbol-before {
+  padding: 5px;
+}
+
+.symbol-before::before {
+  font-family: "Segoe UI Symbol" !important;
+  padding-right: 3px;
+  font-size: 0.8em;
+}
+
+.symbol-button {
+  font-family: "Segoe UI Symbol" !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 18pt;
 }
 
 textbox,
@@ -176,14 +196,20 @@ menulist {
   transform: none;
 }
 
-.menu-popup > richlistbox {
-  padding: 3px 0;
+.menu-popup > richlistbox,
+.menu-popup.menu-border {
+  padding: 0;
   border: #000 solid @metro_border_thick@;
+  background: white;
   -moz-appearance: none;
   display: -moz-box;
 }
 
-.menu-popup > richlistbox > scrollbox {
+.menu-popup > richlistbox {
+  padding: 3px 0;
+}
+
+.menu-popup richlistbox > scrollbox {
   width: 100%;
   overflow-x: hidden !important;
 }
@@ -213,6 +239,19 @@ menulist {
 
 .menu-popup > richlistbox[left-hand="false"] > richlistitem {
   padding-right: 50px;
+}
+
+.menu-header {
+  -moz-box-pack: center;
+  -moz-box-align: center;
+  padding: 10px;
+  border-bottom: 1px solid silver;
+}
+
+.menu-header description {
+  font-weight: 100;
+  font-size: 20px;
+  overflow: hidden;
 }
 
 /* Additional styles applied to popups for form <select> elements. */

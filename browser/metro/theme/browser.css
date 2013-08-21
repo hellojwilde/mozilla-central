@@ -691,7 +691,7 @@ documenttab[selected] .documenttab-selection {
 }
 
 /* navbar edit button: one button out of three - when editing: go, when !editing,
-   loading: stop, when !editing, !loading: reload */ 
+   loading: stop, when !editing, !loading: reload */
 
 #go-button, #reload-button, #stop-button  {
   visibility: collapse;
@@ -1268,4 +1268,128 @@ setting[type="radio"] > vbox {
 
 #clear-notification-done {
   font-weight: bold;
+}
+
+/* Highlights ============================================================== */
+
+/* Header ------------------------------------------------------------------ */
+
+.highlights-back-button::before {
+  content: "\E0BA";
+}
+
+.highlights-back-button:active::before {
+  color: #000;
+  content: "\E0B3";
+}
+
+.highlights-edit-button::after {
+  content: "\E104";
+}
+
+.highlights-back-button,
+.highlights-edit-button {
+  visibility: collapse;
+}
+
+/* Pages ------------------------------------------------------------------- */
+
+.highlights-page {
+  padding: 10px;
+}
+
+.highlights-popup:not([page="empty"]) .highlights-page-empty,
+.highlights-popup:not([page="bookmark"]) .highlights-page-bookmark,
+.highlights-popup:not([page="list"]) .highlights-page-list {
+  visibility: collapse;
+}
+
+.highlights-page-footer {
+  -moz-box-pack: end;
+}
+
+/* Page: Empty */
+
+.highlights-bookmark-button::before {
+  content: "\E109"; /* plus */
+  color: #000;
+}
+
+/* Page: Bookmark (no highlights) */
+
+.highlights-page-bookmark {
+  padding-top: 15px;
+}
+
+.highlights-saved::before {
+  content: "\E10B"; /* checkmark */
+}
+
+.highlights-popup[page="bookmark"] .menu-header,
+.highlights-page-bookmark:not([saved]) .highlights-saved,
+.highlights-page-bookmark[saved] .highlights-remove-button {
+  display: none;
+}
+
+/* Page: List (highlights) */
+
+.highlights-popup[page="list"][editing] .highlights-back-button,
+.highlights-popup[page="list"]:not([editing]) .highlights-edit-button {
+  visibility: visible;
+}
+
+.highlights-popup[page="list"][editing] .highlights-title {
+  margin-left: 0;
+  padding-left: 5px;
+}
+
+.highlights-page-list {
+  padding: 0;
+}
+
+.highlights-page-list richlistbox {
+  border: 0 none;
+  -moz-appearance: none;
+  max-width: 300px;
+  display: -moz-box;
+  min-height: 300px;
+}
+
+.highlights-page-list richlistbox > scrollbox {
+  width: 100%;
+  overflow-x: hidden !important;
+}
+
+.highlights-page-list richlistitem {
+  max-width: 100%;
+  -moz-box-align: start;
+}
+
+.highlights-popup[editing] .highlights-page-list richlistitem[checked] {
+  background: @metro_orange@ !important;
+  color: #fff !important;
+}
+
+.highlights-page-list description {
+  max-width: 280px;
+  overflow: hidden;
+  padding: 0 5px;
+  font-weight: 400 !important;
+}
+
+.highlights-page-list checkbox {
+  padding: 5px 0 5px 10px;
+}
+
+.highlights-popup[editing] .highlights-page-list description {
+  max-width: 250px;
+}
+
+.highlights-page-list .highlights-page-footer {
+  padding: 10px;
+}
+
+.highlights-popup:not([editing]) .highlights-page-list .highlights-page-footer,
+.highlights-popup:not([editing]) .highlights-page-list checkbox {
+  visibility: collapse;
 }

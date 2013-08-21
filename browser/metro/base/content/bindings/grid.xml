@@ -943,7 +943,11 @@
       <handler event="click" button="0">
         <![CDATA[
           // left-click/touch handler
-          this.control.handleItemClick(this, event);
+          let gridParent = this.control;
+          if(!this.isBound || !gridParent)
+            return;
+
+          gridParent.handleItemClick(this, event);
           // Stop this from bubbling, when the richgrid container
           // receives click events, we blur the nav bar.
           event.stopPropagation();

@@ -262,7 +262,7 @@
                                      oncommand="Appbar.onDownloadButton()"/>
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="Appbar.onStarButton()"/>
+                             oncommand="HighlightsUI.onStarButton()"/>
               <toolbarbutton id="pin-button" class="appbar-primary"
                              type="checkbox"
                              oncommand="Appbar.onPinButton()"/>
@@ -710,6 +710,10 @@
           <!-- ux spec: https://bug782810.bugzilla.mozilla.org/attachment.cgi?id=714804 -->
 
           <!-- Text related -->
+          <!-- for page content, this will add the selection to the list of highlights -->
+          <richlistitem id="context-highlight" type="highlight" onclick="ContextCommands.highlight();">
+            <label value="Highlight"/>
+          </richlistitem>
           <!-- for text inputs, this will cut selected text -->
           <richlistitem id="context-cut" type="cut" onclick="ContextCommands.cut();">
             <label value="&contextTextCut.label;"/>
@@ -820,6 +824,50 @@
         <richlistbox id="menupopup-commands" onclick="if (event.target != this) AutofillMenuUI.selectByIndex(this.selectedIndex);" flex="1"/>
       </vbox>
     </box>
+
+    <vbox id="highlights-container" class="menu-container" hidden="true">
+      <vbox id="highlights-popup" class="highlights-popup menu-popup menu-border">
+        <hbox class="menu-header">
+          <button class="highlights-back-button symbol-button"/>
+          <description class="highlights-title" flex="1" value="Highlights"/>
+          <button class="highlights-edit-button symbol-button"/>
+        </hbox>
+
+        <vbox class="highlights-page-empty highlights-page">
+          <label value="You don't have any highlights."/>
+          <html:div class="highlights-bookmark-button text-link symbol-before">
+            Bookmark this page
+          </html:div>
+        </vbox>
+
+        <vbox class="highlights-page-bookmark highlights-page">
+          <vbox class="tilepicker">
+            <stack>
+              <richgriditem/>
+              <!-- XXX this sucks, but I haven't found a better way to
+                   overlay the buttons on top of the richgriditem -->
+              <button left="10" top="40%" class="tilepicker-left"/>
+              <button right="10" top="40%" class="tilepicker-right"/>
+            </stack>
+            <checkbox label="No thumbnail"/>
+          </vbox>
+
+          <hbox class="highlights-page-footer">
+            <html:div class="highlights-saved symbol-before">
+              Bookmark saved
+            </html:div>
+            <button class="highlights-remove-button" label="Remove"/>
+          </hbox>
+        </vbox>
+
+        <vbox class="highlights-page-list highlights-page">
+          <richlistbox flex="1"/>
+          <hbox class="highlights-page-footer">
+            <button class="highlights-delete-button" label="Delete"/>
+          </hbox>
+        </vbox>
+      </vbox>
+    </vbox>
   </stack>
 
 </window>
