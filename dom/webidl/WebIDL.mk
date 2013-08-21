@@ -216,6 +216,7 @@ webidl_files = \
   OfflineAudioCompletionEvent.webidl \
   OfflineAudioContext.webidl \
   OfflineResourceList.webidl \
+  OscillatorNode.webidl \
   PaintRequest.webidl \
   PaintRequestList.webidl \
   PannerNode.webidl \
@@ -443,6 +444,7 @@ webidl_files += \
   MozStkCommandEvent.webidl \
   Telephony.webidl \
   TelephonyCall.webidl \
+  TelephonyCallGroup.webidl \
   $(NULL)
 endif
 
