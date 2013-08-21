@@ -221,7 +221,7 @@ HighlightsList.prototype = {
     let len = checked.length;
 
     this._deleteButton.disabled = (len == 0);
-    this._deleteButton.label = (len > 1) ? "Delete (" + len + ")" : "Delete";
+    this._deleteButton.label = (len > 1) ? "Remove (" + len + ")" : "Remove";
   },
 
   onCheckbox: function () {
