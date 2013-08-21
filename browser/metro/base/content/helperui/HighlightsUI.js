@@ -5,6 +5,8 @@
 
 "use strict";
 
+const kThumbAnno = "snippets/tileThumbnail";
+
 /**
  * Subclass of PagedFlyout that has an editing mode, preset pages,
  * and state updating.
@@ -114,10 +116,10 @@ function HighlightsBookmark(aFlyout, aFlyoutElement) {
 
   this._page = aFlyoutElement.querySelector(".highlights-page-bookmark");
   this._picker = new TilePicker(this._page.querySelector(".tilepicker"));
+  this._picker.parent = this;
   this._removeButton = this._page.querySelector(".highlights-remove-button");
 
   // XXX this isn't a super clean way to do this.
-  this._flyout._popup.addEventListener("popuphidden", this.onFlyoutHidden.bind(this), false);
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
 }
 
@@ -127,9 +129,22 @@ HighlightsBookmark.prototype = {
 
     Util.setBoolAttribute(this._page, "saved", saved);
 
+    this._id = id;
+    this._loading = true;
+
     this._picker.title = PlacesUtils.bookmarks.getItemTitle(id);
     this._picker.uri = Browser.selectedBrowser.currentURI;
     this._picker.imageSnippets = Browser.selectedTab.snippets.ImageSnippet;
+
+    try {
+      let json = PlacesUtils.annotations.getItemAnnotation(id, kThumbAnno);
+      let settings = JSON.parse(json);
+
+      this._picker.selectedImageSnippet = settings.selectedImageSnippet;
+      this._picker.isThumbnail = settings.isThumbnail;
+    } catch (e) { /* there was no snippet data */ }
+
+    this._loading = false;
   },
 
   onRemoveButton: function () {
@@ -141,9 +156,17 @@ HighlightsBookmark.prototype = {
     });
   },
 
-  onFlyoutHidden: function () {
-    if (this.active) {
-      alert("should save now!");
+  onTilePick: function () {
+    if (!this._loading) {
+      this._flyout.realign();
+
+      let json = JSON.stringify({
+        selectedImageSnippet: this._picker.selectedImageSnippet,
+        isThumbnail: this._picker.isThumbnail
+      });
+
+      let anno = PlacesUtils.annotations;
+      anno.setItemAnnotation(this._id, kThumbAnno, json, 0, anno.EXPIRE_NEVER);
     }
   }
 };

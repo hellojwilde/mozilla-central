@@ -41,7 +41,9 @@ TilePicker.prototype = {
     this._noThumbsCheckbox.checked = !aIsShowing;
     this._preview.setAttribute("tiletype", "thumbnail");
     Util.setBoolAttribute(this._preview, "tiletype", aIsShowing, "thumbnail");
-    return Util.setBoolAttribute(this._wrapper, "thumbnail", aIsShowing);
+    Util.setBoolAttribute(this._wrapper, "thumbnail", aIsShowing);
+    this.dispatchPick();
+    return aIsShowing;
   },
 
   _imageSnippets: [],
@@ -68,19 +70,29 @@ TilePicker.prototype = {
       this._leftButton.disabled = aIndex <= 0;
       this._rightButton.disabled = aIndex >= len - 1;
       this._preview.backgroundImage = "url('" + this.selectedImageSnippet.uri + "')";
+      this.dispatchPick();
     }
     return this._selectedImageSnippetIndex;
   },
 
   get selectedImageSnippet() { return this._imageSnippets[this._selectedImageSnippetIndex]; },
   set selectedImageSnippet(aSnippet) {
+    let idx = -1;
     for (let i = 0, len = this._imageSnippets.length; i < len; i++) {
       if (this._imageSnippets[i].uri == aSnippet.uri) {
-        this.selectedImageSnippetIndex = i;
-        return aSnippet;
+        idx = i;
+        break;
       }
     }
-    return null;
+
+    if (idx == -1) {
+      this._imageSnippets.push(aSnippet);
+      idx = this._imageSnippets.length -1;
+    }
+
+    this.selectedImageSnippetIndex = idx;
+    this.dispatchPick();
+    return aSnippet;
   },
 
   onLeftButton: function onLeftButton() {
@@ -93,5 +105,11 @@ TilePicker.prototype = {
 
   onNoThumbs: function onNoThumbs() {
     this.isThumbnail = !this._noThumbsCheckbox.checked;
+  },
+
+  dispatchPick: function dispatchPick() {
+    if (this.parent && this.parent.onTilePick) {
+      this.parent.onTilePick(this);
+    }
   }
 };
