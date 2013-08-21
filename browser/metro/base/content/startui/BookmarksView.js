@@ -355,7 +355,6 @@ BookmarkChangeListener.prototype = {
     if (!this._view.inCurrentView(aParentId, aItemId))
       return;
 
-      alert("id: " + aItemId + " prop: " + aProperty);
     this._view.updateBookmark(aItemId);
   },
 

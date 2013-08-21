@@ -108,7 +108,7 @@ let ScriptContexts = {};
   ["Flyout", "chrome://browser/content/widgets/Flyout.js"],
   ["PagedFlyout", "chrome://browser/content/widgets/Flyout.js"],
   ["TilePicker", "chrome://browser/content/widgets/TilePicker.js"],
-  ["BookmarksUI", "chrome://browser/content/helperui/BookmarksUI.js"],
+  ["BookmarkUI", "chrome://browser/content/helperui/BookmarkUI.js"],
   ["SerializableNode", "chrome://browser/content/library/Serializable.js"],
   ["SerializableRange", "chrome://browser/content/library/Serializable.js"],
   ["IndexedDB", "chrome://browser/content/helperui/IndexedDB.js"],

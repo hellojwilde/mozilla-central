@@ -36,7 +36,7 @@ chrome.jar:
   content/helperui/AlertsHelper.js             (content/helperui/AlertsHelper.js)
   content/helperui/IndexedDB.js                (content/helperui/IndexedDB.js)
   content/helperui/MenuUI.js                   (content/helperui/MenuUI.js)
-  content/helperui/BookmarksUI.js              (content/helperui/BookmarksUI.js)
+  content/helperui/BookmarkUI.js               (content/helperui/BookmarkUI.js)
   content/helperui/OfflineApps.js              (content/helperui/OfflineApps.js)
   content/helperui/SelectHelperUI.js           (content/helperui/SelectHelperUI.js)
   content/helperui/SelectionHelperUI.js        (content/helperui/SelectionHelperUI.js)

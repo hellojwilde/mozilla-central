@@ -828,7 +828,7 @@
     <vbox id="bookmark-container" class="menu-container" hidden="true">
       <vbox id="bookmark-popup" class="bookmark-popup menu-popup menu-border">
         <vbox class="bookmark-page-bookmark bookmark-page">
-          <vbox class="tilepicker">
+          <vbox class="tilepicker bookmark-page-row">
             <stack>
               <richgriditem/>
               <!-- XXX this sucks, but I haven't found a better way to
@@ -839,11 +839,11 @@
             <checkbox label="No thumbnail"/>
           </vbox>
 
-          <hbox class="bookmark-list">
+          <hbox class="bookmark-page-row">
             <button type="menu" label="List"/>
           </hbox>
 
-          <hbox class="bookmark-page-footer">
+          <hbox class="bookmark-page-row">
             <html:div class="bookmark-saved symbol-before">
               Bookmark saved
             </html:div>
@@ -853,8 +853,7 @@
 
         <vbox class="bookmark-page-lists bookmark-page">
           <richlistbox flex="1"/>
-          <hbox class="bookmark-page-footer bookmark-list-new">
-            <textbox/>
+          <hbox class="bookmark-page-row bookmark-lists-create">
             <button label="Create"/>
           </hbox>
         </vbox>
