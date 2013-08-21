@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const kThumbAnno = "snippets/tileThumbnail";
+
 this.EXPORTED_SYMBOLS = ["View"];
 
 Components.utils.import("resource://gre/modules/PlacesUtils.jsm");
@@ -37,6 +39,20 @@ View.prototype = {
 
   onViewStateChange: function (aState) {
     this._adjustDOMforViewState(aState);
+  },
+
+  _updateSnippets: function pv__updateSnippets(aItem, aNodeId) {
+    try {
+      let opt = JSON.parse(PlacesUtils.annotations.
+                           getItemAnnotation(aNodeId, kThumbAnno));
+
+      if (opt.isThumbnail) {
+        aItem.setAttribute("tiletype", "thumbnail");
+        aItem.backgroundImage = "url('" + opt.selectedImageSnippet.uri + "')";
+      } else {
+        aItem.removeAttribute("tiletype");
+      }
+    } catch (e) { /* there were no snippets */ }
   },
 
   _updateFavicon: function pv__updateFavicon(aItem, aUri) {

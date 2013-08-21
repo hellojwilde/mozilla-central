@@ -1603,7 +1603,6 @@ Tab.prototype = {
 
   updateSnippets: function updateSnippets(aSnippets) {
     this._snippets = aSnippets;
-    Util.dumpLn(JSON.stringify(aSnippets));
   },
 
   /**

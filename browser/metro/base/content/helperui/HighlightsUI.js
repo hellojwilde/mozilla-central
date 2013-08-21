@@ -120,6 +120,7 @@ function HighlightsBookmark(aFlyout, aFlyoutElement) {
   this._removeButton = this._page.querySelector(".highlights-remove-button");
 
   // XXX this isn't a super clean way to do this.
+  this._flyout._panel.addEventListener("popuphidden", this.onFlyoutHidden.bind(this), false);
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
 }
 
@@ -130,7 +131,6 @@ HighlightsBookmark.prototype = {
     Util.setBoolAttribute(this._page, "saved", saved);
 
     this._id = id;
-    this._loading = true;
 
     this._picker.title = PlacesUtils.bookmarks.getItemTitle(id);
     this._picker.uri = Browser.selectedBrowser.currentURI;
@@ -143,8 +143,6 @@ HighlightsBookmark.prototype = {
       this._picker.selectedImageSnippet = settings.selectedImageSnippet;
       this._picker.isThumbnail = settings.isThumbnail;
     } catch (e) { /* there was no snippet data */ }
-
-    this._loading = false;
   },
 
   onRemoveButton: function () {
@@ -157,17 +155,21 @@ HighlightsBookmark.prototype = {
   },
 
   onTilePick: function () {
-    if (!this._loading) {
-      this._flyout.realign();
+    this._flyout.realign();
+  },
 
-      let json = JSON.stringify({
-        selectedImageSnippet: this._picker.selectedImageSnippet,
-        isThumbnail: this._picker.isThumbnail
-      });
-
-      let anno = PlacesUtils.annotations;
-      anno.setItemAnnotation(this._id, kThumbAnno, json, 0, anno.EXPIRE_NEVER);
+  onFlyoutHidden: function () {
+    if (!this.active) {
+      return;
     }
+
+    let json = JSON.stringify({
+      selectedImageSnippet: this._picker.selectedImageSnippet,
+      isThumbnail: this._picker.isThumbnail
+    });
+
+    let anno = PlacesUtils.annotations;
+    anno.setItemAnnotation(this._id, kThumbAnno, json, 0, anno.EXPIRE_NEVER);
   }
 };
 

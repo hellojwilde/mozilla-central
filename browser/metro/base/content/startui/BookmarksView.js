@@ -167,6 +167,7 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     item.setAttribute("bookmarkId", aBookmarkId);
     this._setContextActions(item);
     this._updateFavicon(item, uri);
+    this._updateSnippets(item, aBookmarkId);
   },
 
   _setContextActions: function bv__setContextActions(aItem) {
@@ -204,6 +205,7 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     item.setAttribute("label", title);
 
     this._updateFavicon(item, uri);
+    this._updateSnippets(item, aBookmarkID);
   },
 
   removeBookmark: function bv_removeBookmark(aBookmarkId) {
@@ -353,6 +355,7 @@ BookmarkChangeListener.prototype = {
     if (!this._view.inCurrentView(aParentId, aItemId))
       return;
 
+      alert("id: " + aItemId + " prop: " + aProperty);
     this._view.updateBookmark(aItemId);
   },
 

@@ -165,9 +165,14 @@ TopSitesView.prototype = Util.extend(Object.create(View.prototype), {
   updateTile: function(aTileNode, aSite, aArrangeGrid) {
     this._updateFavicon(aTileNode, Util.makeURI(aSite.url));
 
+    let self = this;
     Task.spawn(function() {
+      let bookmarkId = yield Bookmarks.getForURI(aSite.url);
       let filepath = PageThumbsStorage.getFilePathForURL(aSite.url);
-      if (yield OS.File.exists(filepath)) {
+
+      if (bookmarkId) {
+        self._updateSnippets(aTileNode, bookmarkId);
+      } else if (yield OS.File.exists(filepath)) {
         aSite.backgroundImage = 'url("'+PageThumbs.getThumbnailURL(aSite.url)+'")';
         aTileNode.setAttribute("customImage", aSite.backgroundImage);
         if (aTileNode.refresh) {
