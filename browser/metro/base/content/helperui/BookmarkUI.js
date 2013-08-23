@@ -26,7 +26,10 @@ BookmarkFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
     let self = this;
     return Task.spawn(function HUI_updateTask() {
       let uri = Browser.selectedBrowser.currentURI;
-      let options = { id: yield Bookmarks.getForURI(uri) };
+      let options = {
+        id: yield Bookmarks.getForURI(uri),
+        list: yield Browser.getSiteList()
+      };
 
       if (!options.id) {
         options.id = yield Browser.starSite();
@@ -69,7 +72,7 @@ BookmarkBookmark.prototype = {
     this._saved = saved;
     this._id = id;
 
-    this._list = list || Browser.getSiteList();
+    this._list = list;
     this._listButton.label = this._list.title;
 
     this._picker.title = PlacesUtils.bookmarks.getItemTitle(id);
@@ -102,9 +105,9 @@ BookmarkBookmark.prototype = {
     let self = this;
     return Task.spawn(function HE_onRemoveButton () {
       // Make sure we stop messing with the bookmark now that we're deleting it.
-      this.active = false;
-
+      self.active = false;
       self._flyout.hide();
+
       yield Browser.unstarSite();
       yield Appbar.update();
     });
@@ -162,6 +165,7 @@ BookmarkLists.prototype = {
     this._selected = selected;
     this._saved = saved;
     this._id = id;
+    this._createTextbox.value = "";
 
     this.selectList(selected.id);
   },
@@ -194,7 +198,7 @@ BookmarkLists.prototype = {
 
   onCreateButton: function () {
     let title = this._createTextbox.value;
-    let listId = Bookmarks.createList(title);
+    let listId = Bookmarks.addList(title);
 
     let item = new BookmarkListsItem(listId, title);
     item.parent = this;

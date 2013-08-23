@@ -117,7 +117,9 @@ var Bookmarks = {
     return lists;
   },
 
-  createList: function bh_createList(aTitle) {
-    return 0;
+  addList: function bh_addList(aTitle) {
+    const bookmarks = PlacesUtils.bookmarks;
+    return bookmarks.createFolder(this.metroRoot, aTitle,
+                                  bookmarks.DEFAULT_INDEX);
   }
 };

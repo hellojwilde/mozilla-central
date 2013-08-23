@@ -39,31 +39,22 @@
               "index": 1,
               "title": "@firefox_about@",
               "type": "text/x-moz-place",
-              "uri": "http: //www.mozilla.org/@AB_CD@/about/",
-              "iconUri": "chrome: //branding/content/favicon32.png",
-              "annos": [
-                { "name": "auto/unread", "expires": 4, "type": 1, "value": 1 }
-              ]
+              "uri": "http://www.mozilla.org/@AB_CD@/about/",
+              "iconUri": "chrome://branding/content/favicon32.png"
             },
             {
               "index": 2,
               "title": "@getting_started@",
               "type": "text/x-moz-place",
-              "uri": "http: //www.mozilla.org/@AB_CD@/firefox/central/",
-              "iconUri": "chrome: //branding/content/favicon32.png",
-              "annos": [
-                { "name": "auto/unread", "expires": 4, "type": 1, "value": 1 }
-              ]
+              "uri": "http://www.mozilla.org/@AB_CD@/firefox/central/",
+              "iconUri": "chrome://branding/content/favicon32.png"
             },
             {
               "index": 3,
               "title": "@firefox_community@",
               "type": "text/x-moz-place",
-              "uri": "http: //www.mozilla.org/@AB_CD@/contribute/",
-              "iconUri": "chrome: //branding/content/favicon32.png",
-              "annos": [
-                { "name": "auto/unread", "expires": 4, "type": 1, "value": 1 }
-              ]
+              "uri": "http://www.mozilla.org/@AB_CD@/contribute/",
+              "iconUri": "chrome://branding/content/favicon32.png"
             }
           ]
         }

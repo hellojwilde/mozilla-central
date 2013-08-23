@@ -820,8 +820,21 @@ var Browser = {
   },
 
   getSiteList: function browser_getSiteList() {
-    // TODO: intelligently select this from semantic metadata.
-    return Bookmarks.getLists()[0];
+    return Task.spawn(function browser_getSiteListTask() {
+      let uri = Browser.selectedBrowser.currentURI;
+      let bookmarkId = yield Bookmarks.getForURI(uri);
+      if (bookmarkId) {
+        const bookmarks = PlacesUtils.bookmarks;
+        let listId = bookmarks.getFolderIdForItem(bookmarkId);
+        throw new Task.Result({
+          id: listId,
+          title: bookmarks.getItemTitle(listId)
+        });
+      } else {
+        // TODO: intelligently select this from semantic metadata.
+        throw new Task.Result(Bookmarks.getLists()[0]);
+      }
+    });
   },
 
   getHighlights: function browser_getHighlights (aBookmarkId) {
