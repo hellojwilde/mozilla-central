@@ -1294,59 +1294,28 @@ setting[type="radio"] > vbox {
 
 /* Pages ------------------------------------------------------------------- */
 
-.highlights-page {
+.bookmark-page {
   padding: 10px;
 }
 
-.highlights-popup:not([page="empty"]) .highlights-page-empty,
-.highlights-popup:not([page="bookmark"]) .highlights-page-bookmark,
-.highlights-popup:not([page="list"]) .highlights-page-list {
+.bookmark-popup:not([page="bookmark"]) .bookmark-page-bookmark,
+.bookmark-popup:not([page="lists"]) .bookmark-page-lists {
   visibility: collapse;
 }
 
-.highlights-page-footer {
-  -moz-box-pack: end;
-}
+/* Page: Bookmark */
 
-/* Page: Empty */
-
-.highlights-bookmark-button::before {
-  content: "\E109"; /* plus */
-  color: #000;
-}
-
-/* Page: Bookmark (no highlights) */
-
-.highlights-page-bookmark {
-  padding-top: 15px;
-}
-
-.highlights-saved::before {
+.bookmark-saved::before {
   content: "\E10B"; /* checkmark */
 }
 
-.highlights-popup[page="bookmark"] .menu-header,
-.highlights-page-bookmark:not([saved]) .highlights-saved,
-.highlights-page-bookmark[saved] .highlights-remove-button {
-  display: none;
+.bookmark-page-bookmark:not([saved]) .bookmark-saved,
+.bookmark-page-bookmark[saved] .bookmark-remove-button {
+  visibility: collapse;
 }
 
-/* Page: List (highlights) */
-
-.highlights-popup[page="list"][editing] .highlights-back-button,
-.highlights-popup[page="list"]:not([editing]) .highlights-edit-button {
-  visibility: visible;
-}
-
-.highlights-popup[page="list"][editing] .highlights-title {
-  margin-left: 0;
-  padding-left: 5px;
-}
-
-.highlights-page-list {
-  padding: 0;
-}
-
+/* Page: Lists  */
+/*
 .highlights-page-list richlistbox {
   border: 0 none;
   -moz-appearance: none;
@@ -1392,4 +1361,4 @@ setting[type="radio"] > vbox {
 .highlights-popup:not([editing]) .highlights-page-list .highlights-page-footer,
 .highlights-popup:not([editing]) .highlights-page-list checkbox {
   visibility: collapse;
-}
+}*/

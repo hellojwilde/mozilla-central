@@ -819,6 +819,11 @@ var Browser = {
     return Bookmarks.isURIBookmarked(uri);
   },
 
+  getSiteList: function browser_getSiteList() {
+    // TODO: intelligently select this from semantic metadata.
+    return Bookmarks.getLists()[0];
+  },
+
   getHighlights: function browser_getHighlights (aBookmarkId) {
     let highlights = [];
     if (aBookmarkId) {

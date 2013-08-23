@@ -262,7 +262,7 @@
                                      oncommand="Appbar.onDownloadButton()"/>
               <toolbarbutton id="star-button" class="appbar-primary"
                              type="checkbox"
-                             oncommand="BookmarksUI.onStarButton()"/>
+                             oncommand="BookmarkUI.onStarButton()"/>
               <toolbarbutton id="pin-button" class="appbar-primary"
                              type="checkbox"
                              oncommand="Appbar.onPinButton()"/>
@@ -840,10 +840,10 @@
           </vbox>
 
           <hbox class="bookmark-page-row">
-            <button type="menu" label="List"/>
+            <button class="bookmark-list-button" type="menu" flex="1" label="List"/>
           </hbox>
 
-          <hbox class="bookmark-page-row">
+          <hbox class="bookmark-page-row bookmark-page-footer">
             <html:div class="bookmark-saved symbol-before">
               Bookmark saved
             </html:div>
@@ -854,6 +854,7 @@
         <vbox class="bookmark-page-lists bookmark-page">
           <richlistbox flex="1"/>
           <hbox class="bookmark-page-row bookmark-lists-create">
+            <textbox/>
             <button label="Create"/>
           </hbox>
         </vbox>

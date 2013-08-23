@@ -88,47 +88,33 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
   },
 
   getBookmarks: function bv_getBookmarks(aRefresh) {
-    let options = this._navHistoryService.getNewQueryOptions();
-    options.queryType = options.QUERY_TYPE_BOOKMARKS;
-    options.excludeQueries = true; // Don't include "smart folders"
-    options.sortingMode = this._sort;
-
+    let items = PlacesUtils.annotations.getItemsWithAnnotation("auto/unread", {});
+    Util.dumpLn(JSON.stringify(items));
     let limit = this._limit || Infinity;
-
-    let query = this._navHistoryService.getNewQuery();
-    query.setFolders([Bookmarks.metroRoot], 1);
-
-    let result = this._navHistoryService.executeQuery(query, options);
-    let rootNode = result.root;
-    rootNode.containerOpen = true;
-    let childCount = rootNode.childCount;
 
     this._inBatch = true; // batch up grid updates to avoid redundant arrangeItems calls
 
-    for (let i = 0, addedCount = 0; i < childCount && addedCount < limit; i++) {
-      let node = rootNode.getChild(i);
-
-      // Ignore folders, separators, undefined item types, etc.
-      if (node.type != node.RESULT_TYPE_URI)
-        continue;
+    for (let i = 0, addedCount = 0, childCount = items.lenth;
+         i < childCount && addedCount < limit; i++) {
+      let nodeId = items[i];
 
       // If item is marked for deletion, skip it.
-      if (this._toRemove && this._toRemove.indexOf(node.itemId) !== -1)
+      if (this._toRemove && this._toRemove.indexOf(nodeId) !== -1)
         continue;
 
-      let item = this._getItemForBookmarkId(node.itemId);
+      let item = this._getItemForBookmarkId(nodeId);
 
       // Item has been unpinned.
-      if (this._filterUnpinned && !this._pinHelper.isPinned(node.itemId)) {
+      if (this._filterUnpinned && !this._pinHelper.isPinned(nodeId)) {
         if (item)
-          this.removeBookmark(node.itemId);
+          this.removeBookmark(nodeId);
 
         continue;
       }
 
       if (!aRefresh || !item) {
         // If we're not refreshing or the item is not in the grid, add it.
-        this.addBookmark(node.itemId, addedCount);
+        this.addBookmark(nodeId, addedCount);
       } else if (aRefresh && item) {
         // Update context action in case it changed in another view.
         this._setContextActions(item);
@@ -145,7 +131,6 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     }
     this._set.arrangeItems();
     this._inBatch = false;
-    rootNode.containerOpen = false;
   },
 
   inCurrentView: function bv_inCurrentView(aParentId, aItemId) {

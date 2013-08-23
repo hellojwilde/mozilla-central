@@ -90,5 +90,34 @@ var Bookmarks = {
       def.resolve({ uri: aURI, ids: aItemIds });
     });
     return def.promise;
+  },
+
+  getLists: function bh_getLists() {
+    let history = PlacesUtils.history;
+
+    let options = history.getNewQueryOptions();
+    options.queryType = options.QUERY_TYPE_BOOKMARKS;
+    options.excludeQueries = true; // Don't include "smart folders"
+    options.excludeItems = true; // Don't include bookmarks
+
+    let query = history.getNewQuery();
+    query.setFolders([Bookmarks.metroRoot], 1);
+
+    let result = history.executeQuery(query, options);
+    let lists = [];
+    let rootNode = result.root;
+    rootNode.containerOpen = true;
+
+    for (let i = 0, len = rootNode.childCount; i < len; i++) {
+      let node = rootNode.getChild(i);
+      lists.push({ id: node.itemId, title: node.title });
+    }
+
+    rootNode.containerOpen = false;
+    return lists;
+  },
+
+  createList: function bh_createList(aTitle) {
+    return 0;
   }
 };

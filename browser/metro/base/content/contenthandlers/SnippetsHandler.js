@@ -63,8 +63,9 @@ let SnippetsHandler = {
 
   getSnippetsForType: function getSnippetsForType(aType, aElement) {
     let providers = this.providers[aType];
-    return providers.reduce((aArr, aProviderFn) =>
-                              aArr.concat(aProviderFn(aElement)), []);
+    let snippets = providers.reduce((aArr, aProviderFn) =>
+                              aArr.concat(aProviderFn(aElement) || []), []);
+    return snippets;
   },
 
   getSnippets: function getSnippets(aElement) {

@@ -49,7 +49,7 @@ TilePicker.prototype = {
   _imageSnippets: [],
   get imageSnippets() { return this._imageSnippets; },
   set imageSnippets(aImageSnippets) {
-    this._imageSnippets = aImageSnippets;
+    this._imageSnippets = aImageSnippets || [];
     if (this._imageSnippets.length) {
       this.isThumbnail = true;
       this.selectedImageSnippetIndex = 0;

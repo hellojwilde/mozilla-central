@@ -14,6 +14,9 @@ const kThumbAnno = "snippets/tileThumbnail";
 function BookmarkFlyout(aPanel, aPopup) {
   PagedFlyout.call(this, aPanel, aPopup);
 
+  // Make sure we don't hide when the user types into the create list textbox.
+  this._wantTypeBehind = true;
+
   this.registerPage("bookmark", new BookmarkBookmark(this, aPopup));
   this.registerPage("lists", new BookmarkLists(this, aPopup));
 }
@@ -21,11 +24,17 @@ function BookmarkFlyout(aPanel, aPopup) {
 BookmarkFlyout.prototype = Util.extend(Object.create(PagedFlyout.prototype), {
   selectPage: function HF_selectPage() {
     let self = this;
-   /* return Task.spawn(function HUI_updateTask() {
+    return Task.spawn(function HUI_updateTask() {
       let uri = Browser.selectedBrowser.currentURI;
-      let bookmarkId = yield Bookmarks.getForURI(uri);
-      self.displayPage("bookmark", { id: bookmarkId });
-    });*/
+      let options = { id: yield Bookmarks.getForURI(uri) };
+
+      if (!options.id) {
+        options.id = yield Browser.starSite();
+        options.saved = true;
+      }
+
+      self.displayPage("bookmark", options);
+    });
   }
 });
 
@@ -37,64 +46,67 @@ BookmarkFlyout.prototype.constructor = BookmarkFlyout;
 
 function BookmarkBookmark(aFlyout, aFlyoutElement) {
   this._flyout = aFlyout;
-  this._page = aFlyoutElement.querySelector(".bookmarks-page-bookmark");
-}
+  this._page = aFlyoutElement.querySelector(".bookmark-page-bookmark");
 
-/**
- * Controller for the page that lets users manually select the list
- * to add the item to.
- */
-
-function BookmarkLists(aFlyout, aFlyoutElement) {
-  this._flyout = aFlyout;
-  this._page = aFlyoutElement.querySelector(".bookmarks-page-lists");
-}
-
-
-/**
- * Controller for "bookmark" page shown when there is a bookmark,
- * but no highlights.
- */
-function HighlightsBookmark(aFlyout, aFlyoutElement) {
-  this._flyout = aFlyout;
-
-  this._page = aFlyoutElement.querySelector(".highlights-page-bookmark");
   this._picker = new TilePicker(this._page.querySelector(".tilepicker"));
   this._picker.parent = this;
-  this._removeButton = this._page.querySelector(".highlights-remove-button");
+
+  this._removeButton = this._page.querySelector(".bookmark-remove-button");
+  this._listButton = this._page.querySelector(".bookmark-list-button");
 
   // XXX this isn't a super clean way to do this.
   this._flyout._panel.addEventListener("popuphidden", this.onFlyoutHidden.bind(this), false);
   this._removeButton.addEventListener("command", this.onRemoveButton.bind(this), false);
+  this._listButton.addEventListener("click", this.onListButton.bind(this), false);
 }
 
-HighlightsBookmark.prototype = {
-  display: function (aOptions) {
-    let { id, saved } = aOptions || {};
+BookmarkBookmark.prototype = {
+  display: function display(aOptions) {
+    let { id, saved, list } = aOptions || {};
 
     Util.setBoolAttribute(this._page, "saved", saved);
 
+    this._saved = saved;
     this._id = id;
+
+    this._list = list || Browser.getSiteList();
+    this._listButton.label = this._list.title;
 
     this._picker.title = PlacesUtils.bookmarks.getItemTitle(id);
     this._picker.uri = Browser.selectedBrowser.currentURI;
     this._picker.imageSnippets = Browser.selectedTab.snippets.ImageSnippet;
 
     try {
-      let json = PlacesUtils.annotations.getItemAnnotation(id, kThumbAnno);
-      let settings = JSON.parse(json);
+      let settings = JSON.parse(PlacesUtils.annotations.
+                                getItemAnnotation(id, kThumbAnno));
 
-      this._picker.selectedImageSnippet = settings.selectedImageSnippet;
-      this._picker.isThumbnail = settings.isThumbnail;
+      if (settings.isThumbnail) {
+        this._picker.selectedImageSnippet = settings.selectedImageSnippet;
+        this._picker.isThumbnail = settings.isThumbnail;
+      }
     } catch (e) { /* there was no snippet data */ }
+  },
+
+  onListButton: function () {
+    let options = {
+      selected: this._list,
+      saved: this._saved,
+      id: this._id
+    };
+
+    this._flyout.displayPage("lists", options);
+    this._flyout.realign();
   },
 
   onRemoveButton: function () {
     let self = this;
     return Task.spawn(function HE_onRemoveButton () {
+      // Make sure we stop messing with the bookmark now that we're deleting it.
+      this.active = false;
+
+      self._flyout.hide();
       yield Browser.unstarSite();
       yield Appbar.update();
-      self._flyout.hide();
     });
   },
 
@@ -114,8 +126,120 @@ HighlightsBookmark.prototype = {
 
     let anno = PlacesUtils.annotations;
     anno.setItemAnnotation(this._id, kThumbAnno, json, 0, anno.EXPIRE_NEVER);
+
+    let bookmarks = PlacesUtils.bookmarks;
+    let listId = bookmarks.getFolderIdForItem(this._id);
+    if (listId != this._list.id) {
+      bookmarks.moveItem(this._id, this._list.id, bookmarks.DEFAULT_INDEX);
+    }
   }
-};
+}
+
+/**
+ * Controller for the page that lets users manually select the list
+ * to add the item to.
+ */
+
+function BookmarkLists(aFlyout, aFlyoutElement) {
+  this._flyout = aFlyout;
+  this._page = aFlyoutElement.querySelector(".bookmark-page-lists");
+
+  this._list = this._page.querySelector("richlistbox");
+  this._createTextbox = this._page.querySelector(".bookmark-lists-create > textbox");
+  this._createButton = this._page.querySelector(".bookmark-lists-create > button");
+
+  this.populateLists();
+  this._createButton.addEventListener("command", this.onCreateButton.bind(this), false);
+}
+
+BookmarkLists.prototype = {
+  _selected: null,
+  _items: [],
+
+  display: function (aOptions) {
+    let { selected, saved, id } = aOptions;
+
+    this._selected = selected;
+    this._saved = saved;
+    this._id = id;
+
+    this.selectList(selected.id);
+  },
+
+  selectList: function (aToSelectId) {
+    for (let item of this._items) {
+      if (item.id == aToSelectId) {
+        this._list.selectedItem = item.element;
+        break;
+      }
+    }
+  },
+
+  populateLists: function () {
+    let lists = Bookmarks.getLists();
+
+    this._items = [];
+    while (this._list.firstChild) {
+      this._list.removeChild(this._list.firstChild);
+    }
+
+    for (let list of lists) {
+      let item = new BookmarkListsItem(list.id, list.title);
+      item.parent = this;
+
+      this._list.appendChild(item.element);
+      this._items.push(item);
+    }
+  },
+
+  onCreateButton: function () {
+    let title = this._createTextbox.value;
+    let listId = Bookmarks.createList(title);
+
+    let item = new BookmarkListsItem(listId, title);
+    item.parent = this;
+
+    this._list.appendChild(item.element);
+    this._items.push(item);
+
+    this.onListSelect(item);
+  },
+
+  onListSelect: function (aListItem) {
+    let options = { list: aListItem, saved: this._saved, id: this._id };
+    this._flyout.displayPage("bookmark", options);
+  }
+}
+
+function BookmarkListsItem(aId, aTitle) {
+  this.id = aId;
+  this.title = aTitle;
+}
+
+BookmarkListsItem.prototype = {
+  _element: null,
+  get element() {
+    if (!this._element) {
+      this._element = document.createElement("richlistitem");
+      this._element.addEventListener("click", this, false);
+
+      this._elementLabel = document.createElement("label");
+      this._elementLabel.textContent = this.title;
+      this._element.appendChild(this._elementLabel);
+    }
+    return this._element;
+  },
+
+  handleEvent: function (aEvent) {
+    switch (aEvent.type) {
+      case "click":
+        if (this.parent && this.parent.onListSelect) {
+          this.parent.onListSelect(this);
+        }
+        break;
+    }
+  }
+}
 
 let BookmarkUI = {
   get _panel() { return document.getElementById("bookmark-container"); },
@@ -150,7 +274,7 @@ let BookmarkUI = {
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
       } catch(e) {
-        Util.dumpLn(e);
+        Util.dumpLn(e + " " + e.lineNumber + " " + e.fileName);
       }
     });
   },
@@ -161,8 +285,8 @@ let BookmarkUI = {
 
   onStarButton: function HUI_onStarButton() {
     return Task.spawn(function HUI_onStarButtonTask () {
-      yield Appbar.update();
       yield BookmarkUI.show();
+      yield Appbar.update();
     });
   }
 };
