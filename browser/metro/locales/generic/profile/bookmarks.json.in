@@ -13,27 +13,32 @@
         {
           "index": 1,
           "type": "text/x-moz-place-container",
-          "title": "Recipes"
+          "title": "Recipes",
+          "annos": [{ "name": "metro/auto/recipes", "expires": 4, "type": 1, "value": 1 }]
         },
         {
           "index": 2,
           "type": "text/x-moz-place-container",
-          "title": "Stories"
+          "title": "Stories",
+          "annos": [{ "name": "metro/auto/stories", "expires": 4, "type": 1, "value": 1 }]
         },
         {
           "index": 3,
           "type": "text/x-moz-place-container",
-          "title": "Music"
+          "title": "Music",
+          "annos": [{ "name": "metro/auto/music", "expires": 4, "type": 1, "value": 1 }]
         },
         {
           "index": 4,
           "type": "text/x-moz-place-container",
-          "title": "Videos"
+          "title": "Videos",
+          "annos": [{ "name": "metro/auto/videos", "expires": 4, "type": 1, "value": 1 }]
         },
         {
           "index": 5,
           "type": "text/x-moz-place-container",
           "title": "Other",
+          "annos": [{ "name": "metro/auto/other", "expires": 4, "type": 1, "value": 1 }],
           "children": [
             {
               "index": 1,

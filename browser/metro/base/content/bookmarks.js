@@ -117,6 +117,12 @@ var Bookmarks = {
     return lists;
   },
 
+  getAnnoList: function bg_getAnnoList(aAnno) {
+    let annoName = "metro/auto/" + aAnno;
+    let id = PlacesUtils.annotations.getItemsWithAnnotation(annoName)[0];
+    return { id: id, title: PlacesUtils.bookmarks.getItemTitle(id) };
+  },
+
   addList: function bh_addList(aTitle) {
     const bookmarks = PlacesUtils.bookmarks;
     return bookmarks.createFolder(this.metroRoot, aTitle,

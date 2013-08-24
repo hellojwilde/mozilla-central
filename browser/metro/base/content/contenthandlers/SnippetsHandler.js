@@ -5,6 +5,8 @@
 
 "use strict";
 
+Components.utils.import("resource://gre/modules/Microformats.js");
+
 dump("### SnippetsHandler.js loaded\n");
 
 function Snippet(aType) {
@@ -18,6 +20,22 @@ function ImageSnippet(aURI, aWidth, aHeight, aCaption) {
   this.caption = aCaption;
 }
 ImageSnippet.prototype = new Snippet("Image");
+
+function SummarySnippet(aTitle, aDesc, aImageSnippet) {
+  this.title = aTitle;
+  this.desc = aDesc;
+  this.imageSnippet = aImageSnippet;
+}
+SummarySnippet.prototype = new Snippet("Summary");
+
+function RecipeSnippet(aSummarySnippet, aIngredients, aInstructions, aYield, aDuration) {
+  this.summarySnippet = aSummarySnippet;
+  this.ingredients = aIngredients;
+  this.instructions = aInstructions;
+  this.yield = aYield;
+  this.duration = aDuration;
+}
+RecipeSnippet.prototype = new Snippet("Recipe");
 
 let SnippetsHandler = {
   init: function init() {
@@ -120,6 +138,84 @@ SnippetsHandler.providers.ImageSnippet = [
       }
     }
     return snippets;
+  }
+];
+
+let hRecipe = function(aNode, aValidate) {
+  if (aNode) {
+    Microformats.parser.newMicroformat(this, aNode, "hRecipe", aValidate);
+  }
+};
+
+hRecipe.prototype.toString = function() {
+  return this.fn;
+};
+
+let hRecipe_definition = {
+  mfObject: hRecipe,
+  className: "hrecipe",
+  required: ["fn"],
+  properties: {
+    "fn": {
+      required: true
+    },
+    "ingredient": {
+      subproperties: {
+        "type": {},
+        "value": {}
+      },
+      required: true,
+      plural: true
+    },
+    "yield": {},
+    "instructions": {
+      datatype: "HTML"
+    },
+    "duration": {},
+    "photo": {
+      plural: true,
+      datatype: "anyURI"
+    },
+    "summary": {},
+    "author": {
+      plural: true,
+      datatype: "microformat",
+      microformat: "hCard"
+    },
+    "published": {
+      datatype: "dateTime"
+    },
+    "nutrition": {
+      subproperties: {
+        "type": {},
+        "value": {}
+      },
+      plural: true
+    },
+    "tag": {
+      plural: true,
+      datatype: "microformat",
+      microformat: "tag",
+      microformat_property: "tag"
+    },
+    "license": {}
+  }
+};
+
+Microformats.add("hRecipe", hRecipe_definition);
+
+SnippetsHandler.providers.RecipeSnippet = [
+  function microformats(aElement) {
+    let recipes = Microformats.get("hRecipe", aElement);
+    return recipes.map(function (aRecipe) {
+      let summary = new SummarySnippet(aRecipe.fn, aRecipe.summary);
+      if (aRecipe.photo && aRecipe.photo.length > 0) {
+        summary.imageSnippet = new ImageSnippet(aRecipe.photo[0]);
+      }
+      return new RecipeSnippet(summary, aRecipe.ingredients,
+                               aRecipe.instructions, aRecipe.yield,
+                               aRecipe.duration);
+    });
   }
 ];
 

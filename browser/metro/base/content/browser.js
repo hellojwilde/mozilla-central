@@ -831,8 +831,17 @@ var Browser = {
           title: bookmarks.getItemTitle(listId)
         });
       } else {
-        // TODO: intelligently select this from semantic metadata.
-        throw new Task.Result(Bookmarks.getLists()[0]);
+        let snippets = Browser.selectedTab.snippets;
+        let list = null;
+
+        if (snippets.RecipeSnippet && snippets.RecipeSnippet.length > 0) {
+          alert("this is a recipe!");
+          list = Bookmarks.getAnnoList("recipes");
+        } else {
+          list = Bookmarks.getAnnoList("other");
+        }
+
+        throw new Task.Result(list);
       }
     });
   },
