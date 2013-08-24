@@ -96,7 +96,6 @@ BookmarksView.prototype = Util.extend(Object.create(View.prototype), {
     let limit = this._limit || Infinity;
 
     let query = this._navHistoryService.getNewQuery();
-    Util.dumpLn(JSON.stringify(Bookmarks.getLists()));
     let folders = Bookmarks.getLists().map((aItem) => aItem.id);
     query.setFolders(folders, folders.length);
 

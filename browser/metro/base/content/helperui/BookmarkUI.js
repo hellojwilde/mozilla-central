@@ -222,6 +222,7 @@ function BookmarkListsItem(aId, aTitle) {
 
 BookmarkListsItem.prototype = {
   _element: null,
+
   get element() {
     if (!this._element) {
       this._element = document.createElement("richlistitem");
@@ -266,7 +267,6 @@ let BookmarkUI = {
   show: function HUI_show() {
     let self = this;
     return Task.spawn(function HUI_showTask() {
-      try {
       let rect = self._button.getBoundingClientRect();
       let position = {
         xPos: (rect.left + rect.right) / 2,
@@ -277,9 +277,6 @@ let BookmarkUI = {
 
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
-      } catch(e) {
-        Util.dumpLn(e + " " + e.lineNumber + " " + e.fileName);
-      }
     });
   },
 
