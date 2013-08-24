@@ -41,7 +41,7 @@ View.prototype = {
     this._adjustDOMforViewState(aState);
   },
 
-  _updateSnippets: function pv__updateSnippets(aItem, aNodeId) {
+  _updateSnippets: function pv__updateSnippets(aItem, aNodeId, aOnlySetImage) {
     try {
       let opt = JSON.parse(PlacesUtils.annotations.
                            getItemAnnotation(aNodeId, kThumbAnno));
@@ -49,7 +49,7 @@ View.prototype = {
       if (opt.isThumbnail) {
         aItem.setAttribute("tiletype", "thumbnail");
         aItem.backgroundImage = "url('" + opt.selectedImageSnippet.uri + "')";
-      } else {
+      } else if (!aOnlySetImage) {
         aItem.removeAttribute("tiletype");
       }
     } catch (e) { /* there were no snippets */ }

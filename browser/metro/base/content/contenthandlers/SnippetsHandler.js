@@ -99,7 +99,7 @@ SnippetsHandler.providers.ImageSnippet = [
     let image = null;
     let tags = aElement.getElementsByTagName("meta");
     for (let tag of tags) {
-      switch (tag.name) {
+      switch (tag.getAttribute("property")) {
         case "og:image":
         case "og:image:url":
           // XXX Not sure whether it's really defined in OGP as to what tags
