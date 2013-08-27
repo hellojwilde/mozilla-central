@@ -21,6 +21,20 @@ function ImageSnippet(aURI, aWidth, aHeight, aCaption) {
 }
 ImageSnippet.prototype = new Snippet("Image");
 
+function AudioSnippet(aURI, aDuration, aName) {
+  this.uri = aURI;
+  this.duration = aDuration;
+  this.name = aName;
+}
+AudioSnippet.prototype = new Snippet("Audio");
+
+function VideoSnippet(aURI, aWidth, aHeight) {
+  this.uri = aURI;
+  this.width = width;
+  this.height = height;
+}
+VideoSnippet.prototype = new Snippet("Video");
+
 function SummarySnippet(aTitle, aDesc, aImageSnippet) {
   this.title = aTitle;
   this.desc = aDesc;
@@ -36,6 +50,11 @@ function RecipeSnippet(aSummarySnippet, aIngredients, aInstructions, aYield, aDu
   this.duration = aDuration;
 }
 RecipeSnippet.prototype = new Snippet("Recipe");
+
+function StorySnippet(aSummarySnippet) {
+  this.summarySnippet = aSummarySnippet;
+}
+StorySnippet.prototype = new Snippet("Story");
 
 let SnippetsHandler = {
   init: function init() {
@@ -138,6 +157,64 @@ SnippetsHandler.providers.ImageSnippet = [
       }
     }
     return snippets;
+  }
+];
+
+SnippetsHandler.providers.AudioSnippet = [
+  function ogp () {
+    let snippets = [];
+    let audio = null;
+    let tags = aElement.getElementsByTagName("meta");
+    for (let tag of tags) {
+      switch (tag.getAttribute("property")) {
+        case "og:audio":
+        case "og:audio:url":
+          // XXX Not sure whether it's really defined in OGP as to what tags
+          // implicitly construct snippets and what ones add new data.
+          audio = new AudioSnippet(tag.content);
+          snippets.push(audio);
+          break;
+      }
+    }
+    return snippets;
+  },
+
+  function microdata () {
+
+  }
+];
+
+SnippetsHandler.providers.VideoSnippet = [
+  function ogp() {
+    let snippets = [];
+    let video = null;
+    let tags = aElement.getElementsByTagName("meta");
+    for (let tag of tags) {
+      switch (tag.getAttribute("property")) {
+        case "og:video":
+        case "og:video:url":
+          // XXX Not sure whether it's really defined in OGP as to what tags
+          // implicitly construct snippets and what ones add new data.
+          video = new VideoSnippet(tag.content);
+          snippets.push(video);
+          break;
+        case "og:video:width":
+          if (video) {
+            video.width = tag.content;
+          }
+          break;
+        case "og:video:height":
+          if (video) {
+            video.height = tag.content;
+          }
+          break;
+      }
+    }
+    return snippets;
+  },
+
+  function microdata() {
+
   }
 ];
 

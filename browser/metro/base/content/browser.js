@@ -835,7 +835,6 @@ var Browser = {
         let list = null;
 
         if (snippets.RecipeSnippet && snippets.RecipeSnippet.length > 0) {
-          alert("this is a recipe!");
           list = Bookmarks.getAnnoList("recipes");
         } else {
           list = Bookmarks.getAnnoList("other");
