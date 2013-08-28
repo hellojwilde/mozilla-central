@@ -1335,14 +1335,13 @@ setting[type="radio"] > vbox {
 
 .bookmark-lists-create {
   background: #efefef !important;
-  margin: @metro_spacing_small@;
 }
 
 .bookmark-lists-create button {
   font-size: 13px;
   padding-top: 2px;
   padding-bottom: 2px;
-  margin: 2px !important;
+  margin: 4px !important;
   min-height: 0 !important;
 }
 
@@ -1350,4 +1349,5 @@ setting[type="radio"] > vbox {
   border: 0 none !important;
   background: #efefef !important;
   margin: 0 !important;
+  padding-left: 10px;
 }
