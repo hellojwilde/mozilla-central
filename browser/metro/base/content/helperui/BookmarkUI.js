@@ -65,12 +65,14 @@ function BookmarkBookmark(aFlyout, aFlyoutElement) {
 
 BookmarkBookmark.prototype = {
   display: function display(aOptions) {
-    let { id, saved, list } = aOptions || {};
-
-    Util.setBoolAttribute(this._page, "saved", saved);
+    let { id, saved, noRemove, list } = aOptions || {};
 
     this._saved = saved;
     this._id = id;
+    this._noRemove = noRemove || saved;
+
+    Util.setBoolAttribute(this._page, "saved", this._saved);
+    Util.setBoolAttribute(this._page, "noremove", this._noRemove);
 
     this._list = list;
     this._listButton.label = this._list.title;
@@ -93,7 +95,7 @@ BookmarkBookmark.prototype = {
   onListButton: function () {
     let options = {
       selected: this._list,
-      saved: this._saved,
+      noRemove: this._noRemove,
       id: this._id
     };
 
@@ -160,10 +162,10 @@ BookmarkLists.prototype = {
   _items: [],
 
   display: function (aOptions) {
-    let { selected, saved, id } = aOptions;
+    let { selected, noRemove, id } = aOptions;
 
     this._selected = selected;
-    this._saved = saved;
+    this._noRemove = noRemove;
     this._id = id;
     this._createTextbox.value = "";
 
@@ -210,7 +212,7 @@ BookmarkLists.prototype = {
   },
 
   onListSelect: function (aListItem) {
-    let options = { list: aListItem, saved: this._saved, id: this._id };
+    let options = { list: aListItem, noRemove: this._noRemove, id: this._id };
     this._flyout.displayPage("bookmark", options);
   }
 }
@@ -267,6 +269,7 @@ let BookmarkUI = {
   show: function HUI_show() {
     let self = this;
     return Task.spawn(function HUI_showTask() {
+      try{
       let rect = self._button.getBoundingClientRect();
       let position = {
         xPos: (rect.left + rect.right) / 2,
@@ -277,6 +280,7 @@ let BookmarkUI = {
 
       yield self._flyout.selectPage();
       yield self._flyout.show(position);
+      } catch (e) { Util.dumpLn(e);}
     });
   },
 

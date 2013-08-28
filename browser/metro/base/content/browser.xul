@@ -710,10 +710,6 @@
           <!-- ux spec: https://bug782810.bugzilla.mozilla.org/attachment.cgi?id=714804 -->
 
           <!-- Text related -->
-          <!-- for page content, this will add the selection to the list of highlights -->
-          <richlistitem id="context-highlight" type="highlight" onclick="ContextCommands.highlight();">
-            <label value="Highlight"/>
-          </richlistitem>
           <!-- for text inputs, this will cut selected text -->
           <richlistitem id="context-cut" type="cut" onclick="ContextCommands.cut();">
             <label value="&contextTextCut.label;"/>
@@ -840,7 +836,7 @@
           </vbox>
 
           <hbox class="bookmark-page-row">
-            <button class="bookmark-list-button" type="menu" flex="1" label="List"/>
+            <button class="bookmark-list-button" pack="start" type="menu" flex="1" label="List"/>
           </hbox>
 
           <hbox class="bookmark-page-row bookmark-page-footer">
@@ -854,7 +850,7 @@
         <vbox class="bookmark-page-lists bookmark-page">
           <richlistbox flex="1"/>
           <hbox class="bookmark-page-row bookmark-lists-create">
-            <textbox/>
+            <textbox placeholder="Create a list"/>
             <button label="Create"/>
           </hbox>
         </vbox>

@@ -130,9 +130,6 @@ let Content = {
     addMessageListener("Browser:SetCharset", this);
     addMessageListener("Browser:CanUnload", this);
     addMessageListener("Browser:PanBegin", this);
-    addMessageListener("Browser:Highlight", this);
-    addMessageListener("Browser:Unhighlight", this);
-    addMessageListener("Browser:ScrollToHighlight", this);
 
     addEventListener("touchstart", this, false);
     addEventListener("click", this, true);
@@ -253,22 +250,6 @@ let Content = {
 
       case "Browser:PanBegin":
         this._cancelTapHighlight();
-        break;
-
-      case "Browser:Highlight":
-        for (let range of json.ranges) {
-          this._highlightRange(range);
-        }
-        break;
-
-      case "Browser:Unhighlight":
-        for (let range of json.ranges) {
-          this._unhighlightRange(range);
-        }
-        break;
-
-      case "Browser:ScrollToHighlight":
-        this._scrollToHighlight(json.range);
         break;
     }
   },
@@ -486,60 +467,6 @@ let Content = {
     if (viewer)
       viewer.minFontSize = aSize;
   },
-
-  _applied: {},
-
-  _getHighlightForRange: function _getHighlightForRange(aRange) {
-    let key = JSON.stringify(aRange);
-    let highlight = this._applied[key];
-    if (!highlight) {
-      throw "couldn't get highlight for range: " + key;
-    }
-
-    return highlight;
-  },
-
-  _setHighlightForRange: function _setHighlightForRange(aRange, aHighlight) {
-    let key = JSON.stringify(aRange);
-    this._applied[key] = aHighlight;
-  },
-
-  _highlightRange: function _highlightRange(aRange) {
-    let doc = content.document;
-    let highlight = doc.createElement("moz-highlight");
-
-    let range = new SerializableRange(aRange).getRange(doc);
-    if (range) {
-      range.surroundContents(highlight);
-      this._setHighlightForRange(aRange, highlight);
-    }
-  },
-
-  _unhighlightRange: function (aRange) {
-    let highlight = this._getHighlightForRange(aRange);
-    let parent = highlight.parentNode;
-    for (let child of highlight.childNodes) {
-      parent.insertBefore(child, highlight);
-    }
-    parent.removeChild(highlight);
-  },
-
-  _scrollToHighlight: function (aRange) {
-    let highlight = this._getHighlightForRange(aRange);
-
-    let rect = highlight.getBoundingClientRect();
-    let textTop = rect.top + content.scrollY;
-    let scrollTop = textTop - (content.innerHeight / 2) - (rect.height / 2);
-    content.scrollTo(content.scrollX, scrollTop);
-
-    if (!highlight.hasAttribute("bounce")) {
-      highlight.addEventListener("animationend", function bounceEnd() {
-        highlight.removeEventListener("animationend", bounceEnd, false);
-        highlight.removeAttribute("bounce");
-      }, false);
-      highlight.setAttribute("bounce", "true");
-    }
-  }
 };
 
 Content.init();

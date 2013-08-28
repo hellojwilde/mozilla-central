@@ -1270,32 +1270,12 @@ setting[type="radio"] > vbox {
   font-weight: bold;
 }
 
-/* Highlights ============================================================== */
-
-/* Header ------------------------------------------------------------------ */
-
-.highlights-back-button::before {
-  content: "\E0BA";
-}
-
-.highlights-back-button:active::before {
-  color: #000;
-  content: "\E0B3";
-}
-
-.highlights-edit-button::after {
-  content: "\E104";
-}
-
-.highlights-back-button,
-.highlights-edit-button {
-  visibility: collapse;
-}
+/* Bookmarks ============================================================== */
 
 /* Pages ------------------------------------------------------------------- */
 
 .bookmark-page {
-  padding: 10px;
+  padding: 15px;
 }
 
 .bookmark-popup:not([page="bookmark"]) .bookmark-page-bookmark,
@@ -1310,55 +1290,64 @@ setting[type="radio"] > vbox {
 }
 
 .bookmark-page-bookmark:not([saved]) .bookmark-saved,
-.bookmark-page-bookmark[saved] .bookmark-remove-button {
+.bookmark-page-bookmark[noremove] .bookmark-remove-button {
   visibility: collapse;
 }
 
-/* Page: Lists  */
-/*
-.highlights-page-list richlistbox {
-  border: 0 none;
+.bookmark-page-footer {
+  -moz-box-pack: end;
+}
+
+.bookmark-list-button {
   -moz-appearance: none;
-  max-width: 300px;
-  display: -moz-box;
-  min-height: 300px;
+  min-width: @field_sizing@; /* button size */
+  min-height: @field_sizing@; /* button size */
+  margin: 10px @metro_spacing_small@;
+  padding: @metro_spacing_xsmall@ @metro_spacing_small@;
+
+  font-size: @metro_font_normal@;
+  font-weight: normal !important;
+
+  color: @field_foreground_color@;
+  background: @field_background_color@;
+  border: @metro_border_thick@ solid #999 !important;
+  border-radius: 0;
 }
 
-.highlights-page-list richlistbox > scrollbox {
-  width: 100%;
-  overflow-x: hidden !important;
+.bookmark-list-button:hover:not(:active) {
+  background: #ccc;
 }
 
-.highlights-page-list richlistitem {
-  max-width: 100%;
-  -moz-box-align: start;
+.bookmark-list-button:active {
+  color: @field_background_color@;
+  background: @field_foreground_color@;
 }
 
-.highlights-popup[editing] .highlights-page-list richlistitem[checked] {
-  background: @metro_orange@ !important;
-  color: #fff !important;
+.bookmark-page-lists richlistbox {
+  -moz-appearance: none;
+  border: 0;
+  margin: 0;
 }
 
-.highlights-page-list description {
-  max-width: 280px;
-  overflow: hidden;
-  padding: 0 5px;
-  font-weight: 400 !important;
+.bookmark-page-lists richlistbox richlistitem[selected]:not(:active) {
+  color: @metro_orange@ !important;
 }
 
-.highlights-page-list checkbox {
-  padding: 5px 0 5px 10px;
+.bookmark-lists-create {
+  background: #efefef !important;
+  margin: @metro_spacing_small@;
 }
 
-.highlights-popup[editing] .highlights-page-list description {
-  max-width: 250px;
+.bookmark-lists-create button {
+  font-size: 13px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin: 2px !important;
+  min-height: 0 !important;
 }
 
-.highlights-page-list .highlights-page-footer {
-  padding: 10px;
+.bookmark-lists-create textbox {
+  border: 0 none !important;
+  background: #efefef !important;
+  margin: 0 !important;
 }
-
-.highlights-popup:not([editing]) .highlights-page-list .highlights-page-footer,
-.highlights-popup:not([editing]) .highlights-page-list checkbox {
-  visibility: collapse;
-}*/

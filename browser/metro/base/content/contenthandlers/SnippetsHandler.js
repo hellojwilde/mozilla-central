@@ -201,8 +201,8 @@ SnippetsHandler.providers.AudioSnippet = [
       return [];
     }
 
-    let items = aElement.getItems("http://schema.org/MusicRecording " +
-                                  "http://schema.org/AudioObject");
+    let items = aElement.getItems(["http://schema.org/MusicRecording",
+                                  "http://schema.org/AudioObject"].join(" "));
     let snippets = [];
     for (let item of items) {
       let snippet = new AudioSnippet(item.properties["url"],
@@ -338,6 +338,10 @@ SnippetsHandler.providers.RecipeSnippet = [
   },
 
   function microdata(aElement) {
+    if (!aElement.getItems) {
+      return [];
+    }
+
     let recipes = aElement.getItems("http://schema.org/Recipe");
     let snippets = [];
     for (let recipe of recipes) {
@@ -360,7 +364,7 @@ SnippetsHandler.providers.StorySnippet = [
     let tags = aElement.getElementsByTagName("meta");
     let story = null;
     for (let tag of tags) {
-      switch (tag.tagName) {
+      switch (tag.getAttribute("property")) {
         case "og:type":
           if (tag.content == "article" ||
               tag.content == "book") {
@@ -374,7 +378,7 @@ SnippetsHandler.providers.StorySnippet = [
           break;
         case "og:image":
           if (story) {
-            story.summarySnippet.imageSnippet.uri = tag.content;
+            story.summarySnippet.imageSnippet = new ImageSnippet(tag.content);
           }
           break;
       }
@@ -382,7 +386,7 @@ SnippetsHandler.providers.StorySnippet = [
     return story ? [story] : [];
   },
 
-  function microdata(args) {
+  function microdata(aElement) {
     if (!aElement.getItems) {
       return [];
     }

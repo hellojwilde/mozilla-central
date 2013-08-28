@@ -34,13 +34,6 @@ var ContextCommands = {
 
   // Text specific
 
-  highlight: function cc_highlight() {
-    return Task.spawn(function cc_highlightTask() {
-      yield Browser.highlight(ContextMenuUI.popupState.range);
-      yield Appbar.update();
-    });
-  },
-
   cut: function cc_cut() {
     let target = ContextMenuUI.popupState.target;
 
