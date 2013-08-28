@@ -27,7 +27,6 @@
 #include "jsopcode.h"
 #include "jsscript.h"
 #include "jstypes.h"
-#include "jsversion.h"
 
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/FoldConstants.h"
@@ -471,7 +470,7 @@ FunctionBox::FunctionBox(ExclusiveContext *cx, ObjectBox* traceListHead, JSFunct
     bindings(),
     bufStart(0),
     bufEnd(0),
-    ndefaults(0),
+    length(0),
     generatorKindBits_(GeneratorKindAsBits(generatorKind)),
     inWith(false),                  // initialized below
     inGenexpLambda(false),
@@ -883,6 +882,7 @@ Parser<FullParseHandler>::standaloneFunctionBody(HandleFunction fun, const AutoN
                                          generatorKind);
     if (!funbox)
         return null();
+    funbox->length = fun->nargs - fun->hasRest();
     handler.setFunctionBox(fn, funbox);
 
     ParseContext<FullParseHandler> funpc(this, pc, fn, funbox, newDirectives,
@@ -1243,7 +1243,7 @@ struct BindData
 template <typename ParseHandler>
 JSFunction *
 Parser<ParseHandler>::newFunction(GenericParseContext *pc, HandleAtom atom,
-                                  FunctionSyntaxKind kind)
+                                  FunctionSyntaxKind kind, JSObject *proto)
 {
     JS_ASSERT_IF(kind == Statement, atom != NULL);
 
@@ -1266,8 +1266,8 @@ Parser<ParseHandler>::newFunction(GenericParseContext *pc, HandleAtom atom,
                               : (kind == Arrow)
                                 ? JSFunction::INTERPRETED_LAMBDA_ARROW
                                 : JSFunction::INTERPRETED;
-    fun = NewFunction(context, NullPtr(), NULL, 0, flags, parent, atom,
-                      JSFunction::FinalizeKind, MaybeSingletonObject);
+    fun = NewFunctionWithProto(context, NullPtr(), NULL, 0, flags, parent, atom, proto,
+                               JSFunction::FinalizeKind, MaybeSingletonObject);
     if (!fun)
         return NULL;
     if (options().selfHostingMode)
@@ -1540,9 +1540,11 @@ Parser<ParseHandler>::bindDestructuringArg(BindData<ParseHandler> *data,
 template <typename ParseHandler>
 bool
 Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, Node funcpn,
-                                        bool &hasRest)
+                                        bool *hasRest)
 {
     FunctionBox *funbox = pc->sc->asFunctionBox();
+
+    *hasRest = false;
 
     bool parenFreeArrow = false;
     if (kind == Arrow && tokenStream.peekToken() == TOK_NAME) {
@@ -1559,8 +1561,6 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
         funbox->setStart(tokenStream);
     }
 
-    hasRest = false;
-
     Node argsbody = handler.newList(PNK_ARGSBODY);
     if (!argsbody)
         return false;
@@ -1574,7 +1574,7 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
 #endif
 
         do {
-            if (hasRest) {
+            if (*hasRest) {
                 report(ParseError, false, null(), JSMSG_PARAMETER_AFTER_REST);
                 return false;
             }
@@ -1642,13 +1642,13 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
 #endif /* JS_HAS_DESTRUCTURING */
 
               case TOK_YIELD:
-                if (!checkYieldNameValidity(JSMSG_MISSING_FORMAL))
+                if (!checkYieldNameValidity())
                     return false;
                 goto TOK_NAME;
 
               case TOK_TRIPLEDOT:
               {
-                hasRest = true;
+                *hasRest = true;
                 tt = tokenStream.getToken();
                 if (tt != TOK_NAME) {
                     if (tt != TOK_ERROR)
@@ -1676,7 +1676,7 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
                     // Therefore it's impossible to get here with parenFreeArrow.
                     JS_ASSERT(!parenFreeArrow);
 
-                    if (hasRest) {
+                    if (*hasRest) {
                         report(ParseError, false, null(), JSMSG_REST_WITH_DEFAULT);
                         return false;
                     }
@@ -1684,15 +1684,17 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
                         report(ParseError, false, duplicatedArg, JSMSG_BAD_DUP_ARGS);
                         return false;
                     }
-                    hasDefaults = true;
+                    if (!hasDefaults) {
+                        hasDefaults = true;
+
+                        // The Function.length property is the number of formals
+                        // before the first default argument.
+                        funbox->length = pc->numArgs() - 1;
+                    }
                     Node def_expr = assignExprWithoutYield(JSMSG_YIELD_IN_DEFAULT);
                     if (!def_expr)
                         return false;
                     handler.setLastFunctionArgumentDefault(funcpn, def_expr);
-                    funbox->ndefaults++;
-                } else if (!hasRest && hasDefaults) {
-                    report(ParseError, false, null(), JSMSG_NONDEFAULT_FORMAL_AFTER_DEFAULT);
-                    return false;
                 }
 
                 break;
@@ -1710,22 +1712,11 @@ Parser<ParseHandler>::functionArguments(FunctionSyntaxKind kind, Node *listp, No
             report(ParseError, false, null(), JSMSG_PAREN_AFTER_FORMAL);
             return false;
         }
+
+        if (!hasDefaults)
+            funbox->length = pc->numArgs() - *hasRest;
     }
 
-    return true;
-}
-
-template <typename ParseHandler>
-bool
-Parser<ParseHandler>::checkFunctionName(HandlePropertyName funName)
-{
-    if (pc->isStarGenerator() && funName == context->names().yield) {
-        // The name of a named function expression is specified to be bound in
-        // the outer context as if via "let".  In an ES6 generator, "yield" is
-        // not a valid name for a let-bound variable.
-        report(ParseError, false, null(), JSMSG_RESERVED_ID, "yield");
-        return false;
-    }
     return true;
 }
 
@@ -1740,9 +1731,6 @@ Parser<FullParseHandler>::checkFunctionDefinition(HandlePropertyName funName,
 
     /* Function statements add a binding to the enclosing scope. */
     bool bodyLevel = pc->atBodyLevel();
-
-    if (!checkFunctionName(funName))
-        return false;
 
     if (kind == Statement) {
         /*
@@ -1935,9 +1923,6 @@ Parser<SyntaxParseHandler>::checkFunctionDefinition(HandlePropertyName funName,
     /* Function statements add a binding to the enclosing scope. */
     bool bodyLevel = pc->atBodyLevel();
 
-    if (!checkFunctionName(funName))
-        return false;
-
     if (kind == Statement) {
         /*
          * Handle redeclaration and optimize cases where we can statically bind the
@@ -1993,7 +1978,17 @@ Parser<ParseHandler>::functionDef(HandlePropertyName funName, const TokenStream:
     if (bodyProcessed)
         return pn;
 
-    RootedFunction fun(context, newFunction(pc, funName, kind));
+    RootedObject proto(context);
+    if (generatorKind == StarGenerator) {
+        // If we are off the main thread, the generator meta-objects have
+        // already been created by js::StartOffThreadParseScript, so cx will not
+        // be necessary.
+        JSContext *cx = context->maybeJSContext();
+        proto = context->global()->getOrCreateStarGeneratorFunctionPrototype(cx);
+        if (!proto)
+            return null();
+    }
+    RootedFunction fun(context, newFunction(pc, funName, kind, proto));
     if (!fun)
         return null();
 
@@ -2249,6 +2244,7 @@ Parser<FullParseHandler>::standaloneLazyFunction(HandleFunction fun, unsigned st
                                          generatorKind);
     if (!funbox)
         return null();
+    funbox->length = fun->nargs - fun->hasRest();
 
     Directives newDirectives = directives;
     ParseContext<FullParseHandler> funpc(this, /* parent = */ NULL, pn, funbox,
@@ -2292,14 +2288,12 @@ Parser<ParseHandler>::functionArgsAndBodyGeneric(Node pn, HandleFunction fun, Fu
 
     Node prelude = null();
     bool hasRest;
-    if (!functionArguments(kind, &prelude, pn, hasRest))
+    if (!functionArguments(kind, &prelude, pn, &hasRest))
         return false;
 
     FunctionBox *funbox = pc->sc->asFunctionBox();
 
     fun->setArgCount(pc->numArgs());
-    if (funbox->ndefaults)
-        fun->setHasDefaults();
     if (hasRest)
         fun->setHasRest();
 
@@ -2405,15 +2399,11 @@ Parser<SyntaxParseHandler>::moduleDecl()
 
 template <typename ParseHandler>
 bool
-Parser<ParseHandler>::checkYieldNameValidity(unsigned errorNumber)
+Parser<ParseHandler>::checkYieldNameValidity()
 {
-    // In star generators and in JS >= 1.7, yield is a keyword.
-    if (pc->isStarGenerator() || versionNumber() >= JSVERSION_1_7) {
-        report(ParseError, false, null(), errorNumber);
-        return false;
-    }
-    // Otherwise in strict mode, yield is a future reserved word.
-    if (pc->sc->strict) {
+    // In star generators and in JS >= 1.7, yield is a keyword.  Otherwise in
+    // strict mode, yield is a future reserved word.
+    if (pc->isStarGenerator() || versionNumber() >= JSVERSION_1_7 || pc->sc->strict) {
         report(ParseError, false, null(), JSMSG_RESERVED_ID, "yield");
         return false;
     }
@@ -2431,15 +2421,19 @@ Parser<ParseHandler>::functionStmt()
 
     RootedPropertyName name(context);
     GeneratorKind generatorKind = NotGenerator;
-    TokenKind tt = tokenStream.getToken(TokenStream::KeywordIsName);
+    TokenKind tt = tokenStream.getToken();
 
     if (tt == TOK_MUL) {
         tokenStream.tell(&start);
-        tt = tokenStream.getToken(TokenStream::KeywordIsName);
+        tt = tokenStream.getToken();
         generatorKind = StarGenerator;
     }
 
     if (tt == TOK_NAME) {
+        name = tokenStream.currentName();
+    } else if (tt == TOK_YIELD) {
+        if (!checkYieldNameValidity())
+            return null();
         name = tokenStream.currentName();
     } else {
         /* Unnamed function expressions are forbidden in statement context. */
@@ -2464,20 +2458,25 @@ Parser<ParseHandler>::functionExpr()
     TokenStream::Position start(keepAtoms);
     tokenStream.tell(&start);
 
-    RootedPropertyName name(context);
     GeneratorKind generatorKind = NotGenerator;
-    TokenKind tt = tokenStream.getToken(TokenStream::KeywordIsName);
+    TokenKind tt = tokenStream.getToken();
 
     if (tt == TOK_MUL) {
         tokenStream.tell(&start);
-        tt = tokenStream.getToken(TokenStream::KeywordIsName);
+        tt = tokenStream.getToken();
         generatorKind = StarGenerator;
     }
 
-    if (tt == TOK_NAME)
+    RootedPropertyName name(context);
+    if (tt == TOK_NAME) {
         name = tokenStream.currentName();
-    else
+    } else if (tt == TOK_YIELD) {
+        if (!checkYieldNameValidity())
+            return null();
+        name = tokenStream.currentName();
+    } else {
         tokenStream.ungetToken();
+    }
 
     return functionDef(name, start, Normal, Expression, generatorKind);
 }
@@ -3556,7 +3555,7 @@ Parser<ParseHandler>::variables(ParseNodeKind kind, bool *psimple,
 
         if (tt != TOK_NAME) {
             if (tt == TOK_YIELD) {
-                if (!checkYieldNameValidity(JSMSG_NO_VARIABLE_NAME))
+                if (!checkYieldNameValidity())
                     return null();
             } else {
                 if (tt != TOK_ERROR)
@@ -4868,7 +4867,7 @@ Parser<ParseHandler>::tryStatement()
 #endif
 
               case TOK_YIELD:
-                if (!checkYieldNameValidity(JSMSG_CATCH_IDENTIFIER))
+                if (!checkYieldNameValidity())
                     return null();
                 // Fall through.
               case TOK_NAME:
@@ -5035,6 +5034,8 @@ Parser<ParseHandler>::statement(bool canHaveDirectives)
 
       case TOK_STRING:
         if (!canHaveDirectives && tokenStream.currentToken().atom() == context->names().useAsm) {
+            if (!abortIfSyntaxParser())
+                return null();
             if (!report(ParseWarning, false, null(), JSMSG_USE_ASM_DIRECTIVE_FAIL))
                 return null();
         }

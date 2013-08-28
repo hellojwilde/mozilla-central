@@ -12,7 +12,6 @@ include $(DEPTH)/config/autoconf.mk
 include $(topsrcdir)/rdf/util/src/objs.mk
 include $(topsrcdir)/intl/unicharutil/util/objs.mk
 
-MSVC_ENABLE_PGO := 1
 FORCE_SHARED_LIB = 1
 MOZILLA_INTERNAL_API = 1
 
@@ -178,6 +177,12 @@ COMPONENT_LIBS += \
   windowds \
   diskspacewatcher \
   $(NULL)
+
+ifeq (gonk,$(MOZ_WIDGET_TOOLKIT))
+COMPONENT_LIBS += \
+  domwifi_s \
+  $(NULL)
+endif
 
 ifdef BUILD_CTYPES
 COMPONENT_LIBS += \

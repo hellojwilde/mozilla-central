@@ -30,7 +30,7 @@ namespace js {
 
 class StringObject;
 
-namespace ion {
+namespace jit {
 
 class BaselineInspector;
 class ValueNumberData;
@@ -2227,6 +2227,29 @@ class MGuardString
     }
 };
 
+class MAssertRange
+  : public MUnaryInstruction
+{
+    MAssertRange(MDefinition *ins)
+      : MUnaryInstruction(ins)
+    {
+        setGuard();
+        setMovable();
+        setResultType(MIRType_None);
+    }
+
+  public:
+    INSTRUCTION_HEADER(AssertRange)
+
+    static MAssertRange *New(MDefinition *ins) {
+        return new MAssertRange(ins);
+    }
+
+    AliasSet getAliasSet() const {
+        return AliasSet::None();
+    }
+};
+
 // Caller-side allocation of |this| for |new|:
 // Given a templateobject, construct |this| for JSOP_NEW
 class MCreateThisWithTemplate
@@ -3379,6 +3402,8 @@ class MMathFunction
 
   public:
     INSTRUCTION_HEADER(MathFunction)
+
+    // A NULL cache means this function will neither access nor update the cache.
     static MMathFunction *New(MDefinition *input, Function function, MathCache *cache) {
         return new MMathFunction(input, function, cache);
     }
@@ -4226,24 +4251,26 @@ class MLambdaPar
 {
     CompilerRootFunction fun_;
 
-    MLambdaPar(MDefinition *slice, MDefinition *scopeChain, JSFunction *fun)
+    MLambdaPar(MDefinition *slice, MDefinition *scopeChain, JSFunction *fun,
+               types::StackTypeSet *resultTypes)
       : MBinaryInstruction(slice, scopeChain), fun_(fun)
     {
         JS_ASSERT(!fun->hasSingletonType());
         JS_ASSERT(!types::UseNewTypeForClone(fun));
         setResultType(MIRType_Object);
-        setResultTypeSet(MakeSingletonTypeSet(fun));
+        setResultTypeSet(resultTypes);
     }
 
   public:
     INSTRUCTION_HEADER(LambdaPar);
 
     static MLambdaPar *New(MDefinition *slice, MDefinition *scopeChain, JSFunction *fun) {
-        return new MLambdaPar(slice, scopeChain, fun);
+        return new MLambdaPar(slice, scopeChain, fun, MakeSingletonTypeSet(fun));
     }
 
     static MLambdaPar *New(MDefinition *slice, MLambda *lambda) {
-        return New(slice, lambda->scopeChain(), lambda->fun());
+        return new MLambdaPar(slice, lambda->scopeChain(), lambda->fun(),
+                              lambda->resultTypeSet());
     }
 
     MDefinition *forkJoinSlice() const {
@@ -4821,10 +4848,12 @@ class MLoadElementHole
   : public MTernaryInstruction,
     public SingleObjectPolicy
 {
+    bool needsNegativeIntCheck_;
     bool needsHoleCheck_;
 
     MLoadElementHole(MDefinition *elements, MDefinition *index, MDefinition *initLength, bool needsHoleCheck)
       : MTernaryInstruction(elements, index, initLength),
+        needsNegativeIntCheck_(true),
         needsHoleCheck_(needsHoleCheck)
     {
         setResultType(MIRType_Value);
@@ -4854,12 +4883,16 @@ class MLoadElementHole
     MDefinition *initLength() const {
         return getOperand(2);
     }
+    bool needsNegativeIntCheck() const {
+        return needsNegativeIntCheck_;
+    }
     bool needsHoleCheck() const {
         return needsHoleCheck_;
     }
     AliasSet getAliasSet() const {
         return AliasSet::Load(AliasSet::Element);
     }
+    void collectRangeInfo();
 };
 
 class MStoreElementCommon
@@ -7362,12 +7395,12 @@ class MRestPar
     public IntPolicy<1>
 {
     MRestPar(MDefinition *slice, MDefinition *numActuals, unsigned numFormals,
-             JSObject *templateObject)
+             JSObject *templateObject, types::StackTypeSet *resultTypes)
       : MBinaryInstruction(slice, numActuals),
         MRestCommon(numFormals, templateObject)
     {
         setResultType(MIRType_Object);
-        setResultTypeSet(MakeSingletonTypeSet(templateObject));
+        setResultTypeSet(resultTypes);
     }
 
   public:
@@ -7375,11 +7408,12 @@ class MRestPar
 
     static MRestPar *New(MDefinition *slice, MDefinition *numActuals, unsigned numFormals,
                          JSObject *templateObject) {
-        return new MRestPar(slice, numActuals, numFormals, templateObject);
+        return new MRestPar(slice, numActuals, numFormals, templateObject,
+                            MakeSingletonTypeSet(templateObject));
     }
     static MRestPar *New(MDefinition *slice, MRest *rest) {
         return new MRestPar(slice, rest->numActuals(), rest->numFormals(),
-                            rest->templateObject());
+                            rest->templateObject(), rest->resultTypeSet());
     }
 
     MDefinition *forkJoinSlice() const {
@@ -8404,7 +8438,7 @@ bool PropertyWriteNeedsTypeBarrier(JSContext *cx, MBasicBlock *current, MDefinit
                                    PropertyName *name, MDefinition **pvalue,
                                    bool canModify = true);
 
-} // namespace ion
+} // namespace jit
 } // namespace js
 
 #endif /* jit_MIR_h */

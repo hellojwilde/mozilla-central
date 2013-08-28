@@ -28,7 +28,7 @@
 #include "jit/CompileInfo-inl.h"
 
 using namespace js;
-using namespace js::ion;
+using namespace js::jit;
 
 using mozilla::DebugOnly;
 
@@ -820,7 +820,7 @@ IonBuilder::initParameters()
 
     types::StackTypeSet *thisTypes = types::TypeScript::ThisTypes(script());
     if (thisTypes->empty() && baselineFrame_)
-        thisTypes->addType(cx, types::GetValueType(cx, baselineFrame_->thisValue()));
+        thisTypes->addType(cx, types::GetValueType(baselineFrame_->thisValue()));
 
     MParameter *param = MParameter::New(MParameter::THIS_SLOT, cloneTypeSet(thisTypes));
     current->add(param);
@@ -831,7 +831,7 @@ IonBuilder::initParameters()
         if (argTypes->empty() && baselineFrame_ &&
             !script_->baselineScript()->modifiesArguments())
         {
-            argTypes->addType(cx, types::GetValueType(cx, baselineFrame_->argv()[i]));
+            argTypes->addType(cx, types::GetValueType(baselineFrame_->argv()[i]));
         }
 
         param = MParameter::New(i, cloneTypeSet(argTypes));
@@ -993,6 +993,25 @@ IonBuilder::maybeAddOsrTypeBarriers()
     // the types in the preheader.
 
     MBasicBlock *osrBlock = graph().osrBlock();
+    if (!osrBlock) {
+        // Because IonBuilder does not compile catch blocks, it's possible to
+        // end up without an OSR block if the OSR pc is only reachable via a
+        // break-statement inside the catch block. For instance:
+        //
+        //   for (;;) {
+        //       try {
+        //           throw 3;
+        //       } catch(e) {
+        //           break;
+        //       }
+        //   }
+        //   while (..) { } // <= OSR here, only reachable via catch block.
+        //
+        // For now we just abort in this case.
+        JS_ASSERT(graph().hasTryBlock());
+        return abort("OSR block only reachable through catch block");
+    }
+
     MBasicBlock *preheader = osrBlock->getSuccessor(0);
     MBasicBlock *header = preheader->getSuccessor(0);
     static const size_t OSR_PHI_POSITION = 1;
@@ -4295,7 +4314,7 @@ IonBuilder::inlineCalls(CallInfo &callInfo, AutoObjectVector &targets,
         if (maybeCache) {
             JS_ASSERT(callInfo.thisArg() == maybeCache->object());
             types::StackTypeSet *targetThisTypes =
-                maybeCache->propTable()->buildTypeSetForFunction(target);
+                maybeCache->propTable()->buildTypeSetForFunction(original);
             if (!targetThisTypes)
                 return false;
             maybeCache->object()->setResultTypeSet(targetThisTypes);
@@ -5773,7 +5792,7 @@ IonBuilder::newPendingLoopHeader(MBasicBlock *predecessor, jsbytecode *pc, bool 
                 MIRType type = existingValue.isDouble()
                              ? MIRType_Double
                              : MIRTypeFromValueType(existingValue.extractNonDoubleType());
-                types::Type ntype = types::GetValueType(cx, existingValue);
+                types::Type ntype = types::GetValueType(existingValue);
                 types::StackTypeSet *typeSet =
                     GetIonContext()->temp->lifoAlloc()->new_<types::StackTypeSet>(ntype);
                 phi->addBackedgeType(type, typeSet);
@@ -6205,7 +6224,7 @@ IonBuilder::getStaticName(HandleObject staticObject, HandlePropertyName name, bo
 
 // Whether 'types' includes all possible values represented by input/inputTypes.
 bool
-ion::TypeSetIncludes(types::TypeSet *types, MIRType input, types::TypeSet *inputTypes)
+jit::TypeSetIncludes(types::TypeSet *types, MIRType input, types::TypeSet *inputTypes)
 {
     switch (input) {
       case MIRType_Undefined:
@@ -6230,7 +6249,7 @@ ion::TypeSetIncludes(types::TypeSet *types, MIRType input, types::TypeSet *input
 
 // Whether a write of the given value may need a post-write barrier for GC purposes.
 bool
-ion::NeedsPostBarrier(CompileInfo &info, MDefinition *value)
+jit::NeedsPostBarrier(CompileInfo &info, MDefinition *value)
 {
     return info.executionMode() != ParallelExecution && value->mightBeType(MIRType_Object);
 }
@@ -6363,7 +6382,7 @@ IonBuilder::jsop_intrinsic(HandlePropertyName name)
     if (!cx->global()->getIntrinsicValue(cx, name, &vp))
         return false;
 
-    JS_ASSERT(types->hasType(types::GetValueType(cx, vp)));
+    JS_ASSERT(types->hasType(types::GetValueType(vp)));
 
     MConstant *ins = MConstant::New(vp);
     current->add(ins);
@@ -6463,6 +6482,11 @@ IonBuilder::getElemTryDense(bool *emitted, MDefinition *obj, MDefinition *index)
     // Don't generate a fast path if there have been bounds check failures
     // and this access might be on a sparse property.
     if (ElementAccessHasExtraIndexedProperty(cx, obj) && failedBoundsCheck_)
+        return true;
+
+    // Don't generate a fast path if this pc has seen negative indexes accessed,
+    // which will not appear to be extra indexed properties.
+    if (inspector->hasSeenNegativeIndexGetElement(pc))
         return true;
 
     // Emit dense getelem variant.
@@ -6688,6 +6712,10 @@ IonBuilder::getElemTryCache(bool *emitted, MDefinition *obj, MDefinition *index)
     // Always add a barrier if the index might be a string, so that the cache
     // can attach stubs for particular properties.
     if (index->mightBeType(MIRType_String))
+        barrier = true;
+
+    // See note about always needing a barrier in jsop_getprop.
+    if (needsToMonitorMissingProperties(types))
         barrier = true;
 
     MInstruction *ins = MGetElementCache::New(obj, index, barrier);
@@ -8232,15 +8260,8 @@ IonBuilder::getPropTryCache(bool *emitted, HandlePropertyName name, HandleId id,
     if (accessGetter)
         barrier = true;
 
-    // GetPropertyParIC cannot safely call TypeScript::Monitor to ensure that
-    // the observed type set contains undefined. To account for possible
-    // missing properties, which property types do not track, we must always
-    // insert a type barrier.
-    if (info().executionMode() == ParallelExecution &&
-        !types->hasType(types::Type::UndefinedType()))
-    {
+    if (needsToMonitorMissingProperties(types))
         barrier = true;
-    }
 
     MIRType rvalType = MIRTypeFromValueType(types->getKnownTypeTag());
     if (barrier || IsNullOrUndefined(rvalType))
@@ -8252,6 +8273,17 @@ IonBuilder::getPropTryCache(bool *emitted, HandlePropertyName name, HandleId id,
 
     *emitted = true;
     return true;
+}
+
+bool
+IonBuilder::needsToMonitorMissingProperties(types::StackTypeSet *types)
+{
+    // GetPropertyParIC and GetElementParIC cannot safely call
+    // TypeScript::Monitor to ensure that the observed type set contains
+    // undefined. To account for possible missing properties, which property
+    // types do not track, we must always insert a type barrier.
+    return (info().executionMode() == ParallelExecution &&
+            !types->hasType(types::Type::UndefinedType()));
 }
 
 bool
@@ -8980,6 +9012,8 @@ IonBuilder::jsop_instanceof()
         if (!protoObject)
             break;
 
+        rhs->setFoldedUnchecked();
+
         MInstanceOf *ins = new MInstanceOf(obj, protoObject);
 
         current->add(ins);
@@ -9033,9 +9067,6 @@ IonBuilder::addShapeGuard(MDefinition *obj, Shape *const shape, BailoutKind bail
 types::StackTypeSet *
 IonBuilder::cloneTypeSet(types::StackTypeSet *types)
 {
-    if (!js_IonOptions.parallelCompilation)
-        return types;
-
     // Clone a type set so that it can be stored into the MIR and accessed
     // during off thread compilation. This is necessary because main thread
     // updates to type sets can race with reads in the compiler backend, and

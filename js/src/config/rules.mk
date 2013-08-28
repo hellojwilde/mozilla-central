@@ -24,9 +24,12 @@ _MOZBUILD_EXTERNAL_VARIABLES := \
   GTEST_CSRCS \
   HOST_CSRCS \
   HOST_LIBRARY_NAME \
+  LIBXUL_LIBRARY \
   MODULE \
+  MSVC_ENABLE_PGO \
   NO_DIST_INSTALL \
   PARALLEL_DIRS \
+  SIMPLE_PROGRAMS \
   TEST_DIRS \
   TIERS \
   TOOL_DIRS \
@@ -398,7 +401,6 @@ ALL_TRASH_DIRS = \
 
 ifdef QTDIR
 GARBAGE                 += $(MOCSRCS)
-GARBAGE                 += $(RCCSRCS)
 endif
 
 ifdef SIMPLE_PROGRAMS
@@ -425,7 +427,9 @@ UPDATE_TITLE = printf "\033]0;%s in %s\007" $(1) $(shell $(BUILD_TOOLS)/print-de
 endif
 
 ifdef MACH
+ifndef NO_BUILDSTATUS_MESSAGES
 BUILDSTATUS=@echo "BUILDSTATUS $1"
+endif
 endif
 
 # Static directories are largely independent of our build system. But, they

@@ -37,6 +37,7 @@ CPP_SOURCES += [
     'KeyLayoutMap.cpp',
     'Keyboard.cpp',
     'OrientationObserver.cpp',
+    'ProcessOrientation.cpp',
     'PixelFormat.cpp',
     'PointerController.cpp',
     'PropertyMap.cpp',
@@ -60,3 +61,6 @@ if CONFIG['ANDROID_VERSION'] == '15':
     CPP_SOURCES += [
         'HwcComposer2D.cpp'
     ]
+
+LIBXUL_LIBRARY = True
+

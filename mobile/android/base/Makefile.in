@@ -61,6 +61,7 @@ FENNEC_JAVA_FILES = \
   animation/Rotate3DAnimation.java \
   animation/ViewHelper.java \
   BackButton.java \
+  BaseGeckoInterface.java \
   BrowserApp.java \
   BrowserToolbar.java \
   BrowserToolbarBackground.java \
@@ -154,7 +155,6 @@ FENNEC_JAVA_FILES = \
   TabsPanel.java \
   TabsTray.java \
   TabsAccessor.java \
-  TailTouchDelegate.java \
   Telemetry.java \
   TextSelection.java \
   TextSelectionHandle.java \
@@ -494,12 +494,10 @@ RES_LAYOUT = \
   res/layout/pin_bookmark_dialog.xml \
   res/layout/preference_rightalign_icon.xml \
   res/layout/preference_search_tip.xml \
-  res/layout/search_engine_row.xml \
   res/layout/site_setting_item.xml \
   res/layout/site_setting_title.xml \
   res/layout/shared_ui_components.xml \
   res/layout/site_identity.xml \
-  res/layout/suggestion_item.xml \
   res/layout/remote_tabs_child.xml \
   res/layout/remote_tabs_group.xml \
   res/layout/search_engine_row.xml \
@@ -669,6 +667,7 @@ RES_DRAWABLE_MDPI = \
   res/drawable-mdpi/icon_most_recent_empty.png \
   res/drawable-mdpi/icon_most_visited.png \
   res/drawable-mdpi/icon_most_visited_empty.png \
+  res/drawable-mdpi/icon_openinapp.png \
   res/drawable-mdpi/icon_pageaction.png \
   res/drawable-mdpi/icon_reading_list_empty.png \
   res/drawable-mdpi/progress_spinner.png \
@@ -685,7 +684,6 @@ RES_DRAWABLE_MDPI = \
   res/drawable-mdpi/tab_thumbnail_shadow.png \
   res/drawable-mdpi/tabs_count.png \
   res/drawable-mdpi/tabs_count_foreground.png \
-  res/drawable-mdpi/url_bar_bg_shadow.png \
   res/drawable-mdpi/url_bar_entry_default.9.png \
   res/drawable-mdpi/url_bar_entry_default_pb.9.png \
   res/drawable-mdpi/url_bar_entry_pressed.9.png \
@@ -782,6 +780,7 @@ RES_DRAWABLE_HDPI = \
   res/drawable-hdpi/icon_most_recent_empty.png \
   res/drawable-hdpi/icon_most_visited.png \
   res/drawable-hdpi/icon_most_visited_empty.png \
+  res/drawable-hdpi/icon_openinapp.png \
   res/drawable-hdpi/icon_pageaction.png \
   res/drawable-hdpi/icon_reading_list_empty.png \
   res/drawable-hdpi/tab_indicator_divider.9.png \
@@ -797,7 +796,6 @@ RES_DRAWABLE_HDPI = \
   res/drawable-hdpi/tab_thumbnail_shadow.png \
   res/drawable-hdpi/tabs_count.png \
   res/drawable-hdpi/tabs_count_foreground.png \
-  res/drawable-hdpi/url_bar_bg_shadow.png \
   res/drawable-hdpi/url_bar_entry_default.9.png \
   res/drawable-hdpi/url_bar_entry_default_pb.9.png \
   res/drawable-hdpi/url_bar_entry_pressed.9.png \
@@ -845,7 +843,6 @@ RES_DRAWABLE_XHDPI = \
   res/drawable-xhdpi/favicon.png \
   res/drawable-xhdpi/folder.png \
   res/drawable-xhdpi/abouthome_thumbnail.png \
-  res/drawable-xhdpi/url_bar_bg_shadow.png \
   res/drawable-xhdpi/url_bar_entry_default.9.png \
   res/drawable-xhdpi/url_bar_entry_default_pb.9.png \
   res/drawable-xhdpi/url_bar_entry_pressed.9.png \
@@ -882,6 +879,7 @@ RES_DRAWABLE_XHDPI = \
   res/drawable-xhdpi/icon_most_recent_empty.png \
   res/drawable-xhdpi/icon_most_visited.png \
   res/drawable-xhdpi/icon_most_visited_empty.png \
+  res/drawable-xhdpi/icon_openinapp.png \
   res/drawable-xhdpi/icon_pageaction.png \
   res/drawable-xhdpi/icon_reading_list_empty.png \
   res/drawable-xhdpi/spinner_default.9.png \
@@ -1104,7 +1102,6 @@ RES_DRAWABLE += \
   res/drawable/action_bar_button_inverse.xml          \
   res/drawable/bookmark_thumbnail_bg.xml              \
   res/drawable/url_bar_bg.xml                         \
-  res/drawable/url_bar_bg_shadow_repeat.xml           \
   res/drawable/url_bar_entry.xml                      \
   res/drawable/url_bar_nav_button.xml                 \
   res/drawable/url_bar_right_edge.xml                 \
