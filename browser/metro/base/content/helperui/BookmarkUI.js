@@ -81,6 +81,22 @@ BookmarkBookmark.prototype = {
     this._picker.uri = Browser.selectedBrowser.currentURI;
     this._picker.imageSnippets = Browser.selectedTab.snippets.ImageSnippet;
 
+    if (Browser.selectedTab.snippets.RecipeSnippet &&
+        Browser.selectedTab.snippets.RecipeSnippet.length > 0) {
+      let recipe = Browser.selectedTab.snippets.RecipeSnippet[0];
+
+      let details = [];
+      if (recipe.yield) {
+        details.push(recipe.yield);
+      }
+      if (recipe.duration) {
+        details.push(recipe.duration);
+      }
+      this._picker.details = details.join(", ");
+    } else {
+      this._picker.details = null;
+    }
+
     try {
       let settings = JSON.parse(PlacesUtils.annotations.
                                 getItemAnnotation(id, kThumbAnno));
@@ -88,6 +104,7 @@ BookmarkBookmark.prototype = {
       if (settings.isThumbnail) {
         this._picker.selectedImageSnippet = settings.selectedImageSnippet;
         this._picker.isThumbnail = settings.isThumbnail;
+        this._picker.details = settings.details;
       }
     } catch (e) { /* there was no snippet data */ }
   },
@@ -126,7 +143,8 @@ BookmarkBookmark.prototype = {
 
     let json = JSON.stringify({
       selectedImageSnippet: this._picker.selectedImageSnippet,
-      isThumbnail: this._picker.isThumbnail
+      isThumbnail: this._picker.isThumbnail,
+      details: this._picker.details
     });
 
     let anno = PlacesUtils.annotations;

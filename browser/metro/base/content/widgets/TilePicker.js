@@ -46,6 +46,18 @@ TilePicker.prototype = {
     return aIsShowing;
   },
 
+  _details: null,
+  get details() { return this._details; },
+  set details(aDetails) {
+    this._details = aDetails;
+    if (this._details) {
+      this._preview.details = this._details;
+    } else {
+      this._preview.details = "";
+      this._preview.removeAttribute("hasdetails");
+    }
+  },
+
   _imageSnippets: [],
   get imageSnippets() { return this._imageSnippets; },
   set imageSnippets(aImageSnippets) {

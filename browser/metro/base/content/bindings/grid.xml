@@ -801,6 +801,7 @@
       <html:div anonid="anon-tile" class="tile-content" xbl:inherits="customImage">
         <html:div class="tile-start-container" xbl:inherits="customImage">
           <html:div class="tile-icon-box" anonid="anon-tile-icon-box"><xul:image anonid="anon-tile-icon" xbl:inherits="src=iconURI"/></html:div>
+          <html:div anonid="anon-tile-details" class="tile-details" xbl:inherits="xbl:text=details"/>
         </html:div>
         <html:div anonid="anon-tile-label" class="tile-desc" xbl:inherits="xbl:text=label"/>
       </html:div>
@@ -819,6 +820,7 @@
       <property name="_icon" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-icon');"/>
       <property name="_iconBox" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-icon-box');"/>
       <property name="_label" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-label');"/>
+      <property name="_details" onget="return document.getAnonymousElementByAttribute(this, 'anonid', 'anon-tile-details');"/>
       <property name="iconSrc"
                 onset="this._icon.src = val; this.setAttribute('iconURI', val);"
                 onget="return this._icon.src;" />
@@ -832,6 +834,15 @@
       <property name="label"
                 onget="return this._label.getAttribute('value')"
                 onset="this.setAttribute('label', val); this._label.setAttribute('value', val);"/>
+      <property name="details"
+                onget="return this._label.getAttribute('details')"
+                onset="if (val) {
+                         this.setAttribute('hasdetails', val)
+                       } else {
+                         this.removeAttribute('hasdetails');
+                       }
+                       this.setAttribute('details', val);
+                       this._details.setAttribute('value', val);"/>
       <property name="pinned"
                 onget="return this.hasAttribute('pinned')"
                 onset="if (val) { this.setAttribute('pinned', val) } else this.removeAttribute('pinned');"/>
@@ -880,6 +891,7 @@
 
             // overridden in tiles.css for non-thumbnail types
             this._label.style.backgroundColor = val.replace(/rgb\(([^\)]+)\)/, 'rgba($1, 0.8)');
+            this._details.style.backgroundColor = val.replace(/rgb\(([^\)]+)\)/, 'rgba($1, 0.6)');
 
             // Small icons get a border+background-color treatment.
             // See tiles.css for large icon overrides

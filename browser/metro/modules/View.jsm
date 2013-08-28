@@ -47,6 +47,9 @@ View.prototype = {
                            getItemAnnotation(aNodeId, kThumbAnno));
 
       if (opt.isThumbnail) {
+        if (opt.details) {
+          aItem.details = opt.details;
+        }
         aItem.setAttribute("tiletype", "thumbnail");
         aItem.backgroundImage = "url('" + opt.selectedImageSnippet.uri + "')";
       } else if (!aOnlySetImage) {

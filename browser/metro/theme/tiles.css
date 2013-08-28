@@ -143,6 +143,10 @@ richgriditem:not([tiletype="thumbnail"]) .tile-desc {
   background-color: transparent!important;
 }
 
+richgriditem:not([tiletype="thumbnail"]) .tile-details {
+  display: none;
+}
+
 
 richgriditem.collapsed {
   height: 0!important;
@@ -197,6 +201,23 @@ richgriditem[tiletype="thumbnail"] > .tile-content > .tile-start-container {
   right: 0;
   left: 0;
 }
+
+richgriditem[tiletype="thumbnail"]:not([hasdetails]) .tile-details {
+  display: none;
+}
+
+richgriditem[tiletype="thumbnail"] .tile-details {
+  right: 0;
+  left: 0;
+  bottom: 31px;
+  position: absolute;
+  padding: 4px 8px 4px 56px;
+  font-size: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 richgriditem[tiletype="thumbnail"] .tile-icon-box {
   top: auto;
   left: 10px;
