@@ -18,6 +18,4 @@
 # Modifying this file will now automatically clobber the buildbot machines \o/
 #
 
-In Bug 863306 comment #42 sheriff KWierso states that we should CLOBBER every time
-that WebRTC code is changed, which will be awesome.
-
+Bug 909870 - xpidl header generation is somehow busted so we need to clobber on windows

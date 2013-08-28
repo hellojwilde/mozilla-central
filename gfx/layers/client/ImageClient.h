@@ -87,6 +87,9 @@ public:
   virtual void AddTextureClient(TextureClient* aTexture) MOZ_OVERRIDE;
 
   virtual TemporaryRef<BufferTextureClient>
+  CreateBufferTextureClient(gfx::SurfaceFormat aFormat, TextureFlags aFlags) MOZ_OVERRIDE;
+
+  virtual TemporaryRef<BufferTextureClient>
   CreateBufferTextureClient(gfx::SurfaceFormat aFormat) MOZ_OVERRIDE;
 
   virtual TextureInfo GetTextureInfo() const MOZ_OVERRIDE;
@@ -179,6 +182,11 @@ public:
   virtual TextureInfo GetTextureInfo() const MOZ_OVERRIDE
   {
     return TextureInfo(mType);
+  }
+
+  virtual void SetIPDLActor(CompositableChild* aChild) MOZ_OVERRIDE
+  {
+    MOZ_ASSERT(!aChild, "ImageClientBridge should not have IPDL actor");
   }
 
 protected:
