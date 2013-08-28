@@ -157,11 +157,28 @@ SnippetsHandler.providers.ImageSnippet = [
       }
     }
     return snippets;
+  },
+
+  function microdata(aElement) {
+    if (!aElement.getItems) {
+      return [];
+    }
+
+    let items = aElement.getItems("http://schema.org/ImageObject");
+    let snippets = [];
+    for (let item of items) {
+      let snippet = new ImageSnippet(item.properties["image"],
+                                     item.properties["width"],
+                                     item.properties["height"],
+                                     item.properties["caption"]);
+      snippets.push(snippet);
+    }
+    return snippets;
   }
 ];
 
 SnippetsHandler.providers.AudioSnippet = [
-  function ogp () {
+  function ogp (aElement) {
     let snippets = [];
     let audio = null;
     let tags = aElement.getElementsByTagName("meta");
@@ -179,13 +196,26 @@ SnippetsHandler.providers.AudioSnippet = [
     return snippets;
   },
 
-  function microdata () {
+  function microdata (aElement) {
+    if (!aElement.getItems) {
+      return [];
+    }
 
+    let items = aElement.getItems("http://schema.org/MusicRecording " +
+                                  "http://schema.org/AudioObject");
+    let snippets = [];
+    for (let item of items) {
+      let snippet = new AudioSnippet(item.properties["url"],
+                                     item.properties["duration"],
+                                     item.properties["name"]);
+      snippets.push(snippet);
+    }
+    return snippets;
   }
 ];
 
 SnippetsHandler.providers.VideoSnippet = [
-  function ogp() {
+  function ogp(aElement) {
     let snippets = [];
     let video = null;
     let tags = aElement.getElementsByTagName("meta");
@@ -213,8 +243,20 @@ SnippetsHandler.providers.VideoSnippet = [
     return snippets;
   },
 
-  function microdata() {
+  function microdata (aElement) {
+    if (!aElement.getItems) {
+      return [];
+    }
 
+    let items = aElement.getItems("http://schema.org/VideoObject");
+    let snippets = [];
+    for (let item of items) {
+      let snippet = new VideoSnippet(item.properties["url"],
+                                     item.properties["duration"],
+                                     item.properties["name"]);
+      snippets.push(snippet);
+    }
+    return snippets;
   }
 ];
 
@@ -293,6 +335,75 @@ SnippetsHandler.providers.RecipeSnippet = [
                                aRecipe.instructions, aRecipe.yield,
                                aRecipe.duration);
     });
+  },
+
+  function microdata(aElement) {
+    let recipes = aElement.getItems("http://schema.org/Recipe");
+    let snippets = [];
+    for (let recipe of recipes) {
+      let summary = new SummarySnippet(recipe.properties["name"],
+                                       recipe.properties["description"]);
+      if (recipe.properties["image"]) {
+        summary.imageSnippet = new ImageSnippet(recipe.properties["image"]);
+      }
+      return new RecipeSnippet(summary, recipe.properties["ingredients"],
+                               recipe.properties["recipeInstructions"],
+                               recipe.properties["recipeYield"],
+                               recipe.properties["totalTime"]);
+    }
+    return snippets;
+  }
+];
+
+SnippetsHandler.providers.StorySnippet = [
+  function ogp(aElement) {
+    let tags = aElement.getElementsByTagName("meta");
+    let story = null;
+    for (let tag of tags) {
+      switch (tag.tagName) {
+        case "og:type":
+          if (tag.content == "article" ||
+              tag.content == "book") {
+            story = new StorySnippet(new SummarySnippet());
+          }
+          break;
+        case "og:title":
+          if (story) {
+            story.summarySnippet.title = tag.content;
+          }
+          break;
+        case "og:image":
+          if (story) {
+            story.summarySnippet.imageSnippet.uri = tag.content;
+          }
+          break;
+      }
+    }
+    return story ? [story] : [];
+  },
+
+  function microdata(args) {
+    if (!aElement.getItems) {
+      return [];
+    }
+
+    let stories = aElement.getItems(["http://schema.org/Article",
+                                     "http://schema.org/Book"].join(" "));
+    let snippets = [];
+    for (let story of stories) {
+      let summary = new SummarySnippet(story.properties["name"],
+                                       story.properties["description"]);
+      if (story.properties["image"]) {
+        summary.imageSnippet = new ImageSnippet(story.properties["image"]);
+      }
+      snippets.push(new StorySnippet(summary));
+    }
+    return snippets;
+  },
+
+  function microformats(args) {
+    // TODO
+    return [];
   }
 ];
 

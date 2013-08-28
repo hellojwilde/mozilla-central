@@ -833,9 +833,14 @@ var Browser = {
       } else {
         let snippets = Browser.selectedTab.snippets;
         let list = null;
+        alert("something!");
 
         if (snippets.RecipeSnippet && snippets.RecipeSnippet.length > 0) {
           list = Bookmarks.getAnnoList("recipes");
+        } else if (snippets.AudioSnippet && snippets.AudioSnippet.length > 0) {
+          list = Bookmarks.getAnnoList("music");
+        } else if (snippets.VideoSnippet && snippets.VideoSnippet.length > 0) {
+          list = Bookmarks.getAnnoList("videos");
         } else {
           list = Bookmarks.getAnnoList("other");
         }
